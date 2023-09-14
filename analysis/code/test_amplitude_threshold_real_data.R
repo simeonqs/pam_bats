@@ -10,6 +10,7 @@ library(seewave)
 library(tuneR)
 library(scales)
 library(stringr)
+library(parallel)
 
 # Source custom functions
 source('analysis/code/test_plot_specs.R')
@@ -30,21 +31,20 @@ files = list.files(path_files, recursive = TRUE, full.names = TRUE)
 selection_table_files = list.files(path_selection_tables, 
                                    recursive = TRUE, full.names = TRUE)
 
-# Run for all files
-for(file in files){
-  
+# Function to proces file
+process.file = function(file){
+ 
   # Get file name for storing
   file_short = file |> basename() |> str_remove('.WAV') |> str_remove('.wav')
   
   # Run amplitude threshold on one file
-  # wave = readWave(file, from = 9.5, to = 10.5, units = 'seconds')
   wave = readWave(file)
   wave = ffilter(wave, from = 10000, output = 'Wave')
   pdf(sprintf('%s%s.pdf', path_detections_pdf, file_short), 30, 5)
-  detections = call.detect.multiple(wave, threshold = 0.07, min_dur = 0, 
+  detections = call.detect.multiple(wave, threshold = 0.04, min_dur = 0,
                                     plot_it = TRUE,
                                     save_extra = 0.01, env_type = 'summed',
-                                    bin_depth = 512, merge_overlap = TRUE)
+                                    bin_depth = 256, merge_overlap = TRUE)
   dev.off()
   
   # Plot small spectrograms of detections
@@ -56,23 +56,33 @@ for(file in files){
     export.detections(detections, wave@samp.rate,
                       sprintf('%s%s.txt', path_detections_txt, file_short))
   
-  # # Compute performance
-  # gt = load.selection.table(
-  #   selection_table_files[str_detect(selection_table_files, file_short)])
-  # gt = gt[gt$View == 'Waveform 1',]
-  # gt = data.frame(start = gt$Begin.Time..s.,
-  #                 end = gt$End.Time..s.,
-  #                 file = 'nr')
-  # d = detections/wave@samp.rate
-  # d$file = 'nr'
-  # performance = calc.perf(d, gt)
-  # 
-  # # Store performance
-  # sink(sprintf('%s%s.txt', path_performance, file_short))
-  # print(performance)
-  # sink()
+  # Compute performance
+  gt = load.selection.table(
+    selection_table_files[str_detect(selection_table_files, file_short)])
+  gt = gt[gt$View == 'Waveform 1',]
+  if(nrow(gt) > 0){
+    gt = data.frame(start = gt$Begin.Time..s.,
+                    end = gt$End.Time..s.,
+                    file = 'nr')
+  } else {
+    gt = data.frame(start = numeric(),
+                    end = numeric(),
+                    file = character())
+  }
+  d = detections/wave@samp.rate
+  if(nrow(d) == 0) d$file = character() else d$file = 'nr'
+  performance = calc.perf(d, gt)
   
-} # end file loop
+  # Store performance
+  sink(sprintf('%s%s.txt', path_performance, file_short))
+  print(performance)
+  sink()
+  
+} # end process.file
 
-
-
+# Run and test time
+time_1 = Sys.time()
+mclapply(files, process.file, mc.cores = 4)
+time_2 = Sys.time()
+message(sprintf('Processed %s files in %s seconds.', 
+                length(files), round(time_2 - time_1)))
