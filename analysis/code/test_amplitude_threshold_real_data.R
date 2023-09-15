@@ -39,12 +39,14 @@ process.file = function(file){
   
   # Run amplitude threshold on one file
   wave = readWave(file)
-  wave = ffilter(wave, from = 10000, output = 'Wave')
+  wave = ffilter(wave, from = 10000, to = 90000, 
+                 output = 'Wave')
+  wave = downsample(wave, 192000)
   pdf(sprintf('%s%s.pdf', path_detections_pdf, file_short), 30, 5)
-  detections = call.detect.multiple(wave, threshold = 0.04, min_dur = 0,
+  detections = call.detect.multiple(wave, threshold = 0.065, min_dur = 0,
                                     plot_it = TRUE,
                                     save_extra = 0.01, env_type = 'summed',
-                                    bin_depth = 256, merge_overlap = TRUE)
+                                    bin_depth = 128, merge_overlap = TRUE)
   dev.off()
   
   # Plot small spectrograms of detections
@@ -52,9 +54,8 @@ process.file = function(file){
   # sprintf('%s%s.pdf', path_spectrograms, file_short))
   
   # Export detections
-  if(nrow(detections) > 0) 
-    export.detections(detections, wave@samp.rate,
-                      sprintf('%s%s.txt', path_detections_txt, file_short))
+  export.detections(detections, wave@samp.rate,
+                    sprintf('%s%s.txt', path_detections_txt, file_short))
   
   # Compute performance
   gt = load.selection.table(
@@ -78,7 +79,7 @@ process.file = function(file){
   print(performance)
   sink()
   
-} # end process.file
+  } # end process.file
 
 # Run and test time
 time_1 = Sys.time()
