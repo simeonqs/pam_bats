@@ -16,13 +16,13 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_selections = 'analysis/data/aspot_selections/noise'
+path_selections = 'analysis/data/aspot_selections/target'
 path_wavs = 'analysis/data'
-path_results = 'analysis/results/aspot'
+path_results = 'analysis/results/aspot/data/'
 
 # Settings
-type = 'noise'
-bandpass = c(10000, 90000)
+type = 'target'
+bandpass = c(15000, 90000)
 resample_rate = 192000
 
 # List files
@@ -57,15 +57,16 @@ export.selection = function(selection, selection_table, wave, file_name){
   
   # Create new wave and save
   new_wave = wave[start:end]
-  orig_max = max(abs(new_wave@left))
-  new_wave = ffilter(new_wave, from = bandpass[1], to = bandpass[2], 
-                     output = 'Wave')
-  new_wave@left = round(new_wave@left / max(abs(new_wave@left)) * orig_max)
-  new_wave = downsample(new_wave, resample_rate)
-  
-  new_name = paste0(path_results, '/', type, '/', new_name, '.wav')
-  if(length(new_wave@left)/new_wave@samp.rate > 0.0001)  
+  if(length(new_wave@left)/new_wave@samp.rate > 0.005){
+    orig_max = max(abs(new_wave@left))
+    new_wave = ffilter(new_wave, from = bandpass[1], to = bandpass[2], 
+                       output = 'Wave')
+    new_wave@left = round(new_wave@left / max(abs(new_wave@left)) * orig_max)
+    new_wave = downsample(new_wave, resample_rate)
+    
+    new_name = paste0(path_results, '/', type, '/', new_name, '.wav')
     writeWave(new_wave, new_name, extensible = FALSE)
+  }
   
 }
 
