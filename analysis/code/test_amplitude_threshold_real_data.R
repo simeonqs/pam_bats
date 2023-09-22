@@ -25,7 +25,7 @@ path_selection_tables =
 
 # List files to detect on 
 files = list.files(path_files, recursive = TRUE, full.names = TRUE)
-# files = files[1:2]
+files = files[5]
 
 # List selection tables
 selection_table_files = list.files(path_selection_tables, 
@@ -39,15 +39,16 @@ process.file = function(file){
   
   # Run amplitude threshold on one file
   wave = readWave(file)
-  wave = ffilter(wave, from = 10000, to = 90000, 
-                 output = 'Wave')
-  wave = downsample(wave, 192000)
+  orig_max = max(abs(wave@left))
+  wave = ffilter(wave, from = 15000, to = 90000, output = 'Wave')
+  wave@left = round(wave@left / max(abs(wave@left)) * orig_max)
   pdf(sprintf('%s%s.pdf', path_detections_pdf, file_short), 30, 5)
-  detections = call.detect.multiple(wave, threshold = 0.065, min_dur = 0,
+  detections = call.detect.multiple(wave, threshold = 2, min_dur = 0,
                                     plot_it = TRUE,
                                     save_extra = 0.01, env_type = 'summed',
-                                    bin_depth = 128, merge_overlap = TRUE)
+                                    bin_depth = 50, merge_overlap = TRUE)
   dev.off()
+  # wave = downsample(wave, 192000)
   
   # Plot small spectrograms of detections
   # plot.all.specs(detections, file, 
