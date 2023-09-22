@@ -39,10 +39,9 @@ for(file in files){
   
   # Run amplitude threshold on one file
   wave = readWave(file)
-  # orig_max = max(abs(wave@left))
+  orig_max = max(abs(wave@left))
   wave = ffilter(wave, from = 10000, to = 90000, 
                  output = 'Wave')
-  # wave@left = round(wave@left / max(abs(wave@left)) * orig_max)
   wave = downsample(wave, 192000)
   pdf(sprintf('%s%s.pdf', path_detections_pdf, file_short), 30, 5)
   detections = call.detect.multiple(wave, threshold = 0.065, min_dur = 0,
@@ -50,6 +49,7 @@ for(file in files){
                                     save_extra = 0.01, env_type = 'summed',
                                     bin_depth = 128, merge_overlap = TRUE)
   dev.off()
+  wave@left = round(wave@left / max(abs(wave@left)) * orig_max)
   
   # Plot small spectrograms of detections
   # plot.all.specs(detections, file, 
