@@ -6,7 +6,7 @@
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Loading libraries
-libraries = c('stringr', 'seewave', 'tuneR')
+libraries = c('stringr', 'seewave', 'tuneR', 'parallel')
 for(lib in libraries){
   if(! lib %in% installed.packages()) lapply(lib, install.packages)
   lapply(libraries, require, character.only = TRUE)
@@ -16,15 +16,17 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_wavs = 'analysis/data/test_data'
-path_results = 'analysis/results/test_data/downsampled'
+path_wavs = '/media/au472091/T7 Shield/NS6C_A_Spring23_Backup/Data'
+path_results = '/home/au472091/Documents/test_data_bojer'
 
 # Settings
 resample_rate = 192000
-bandpass = c(15000, 90000)
+bandpass = c(10000, 90000)
 
 # List audio files
-files = list.files(path_wavs, recursive = TRUE, full.names = TRUE)
+files = list.files(path_wavs, '*wav', recursive = FALSE, full.names = TRUE)
+set.seed(1)
+files = sample(files, 1000)
 
 # Function to process file
 downsample.file = function(file){
@@ -38,5 +40,5 @@ downsample.file = function(file){
 }
 
 # Run on all files
-lapply(files, downsample.file)
+mclapply(files, downsample.file, mc.cores = 4)
 message('Downsampled all files.')
