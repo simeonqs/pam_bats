@@ -15,12 +15,12 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
+model = 'm40'
 path_gt = 'analysis/results/test_data/ground_truth_selection_tables'
-path_d = 'aspot/m16/selection_tables'
-path_performance = 'analysis/results/test_data/performance_aspot/'
+path_d = sprintf('aspot/models/%s/selection_tables', model)
+path_performance = sprintf('aspot/models/%s/performance/', model)
 
 # List files
-gt_files = list.files(path_gt, full.names = TRUE)
 d_files = list.files(path_d, full.names = TRUE)
 
 # Function to process file
@@ -35,16 +35,17 @@ process.file = function(path){
     str_remove('_predict_output.log.annotation.result.txt')
   
   # Compute performance
-  gt = load.selection.table(gt_files[str_detect(gt_files, file_short)])
+  gt = load.selection.table(sprintf('%s/%s.Table.1.selections.txt',
+                                    path_gt, file_short))
   gt = gt[gt$View == 'Waveform 1',]
   if(nrow(gt) > 0){
     gt = data.frame(start = gt$Begin.Time..s.,
                     end = gt$End.Time..s.,
                     file = 'nr')
   } else {
-    d = data.frame(start = numeric(),
-                   end = numeric(),
-                   file = character())
+    gt = data.frame(start = numeric(),
+                    end = numeric(),
+                    file = character())
   }
   if(nrow(d) > 0){
     d = data.frame(start = d$Begin.time..s.,
@@ -71,7 +72,8 @@ out = lapply(d_files, process.file)
 perf_files = list.files(path_performance, pattern = '*.txt', full.names = TRUE)
 n_calls = perf_files |> basename() |> str_remove('.txt') |> 
   vapply(function(file) 
-    load.selection.table(gt_files[str_detect(gt_files, file)]) |> nrow(), 
+    load.selection.table(sprintf('%s/%s.Table.1.selections.txt',
+                                 path_gt, file)) |> nrow(), 
     numeric(1))
 perf_overview = data.frame(file = basename(perf_files),
                            n_calls = n_calls,
@@ -88,9 +90,9 @@ for(i in seq_along(perf_files)){
   # if n_fp is NULL, return zero, else split into all detections and subtract
   # 1, because the string also includes [1] 
   perf_overview$n_fp[i] = ifelse(perf[l1+1,] == 'NULL', 0, 
-                                 length(str_split(perf[l1+1,], ' ')[[1]]) - 1)
+                                 str_count(perf[l1+1,], '\\d+') - 1)
   perf_overview$n_fn[i] = ifelse(perf[l2+1,] == 'NULL', 0, 
-                                 length(str_split(perf[l2+1,], ' ')[[1]]) - 1)
+                                 str_count(perf[l2+1,], '\\d+') - 1)
   perf_overview$fp_rate[i] = perf[l3+1,] |> 
     str_remove('\\[1\\] ') |> 
     as.numeric() |> round(3)
@@ -98,7 +100,16 @@ for(i in seq_along(perf_files)){
     str_remove('\\[1\\] ') |> 
     as.numeric() |> round(3)
 }
-write.csv(perf_overview, sprintf('%s0_summary.csv', path_performance))
+write.csv(perf_overview, sprintf('%s0_summary.csv', path_performance),
+          row.names = FALSE)
+
+# Calculate overall performance
+d = load.selection.tables(path_d)
+gt = load.selection.tables(path_gt)
+perf = calc.perf(d, gt)
 
 # Message
 message('Stored performance files.')
+message(sprintf('Overall fp rate = %s, overall fn rate = %s.',
+                round(perf$fp_rate, 2),
+                round(perf$fn_rate, 2)))
