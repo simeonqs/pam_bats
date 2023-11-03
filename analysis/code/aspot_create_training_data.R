@@ -15,15 +15,15 @@ for(lib in libraries){
 # Clean R
 rm(list=ls()) 
 
-# Paths 
-path_selections = 'analysis/data/aspot_selections/target'
-path_wavs = 'analysis/data'
-path_results = 'analysis/results/aspot/data/'
-
 # Settings
 type = 'target'
-bandpass = c(10000, 90000)
+bandpass = c(1000, 95000)
 resample_rate = 192000
+
+# Paths 
+path_selections = sprintf('analysis/data/aspot_selections/%s', type)
+path_wavs = 'analysis/data'
+path_results = 'aspot/data_sets/data_10/data'
 
 # List files
 audio_files = c(list.files(path_wavs,  '*wav', full.names = TRUE, 
@@ -58,12 +58,11 @@ export.selection = function(selection, selection_table, wave, file_name){
   # Create new wave and save
   new_wave = wave[start:end]
   if(length(new_wave@left)/new_wave@samp.rate > 0.005){
-    # orig_max = max(abs(new_wave@left))
-    # new_wave = ffilter(new_wave, from = bandpass[1], to = bandpass[2], 
-    #                    output = 'Wave')
-    # new_wave@left = round(new_wave@left / max(abs(new_wave@left)) * orig_max)
-    # new_wave = downsample(new_wave, resample_rate)
-    
+  orig_max = max(abs(new_wave@left))
+  new_wave = ffilter(new_wave, from = bandpass[1], to = bandpass[2],
+                     output = 'Wave')
+  new_wave@left = round(new_wave@left / max(abs(new_wave@left)) * orig_max)
+  new_wave = downsample(new_wave, resample_rate)
     new_name = paste0(path_results, '/', type, '/', new_name, '.wav')
     writeWave(new_wave, new_name, extensible = FALSE)
   }
@@ -76,7 +75,7 @@ export.selections = function(path_selection_table){
   # Read the table
   selection_table = read.csv(path_selection_table, sep = '\t')
   selection_table = 
-    selection_table[str_detect(selection_table$View, 'Waveform'),]
+    selection_table[str_detect(selection_table$View, 'Spectrogram'),]
   
   # Find wav file name
   file_name = path_selection_table |>
