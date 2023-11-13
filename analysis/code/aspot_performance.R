@@ -15,7 +15,7 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-model = 'm40'
+model = 'm42'
 path_gt = 'analysis/results/test_data/ground_truth_selection_tables'
 path_d = sprintf('aspot/models/%s/selection_tables', model)
 path_performance = sprintf('aspot/models/%s/performance/', model)
@@ -74,7 +74,7 @@ n_calls = perf_files |> basename() |> str_remove('.txt') |>
   vapply(function(file) 
     load.selection.table(sprintf('%s/%s.Table.1.selections.txt',
                                  path_gt, file)) |> nrow(), 
-    numeric(1))
+    numeric(1)) / 2
 perf_overview = data.frame(file = basename(perf_files),
                            n_calls = n_calls,
                            n_fp = numeric(length(perf_files)),
