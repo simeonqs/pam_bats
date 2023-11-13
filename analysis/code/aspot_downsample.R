@@ -20,7 +20,9 @@ rm(list=ls())
 # Paths 
 path_wavs = 
   '/media/au472091/T7 Shield/LOT_1_BØJER_DATA/T3-NS26_A_Spring23/Data'
-path_results = '/media/au472091/T7 Shield/downsampled_data/T3-NS26_A_Spring23'
+path_results = 
+  '/media/au472091/T7 Shield/downsampled_data/T3-NS26_A_Spring23'
+path_predictions = 'aspot/models/m40/predict_T3'
   
 # Settings
 resample_rate = 192000
@@ -30,6 +32,13 @@ bandpass = c(1000, 95000)
 files = list.files(path_wavs, '*wav', recursive = FALSE, full.names = TRUE)
 set.seed(1)
 # files = sample(files, 1000)
+
+# Check which files are already downsampled and remove them from vector
+already_done = list.files(path_results, '*wav')
+already_predicted = list.files(path_predictions, '*.log') |>
+  str_remove('_predict_output.log') |>
+  paste0('.wav')
+files = files[!basename(files) %in% c(already_done, already_predicted)]
 
 # Function to process file
 downsample.file = function(file){
@@ -44,5 +53,5 @@ downsample.file = function(file){
 
 # Run on all files
 message(sprintf('Downsampling %s files...', length(files)))
-mclapply(files, downsample.file, mc.cores = 3)
+mclapply(files, downsample.file, mc.cores = 2)
 message('Downsampled all files.')
