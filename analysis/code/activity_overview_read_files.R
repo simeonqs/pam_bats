@@ -17,6 +17,7 @@ rm(list=ls())
 
 # Paths 
 path_data = '/media/au472091/T7 Shield/LOT_1_BØJER_DATA'
+# path_data = '/home/au472091/Documents/large_data/LOT_1_BØJER_DATA'
 path_summaries = 'analysis/results/activity_overview/summaries'
 
 # List files
@@ -39,7 +40,7 @@ for(file in files){
   summary$station = station
   ## store summary data
   write.csv(summary, 
-            sprintf('%s/%s.csv',
+            sprintf('%s/summaries/%s.csv',
                     path_summaries,
                     file |> basename() |> str_remove('_Summary.txt')),
             row.names = FALSE)
@@ -58,11 +59,11 @@ for(file in files){
   summary_detections$station = station
   ## store summary data
   write.csv(summary, 
-            sprintf('%s/detections_%s.csv',
+            sprintf('%s/detections/%s.csv',
                     path_summaries,
                     file |> basename() |> str_remove('_Summary.txt')),
             row.names = FALSE)
 }
 
 # Message
-message(sprintf('Processed %s files.', length(files)))
+message(sprintf('Processed %s file(s).', length(files)))
