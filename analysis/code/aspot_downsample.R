@@ -3,7 +3,7 @@
 # Author: Simeon Q. Smeele
 # Description: Takes Raven selection tables and raw audio and creates audio
 # clips with the correct file names for Animal Spot.
-# setwd('/home/au472091/OneDrive/au/projects/pam_bats')
+# setwd('/home/au472091/Documents/au/projects/pam_bats')
 # source('analysis/code/aspot_downsample.R')
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -19,10 +19,10 @@ rm(list=ls())
 
 # Paths 
 path_wavs = 
-  '/media/au472091/T7 Shield/LOT_1_BØJER_DATA/T3-NS26_A_Spring23/Data'
+  '/home/au472091/Documents/large_data/LOT_1_BØJER_DATA/NS21_A_Spring23/Data'
 path_results = 
-  '/media/au472091/T7 Shield/downsampled_data/T3-NS26_A_Spring23'
-path_predictions = 'aspot/models/m40/predict_T3'
+  '/home/au472091/Documents/large_data/downsampled/NS21_A_Spring23'
+path_predictions = ''
   
 # Settings
 resample_rate = 192000
@@ -53,5 +53,6 @@ downsample.file = function(file){
 
 # Run on all files
 message(sprintf('Downsampling %s files...', length(files)))
-mclapply(files, downsample.file, mc.cores = 2)
+mclapply(files, downsample.file, mc.cores = 15)
 message('Downsampled all files.')
+
