@@ -16,88 +16,100 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Settings
-type = 'target'
+data_set = 16
+n_aug_noise = 600
 bandpass = c(1000, 95000)
 resample_rate = 192000
 
-# Paths 
-path_selections = sprintf('analysis/data/aspot_selections/%s', type)
-path_wavs = 'analysis/data'
-path_results = 'aspot/data_sets/data_10/data'
-
-# List files
-audio_files = c(list.files(path_wavs,  '*wav', full.names = TRUE, 
-                           recursive = TRUE), 
-                list.files(path_wavs,  '*WAV', full.names = TRUE, 
-                           recursive = TRUE))
-
-# Find the selection tables
-selection_tables = list.files(path_selections, '*txt', full.names = TRUE, 
-                              recursive = TRUE)
-
-# The function for each selection
-export.selection = function(selection, selection_table, wave, file_name){
+# Run for types
+for(type in c('target', 'noise')){
   
-  # Get start and end
-  start = round((selection_table$Begin.Time..s.[selection]) * wave@samp.rate)
-  if(length(start) == 0) 
-    start = round((selection_table$Begin.time..s.[selection]) * wave@samp.rate)
-  end = round((selection_table$End.Time..s.[selection]) * wave@samp.rate)
-  if(length(end) == 0) 
-    end = round((selection_table$End.time..s.[selection]) * wave@samp.rate)
+  # Paths 
+  path_selections = sprintf('analysis/data/aspot_selections/%s', type)
+  path_wavs = 'analysis/data'
+  path_results = sprintf('aspot/data_sets/data_%s/data', data_set)
+
+  # List files
+  audio_files = c(list.files(path_wavs,  '*wav', full.names = TRUE, 
+                             recursive = TRUE), 
+                  list.files(path_wavs,  '*WAV', full.names = TRUE, 
+                             recursive = TRUE))
   
-  # Create new name 
-  ID = round(runif(1) * 1e7)
-  year = 2020
-  tape_name = str_replace_all(file_name, '_', '-')
-  start_name = round(start / wave@samp.rate * 1000)
-  end_name = round(end / wave@samp.rate * 1000)
-  new_name = paste0(type, '-bat', '_', ID, '_', year, '_', 
-                    tape_name, '_', start_name, '_', end_name)
+  # Find the selection tables
+  selection_tables = list.files(path_selections, '*txt', full.names = TRUE, 
+                                recursive = TRUE)
   
-  # Create new wave and save
-  new_wave = wave[start:end]
-  if(length(new_wave@left)/new_wave@samp.rate > 0.005){
-  orig_max = max(abs(new_wave@left))
-  new_wave = ffilter(new_wave, from = bandpass[1], to = bandpass[2],
-                     output = 'Wave')
-  new_wave@left = round(new_wave@left / max(abs(new_wave@left)) * orig_max)
-  new_wave = downsample(new_wave, resample_rate)
-    new_name = paste0(path_results, '/', type, '/', new_name, '.wav')
-    writeWave(new_wave, new_name, extensible = FALSE)
+  # The function for each selection
+  export.selection = function(selection, selection_table, wave, file_name){
+    
+    # Get start and end
+    start = round((selection_table$Begin.Time..s.[selection]) * wave@samp.rate)
+    if(length(start) == 0) 
+      start = round((selection_table$Begin.time..s.[selection]) * wave@samp.rate)
+    end = round((selection_table$End.Time..s.[selection]) * wave@samp.rate)
+    if(length(end) == 0) 
+      end = round((selection_table$End.time..s.[selection]) * wave@samp.rate)
+    
+    # Create new name 
+    ID = round(runif(1) * 1e7)
+    year = 2020
+    tape_name = str_replace_all(file_name, '_', '-')
+    start_name = round(start / wave@samp.rate * 1000)
+    end_name = round(end / wave@samp.rate * 1000)
+    new_name = paste0(type, '-bat', '_', ID, '_', year, '_', 
+                      tape_name, '_', start_name, '_', end_name)
+    
+    # Create new wave and save
+    new_wave = wave[start:end]
+    if(length(new_wave@left)/new_wave@samp.rate > 0.005){
+      orig_max = max(abs(new_wave@left))
+      new_wave = ffilter(new_wave, from = bandpass[1], to = bandpass[2],
+                         output = 'Wave')
+      new_wave@left = round(new_wave@left / max(abs(new_wave@left)) * orig_max)
+      new_wave = downsample(new_wave, resample_rate)
+      new_name = paste0(path_results, '/', type, '/', new_name, '.wav')
+      writeWave(new_wave, new_name, extensible = FALSE)
+    }
+    
   }
   
-}
+  # The running per selection table
+  export.selections = function(path_selection_table){
+    
+    # Read the table
+    selection_table = read.csv(path_selection_table, sep = '\t')
+    selection_table = 
+      selection_table[str_detect(selection_table$View, 'Spectrogram'),]
+    
+    # Find wav file name
+    file_name = path_selection_table |>
+      basename() |>
+      str_remove('.Table.1.selections.txt') |>
+      str_remove('.Table.2.selections.txt') |>
+      str_remove('_predict_output.log.annotation.result.txt')
+    file_name = sub('\\.\\d+\\.selections\\.txt$', '', file_name)
+    
+    print(file_name)
+    
+    # Read the wave
+    wave = readWave(audio_files[ grepl(paste0(file_name, '.wav'), audio_files,
+                                       ignore.case = TRUE) ])
+    
+    # Export for each piece
+    sapply(seq_len(nrow(selection_table)), export.selection, 
+           selection_table, wave, file_name)
+  }
+  
+  # Calls the function
+  sapply(selection_tables, export.selections)
+  
+} # end type loop
 
-# The running per selection table
-export.selections = function(path_selection_table){
-  
-  # Read the table
-  selection_table = read.csv(path_selection_table, sep = '\t')
-  selection_table = 
-    selection_table[str_detect(selection_table$View, 'Spectrogram'),]
-  
-  # Find wav file name
-  file_name = path_selection_table |>
-    basename() |>
-    str_remove('.Table.1.selections.txt') |>
-    str_remove('.Table.2.selections.txt') |>
-    str_remove('_predict_output.log.annotation.result.txt')
-  file_name = sub('\\.\\d+\\.selections\\.txt$', '', file_name)
-  
-  print(file_name)
-  
-  # Read the wave
-  wave = readWave(audio_files[ grepl(paste0(file_name, '.wav'), audio_files,
-                                     ignore.case = TRUE) ])
-  
-  # Export for each piece
-  sapply(seq_len(nrow(selection_table)), export.selection, 
-         selection_table, wave, file_name)
-}
-
-# Calls the function
-sapply(selection_tables, export.selections)
+# Move some noise to aug data
+files = sprintf('%s/noise', path_results) |>
+  list.files(full.names = TRUE) |>
+  sample(600) 
+file.rename(files, str_replace(files, 'data/noise', 'aug_data'))
 
 # Message
 message('Exported all selections.')
