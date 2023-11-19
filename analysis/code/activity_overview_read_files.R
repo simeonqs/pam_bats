@@ -39,7 +39,7 @@ for(file in files){
   summary$station = station
   ## store summary data
   write.csv(summary, 
-            sprintf('%s/%s.csv',
+            sprintf('%s/summaries/%s.csv',
                     path_summaries,
                     file |> basename() |> str_remove('_Summary.txt')),
             row.names = FALSE)
@@ -58,7 +58,7 @@ for(file in files){
   summary_detections$station = station
   ## store summary data
   write.csv(summary, 
-            sprintf('%s/detections_%s.csv',
+            sprintf('%s/detections/%s.csv',
                     path_summaries,
                     file |> basename() |> str_remove('_Summary.txt')),
             row.names = FALSE)
