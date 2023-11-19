@@ -15,7 +15,10 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_summaries = 'analysis/results/activity_overview/summaries'
+path_summaries = 'analysis/results/activity_overview/summaries/summaries'
+path_detections = 'analysis/results/activity_overview/summaries/detections'
+path_aspot = 'analysis/results/activity_overview/summaries/aspot'
+path_aspot_bats = 'analysis/results/activity_overview/summaries/aspot_bats'
 path_png = 'analysis/results/activity_overview'
 
 # Plotting function
@@ -40,18 +43,23 @@ my_shape1 = list(x = c(-0.1, 0.1, 0.1, -0.1)/ dev,
                  y = c(-0.5, -0.5, 0.5, 0.5)/ dev) 
 
 # List files
-files = list.files(path_summaries, pattern = '*.csv', 
-                   recursive = TRUE, full.names = TRUE)
+files_summaries = list.files(path_summaries, pattern = '*.csv', 
+                             recursive = TRUE, full.names = TRUE)
+files_detections = list.files(path_detections, pattern = '*.csv', 
+                              recursive = TRUE, full.names = TRUE)
+files_aspot = list.files(path_aspot, pattern = '*.csv', 
+                         recursive = TRUE, full.names = TRUE)
+files_aspot_bats = list.files(path_aspot_bats, pattern = '*.csv', 
+                              recursive = TRUE, full.names = TRUE)
 
 # Read all files
-summary = files[!str_detect(files, 'detections_') &
-                  !str_detect(files, 'aspot_')] |>
+summary = files_summaries |>
   lapply(read.csv) |> bind_rows()
-summary_detections = files[str_detect(files, 'detections_') &
-                             !str_detect(files, 'aspot_')] |>
+summary_detections = files_detections |>
   lapply(read.csv) |> bind_rows()
-summary_aspot = files[!str_detect(files, 'detections_') &
-                        str_detect(files, 'aspot_')] |>
+summary_aspot = files_aspot |>
+  lapply(read.csv) |> bind_rows()
+summary_aspot_bats = files_aspot_bats |>
   lapply(read.csv) |> bind_rows()
 
 # Plot
@@ -75,6 +83,9 @@ for(season in c('Forår 2023')){
                                  format = '%Y-%b-%d') < as.Date('2023-07-15'),]
     sub_aspot = 
       summary_aspot[as.Date(summary_aspot$DATE) < as.Date('2023-07-15'),]
+    sub_aspot_bats = 
+      summary_aspot_bats[as.Date(summary_aspot_bats$DATE) < 
+                           as.Date('2023-07-15'),]
     xlim = as.Date(c('2023-04-01', '2023-06-15'))
   } else {
     sub = summary[as.Date(summary$DATE, format = '%Y-%b-%d') > 
@@ -84,6 +95,9 @@ for(season in c('Forår 2023')){
                                  format = '%Y-%b-%d') > as.Date('2023-07-15'),]
     sub_aspot = 
       summary_aspot[as.Date(summary_aspot$DATE) > as.Date('2023-07-15'),]
+    sub_aspot_bats = 
+      summary_aspot_bats[as.Date(summary_aspot_bats$DATE) > 
+                           as.Date('2023-07-15'),]
     xlim = as.Date(c('2023-06-15', '2023-12-31'))
   }
   ## create empty plot
@@ -108,6 +122,9 @@ for(season in c('Forår 2023')){
   points(as.Date(sub_aspot$DATE),
          trans_stations[sub_aspot$station] - 0.15, pch = 16, 
          cex = log10(sub_aspot$n)/4 + 0.1)
+  points(as.Date(sub_aspot_bats$DATE),
+         trans_stations[sub_aspot_bats$station] - 0.15, pch = 16, 
+         cex = log10(sub_aspot_bats$n)/4 + 0.1, col = '#28B463')
   ## add axes
   unique_months = unique(format(ymd(sub$DATE), '%Y-%m'))
   axis(1, at = as.Date(paste0(unique_months, '-01')), 
