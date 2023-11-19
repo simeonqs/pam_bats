@@ -25,8 +25,11 @@ files = list.files(path_data, pattern = '*.txt',
 
 # Function to get duration from log file
 read.log = function(lf){
+  line_8 = readLines(lf, n = 8)[8]
   line_9 = readLines(lf, n = 9)[9]
-  total_duration = as.numeric(sub('.*stop time=(\\d+).*', '\\1', line_9))
+  n_windows = as.numeric(sub('.*=(\\d+).*', '\\1', line_8))
+  duration = as.numeric(sub('.*stop time=(\\d+).*', '\\1', line_9))
+  return(c(n_windows = n_windows, duration = duration))
 }
 
 # Make summary per folder
@@ -41,12 +44,18 @@ for(folder in folders){
                      full.names = TRUE)
   out = data.frame(
     file = files |> basename() |> str_remove('_predict_output.log') )
-  out$duration = files |> vapply(read.log, numeric(1))
+  predict_infos = files |> vapply(read.log, numeric(2)) |> t() |> 
+    as.data.frame()
+  out$duration = predict_infos$duration
+  out$n_windows = predict_infos$n_windows
+  out$station = gsub('.*(NS\\d+).*', '\\1', folder) |> 
+    as.character()
   
   # Write output
   write.csv(out, sprintf('%s/%s.csv',
                          path_csv,
-                         basename(folder)))
+                         basename(folder)),
+            row.names = FALSE)
   
 }
 
