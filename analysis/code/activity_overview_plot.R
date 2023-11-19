@@ -71,7 +71,7 @@ colfunc = colorRampPalette(c('#FAD7A0', '#0B5345'))
 cols = colfunc(max(summary$n))
 for(season in c('Forår 2023')){
   png(sprintf('%s/%s.png', path_png, season),
-      width = 8, height = 3, units = 'in', res = 1000) # open PNG
+      width = 8, height = 4, units = 'in', res = 1000) # open PNG
   # season = 'Forår 2023'
   par(mar = c(5, 7, 3, 2))
   ## subset per season and adjust xlims

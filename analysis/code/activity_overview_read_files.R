@@ -17,6 +17,7 @@ rm(list=ls())
 
 # Paths 
 path_data = '/media/au472091/T7 Shield/LOT_1_BØJER_DATA'
+# path_data = '/home/au472091/Documents/large_data/LOT_1_BØJER_DATA'
 path_summaries = 'analysis/results/activity_overview/summaries'
 
 # List files
@@ -65,4 +66,4 @@ for(file in files){
 }
 
 # Message
-message(sprintf('Processed %s files.', length(files)))
+message(sprintf('Processed %s file(s).', length(files)))
