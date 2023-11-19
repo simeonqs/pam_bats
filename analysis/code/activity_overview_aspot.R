@@ -17,6 +17,7 @@ rm(list=ls())
 
 # Paths 
 path_data = 'aspot/results'
+path_data_bats = 'aspot/results/defenitely_bats'
 path_summaries = 'analysis/results/activity_overview/summaries'
 
 # List files
@@ -25,7 +26,7 @@ files = list.files(path_data, pattern = '*.txt',
 
 # Make summary per folder
 folders = list.files(path_data, full.names = TRUE)
-folders = folders[!folders %in% c('aspot/results/maybe_bats', 
+folders = folders[!folders %in% c('aspot/results/maybe_bats',
                                   'aspot/results/defenitely_bats')]
 for(folder in folders){
   detections = load.selection.tables(sprintf('%s/selection_tables', folder))
@@ -41,9 +42,30 @@ for(folder in folders){
     as.character()
   ## store summary data
   write.csv(summary, 
-            sprintf('%s/aspot_%s.csv',
+            sprintf('%s/aspot/%s.csv',
                     path_summaries,
                     basename(folder)),
             row.names = FALSE)
 }
 
+# Make summary per folder where bats were detected
+folders = list.files(path_data_bats, full.names = TRUE)
+for(folder in folders){
+  detections = load.selection.tables(folder)
+  ## get dates
+  detections$DATE = detections$file |> 
+    str_extract('\\d{8}') |> 
+    as.Date(format = '%Y%m%d')
+  ## make summary
+  summary = detections |> 
+    group_by(DATE) |>
+    count()
+  summary$station = gsub('.*(NS\\d+).*', '\\1', folder) |> 
+    as.character()
+  ## store summary data
+  write.csv(summary, 
+            sprintf('%s/aspot_bats/%s.csv',
+                    path_summaries,
+                    basename(folder)),
+            row.names = FALSE)
+}
