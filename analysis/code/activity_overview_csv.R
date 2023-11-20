@@ -20,6 +20,7 @@ path_detections = 'analysis/results/activity_overview/summaries/detections'
 path_aspot = 'analysis/results/activity_overview/summaries/aspot'
 path_aspot_bats = 'analysis/results/activity_overview/summaries/aspot_bats'
 path_durations = 'analysis/results/activity_overview/summaries/durations'
+path_out = 'analysis/results/activity_overview/overview.csv'
 
 # List files
 files_summaries = list.files(path_summaries, pattern = '*.csv', 
@@ -58,12 +59,16 @@ overview$n_bats = vapply(overview$station, function(station)
   sum(summary_aspot_bats$n[summary_aspot_bats$station == station]), numeric(1))
 ## add duration
 overview$total_duration_h = vapply(overview$station, function(station)
-  sum(durations$duration[durations$station == station]), numeric(1)) / 3600
+  sum(durations$duration[durations$station == station])/ 3600, 
+  numeric(1))  |> round()
 ## add column with false positive rate
-overview$fp_rate_window = (overview$n_detections - overview$n_bats) /
+overview$fp_rate_1000windows = ((overview$n_detections - overview$n_bats) /
   vapply(overview$station, function(station)
-    sum(durations$n_windows[durations$station == station]), numeric(1))
-overview$fp_rate_h = (overview$n_detections - overview$n_bats) /
-  overview$total_duration_h
-
+    sum(durations$n_windows[durations$station == station])/1000, 
+    numeric(1))) |> round(4)
+overview$fp_rate_h = ((overview$n_detections - overview$n_bats) /
+  overview$total_duration_h) |> round(4)
+  
 # Write csv and message
+write.csv(overview, path_out, row.names = FALSE)
+message('Stored oveview file.')
