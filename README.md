@@ -18,9 +18,13 @@ Meta data per file:
   - `n_detections`: number of detections from animal spot
   - `n_bats`: number of detections that are varified as bat calls
   - `total_duration_h`: the total duration (of all wav files combined) in hours
-  - `fp_rate_1000windows`: false positive rate - number of false positives per 1000 windows (animal spot looks at 200 ms windows with 100 ms overlap)
+  - `fp_rate_1000windows`: false positive rate - number of false positives per 1000 windows (animal spot looks at 20 ms windows with 10 ms overlap)
   - `fp_rate_h`: false positive rate - number of false positives per hour
-- `analysis/code/`:
+- `analysis/code/activity_overview_durations.R`: script to calculate durations per wav file from the prediction output from animal spot; stores a csv file per folder with four columns:
+  - `file`: name of the original wav file
+  - `duration`: total duration in seconds
+  - `n_windows`: total number of windows that were predicted upon (animal spot looks at 20 ms windows with 10 ms overlap)
+  - `station`: name of the station
 - `analysis/code/`:
 - `analysis/code/`:
 - `analysis/code/`:
