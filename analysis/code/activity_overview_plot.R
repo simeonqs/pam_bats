@@ -38,7 +38,7 @@ points_custom <- function(x, y, shape, col = 'black', cex = 1, ...) {
   }
   invisible(NULL)
 }
-dev = 4
+dev = 2.5
 my_shape1 = list(x = c(-0.1, 0.1, 0.1, -0.1)/ dev, 
                  y = c(-0.5, -0.5, 0.5, 0.5)/ dev) 
 
@@ -71,33 +71,37 @@ colfunc = colorRampPalette(c('#FAD7A0', '#0B5345'))
 cols = colfunc(max(summary$n))
 for(season in c('Forår 2023')){
   png(sprintf('%s/%s.png', path_png, season),
-      width = 8, height = 4, units = 'in', res = 1000) # open PNG
+      width = 8, height = 6, units = 'in', res = 1000) # open PNG
   # season = 'Forår 2023'
   par(mar = c(5, 7, 3, 2))
   ## subset per season and adjust xlims
   if(season == 'Forår 2023'){
-    sub = summary[as.Date(summary$DATE, format = '%Y-%b-%d') < 
-                    as.Date('2023-06-15'),]
+    sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') < 
+                          as.Date('2023-06-15')),]
     sub_detections = 
-      summary_detections[as.Date(summary_detections$DATE, 
-                                 format = '%Y-%b-%d') < as.Date('2023-07-15'),]
+      summary_detections[which(as.Date(summary_detections$date, 
+                                       format = '%Y-%m-%d') < 
+                                 as.Date('2023-07-15')),]
     sub_aspot = 
-      summary_aspot[as.Date(summary_aspot$DATE) < as.Date('2023-07-15'),]
+      summary_aspot[which(as.Date(summary_aspot$DATE) < 
+                            as.Date('2023-07-15')),]
     sub_aspot_bats = 
-      summary_aspot_bats[as.Date(summary_aspot_bats$DATE) < 
-                           as.Date('2023-07-15'),]
-    xlim = as.Date(c('2023-04-01', '2023-06-15'))
+      summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) < 
+                                 as.Date('2023-07-15')),]
+    xlim = as.Date(c('2023-04-10', '2023-06-10'))
   } else {
-    sub = summary[as.Date(summary$DATE, format = '%Y-%b-%d') > 
-                    as.Date('2023-06-15'),]
+    sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') > 
+                          as.Date('2023-06-15')),]
     sub_detections = 
-      summary_detections[as.Date(summary_detections$DATE, 
-                                 format = '%Y-%b-%d') > as.Date('2023-07-15'),]
+      summary_detections[which(as.Date(summary_detections$date, 
+                                       format = '%Y-%m-%d') > 
+                                 as.Date('2023-07-15')),]
     sub_aspot = 
-      summary_aspot[as.Date(summary_aspot$DATE) > as.Date('2023-07-15'),]
+      summary_aspot[which(as.Date(summary_aspot$DATE) > 
+                            as.Date('2023-07-15')),]
     sub_aspot_bats = 
-      summary_aspot_bats[as.Date(summary_aspot_bats$DATE) > 
-                           as.Date('2023-07-15'),]
+      summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) > 
+                                 as.Date('2023-07-15')),]
     xlim = as.Date(c('2023-06-15', '2023-12-31'))
   }
   ## create empty plot
@@ -115,7 +119,7 @@ for(season in c('Forår 2023')){
                   my_shape1, col = cols[sub$n[i]])
   }
   ## add scaled dots for number detections
-  points(as.Date(sub_detections$DATE, format = '%Y-%b-%d'),
+  points(as.Date(sub_detections$date, format = '%Y-%m-%d'),
          trans_stations[sub_detections$station] + 0.15, pch = 16, 
          cex = log10(sub_detections$n)/4 + 0.1)
   ## add scaled dots for number detections from aspot
