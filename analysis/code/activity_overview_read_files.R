@@ -16,8 +16,7 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_data = '/media/au472091/T7 Shield/LOT_1_BØJER_DATA'
-# path_data = '/home/au472091/Documents/large_data/LOT_1_BØJER_DATA'
+path_data = '/media/au472091/T7 Shield/temp'
 path_summaries = 'analysis/results/activity_overview/summaries'
 
 # List files
@@ -27,8 +26,14 @@ files = list.files(path_data, pattern = '*.txt',
 # Run through files and process data
 for(file in files){
   ## get station 
-  station = file |> vapply(function(x) 
-    gsub('.*(NS\\d+).*', '\\1', x), character(1)) |> as.character()
+  station = file |> basename() |> 
+    strsplit('_A') |> sapply(`[`, 1) |> 
+    strsplit('_B') |> sapply(`[`, 1)
+  ## get season
+  season = 'no_season'
+  if(str_detect(file, 'Fall')) season = 'fall'
+  if(str_detect(file, 'Spring')) season = 'spring'
+  if(str_detect(file, 'Summer')) season = 'summer'
   ## read file
   dat = read.csv(file) 
   ## remove extra headers
@@ -36,13 +41,15 @@ for(file in files){
   ## make summary for each station
   summary = dat |> 
     group_by(DATE) |>
-    count()
+    count() |> 
+    na.omit()
   summary$station = station
   ## store summary data
   write.csv(summary, 
-            sprintf('%s/summaries/%s.csv',
+            sprintf('%s/summaries/%s_%s.csv',
                     path_summaries,
-                    file |> basename() |> str_remove('_Summary.txt')),
+                    file |> basename() |> str_remove('_Summary.txt'),
+                    season),
             row.names = FALSE)
   ## get detections
   folder = str_remove(file, basename(file))
@@ -55,13 +62,15 @@ for(file in files){
   ## create summary
   summary_detections = dat_detections |>
     group_by(date) |>
-    count()
+    count() |> 
+    na.omit()
   summary_detections$station = station
   ## store summary data
-  write.csv(summary, 
-            sprintf('%s/detections/%s.csv',
+  write.csv(summary_detections, 
+            sprintf('%s/detections/%s_%s.csv',
                     path_summaries,
-                    file |> basename() |> str_remove('_Summary.txt')),
+                    file |> basename() |> str_remove('_Summary.txt'),
+                    season),
             row.names = FALSE)
 }
 
