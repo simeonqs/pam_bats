@@ -62,6 +62,16 @@ summary_aspot = files_aspot |>
 summary_aspot_bats = files_aspot_bats |>
   lapply(read.csv) |> bind_rows()
 
+# Fix two station names
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'HR3_4', 'HR3-4S-C',
+         ifelse(summary_aspot$station == 'T3-NS26', 'T3-NS26-C',
+                summary_aspot$station))
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'HR3_4', 'HR3-4S-C',
+         ifelse(summary_aspot_bats$station == 'T3-NS26', 'T3-NS26-C',
+                summary_aspot_bats$station))
+
 # Plot
 unique_stations = summary$station |> unique() |> sort(decreasing = TRUE)
 trans_stations = seq_along(unique_stations)
@@ -69,11 +79,11 @@ names(trans_stations) = unique_stations
 ## create colour gradient
 colfunc = colorRampPalette(c('#FAD7A0', '#0B5345'))
 cols = colfunc(max(summary$n))
-for(season in c('Forår 2023')){
+for(season in c('Forår 2023', 'Efterår 2023')){
   png(sprintf('%s/%s.png', path_png, season),
-      width = 8, height = 6, units = 'in', res = 1000) # open PNG
+      width = 11.5, height = 8, units = 'in', res = 1000) # open PNG
   # season = 'Forår 2023'
-  par(mar = c(5, 7, 3, 2))
+  par(mar = c(5, 7, 3, 1))
   ## subset per season and adjust xlims
   if(season == 'Forår 2023'){
     sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') < 
@@ -102,7 +112,7 @@ for(season in c('Forår 2023')){
     sub_aspot_bats = 
       summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) > 
                                  as.Date('2023-07-15')),]
-    xlim = as.Date(c('2023-06-15', '2023-12-31'))
+    xlim = as.Date(c('2023-07-30', '2023-11-05'))
   }
   ## create empty plot
   plot(as.Date(sub$DATE, format = '%Y-%b-%d'),
