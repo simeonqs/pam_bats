@@ -2,7 +2,9 @@
 # Project: pam_bats  
 # Author: Simeon Q. Smeele
 # Description: Reads the durations from the log files and stores output as
-# csv. 
+# csv. Outputs csv file per folder with four columns: duration = duration in
+# seconds, n_windows = number of windows that were predicted on, station = 
+# station name, file = name of the wav file. 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Loading libraries
@@ -16,7 +18,7 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_data = 'aspot/results'
+path_data = '/home/au472091/Documents/results_aspot'
 path_csv = 'analysis/results/activity_overview/summaries/durations'
 
 # List files
@@ -28,7 +30,7 @@ read.log = function(lf){
   line_8 = readLines(lf, n = 8)[8]
   line_9 = readLines(lf, n = 9)[9]
   n_windows = as.numeric(sub('.*=(\\d+).*', '\\1', line_8))
-  duration = as.numeric(sub('.*stop time=(\\d+).*', '\\1', line_9))
+  duration = as.numeric(sub('.*stop time=(\\d+).*', '\\1', line_9))/100
   return(c(n_windows = n_windows, duration = duration))
 }
 
