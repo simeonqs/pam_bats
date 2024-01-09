@@ -16,10 +16,15 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths
-folder = '/media/au472091/backup_1/NS16_B'
+folder = 'NS13_A_STRANDING'
+path_folder = sprintf('/media/au472091/T7 Shield/temp/%s/Data',
+                      folder)
+path_pdf = sprintf('analysis/results/longterm_spectrograms/%s.pdf', folder)
+path_intermediate = sprintf('analysis/results/longterm_spectrograms/%s.RData', 
+                            folder)
 
 # List files
-files = list.files(folder, full.names = TRUE)
+files = list.files(path_folder, full.names = TRUE)
 
 # Settings 
 window_length = 1e3
@@ -31,7 +36,8 @@ create.av.spec = function(file){
   duration = wave@left |> length()
   starts = sample(duration - window_length, n_samples)
   spectra = vapply(starts, function(start) 
-    log(spec(wave[start:(start+window_length)], plot = FALSE)[,2]),
+    log(spec(wave[start:(start+window_length)], plot = FALSE,
+             norm = FALSE)[,2]),
     numeric(500)) 
   return(rowSums(spectra))
 }
@@ -48,11 +54,16 @@ dates = as.Date(dts)
 spectra = files |> vapply(create.av.spec, numeric(500))
 
 # Create long-term spectrogram
+pdf(path_pdf, 7, 4)
 wave = readWave(files[1])
-s = spec(wave[1:(1+window_length)])
-imagep(t(spectra), drawPalette = FALSE, axes = FALSE)
+s = spec(wave[1:(1+window_length)], plot = FALSE)
+imagep(t(spectra), drawPalette = FALSE, axes = FALSE, mar = c(4, 4, 1, 3))
 index = seq(1, length(dts), length.out = 5)
 axis(1, index, dates[index])
 index = seq(1, nrow(s), 100)
 axis(2, index, round(s[index,1]))
 mtext('frequency [kHz]', 2, 2)
+dev.off()
+
+# Store intermediate data for later
+save(spectra, dts, dates, wave, file = path_intermediate)
