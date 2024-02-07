@@ -16,10 +16,10 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Settings
-data_set = 16
-n_aug_noise = 600
-bandpass = c(1000, 95000)
-resample_rate = 192000
+data_set = 21
+n_aug_noise = 1200
+# bandpass = c(1000, 95000)
+# resample_rate = 192000
 
 # Run for types
 for(type in c('target', 'noise')){
@@ -28,7 +28,7 @@ for(type in c('target', 'noise')){
   path_selections = sprintf('analysis/data/aspot_selections/%s', type)
   path_wavs = 'analysis/data'
   path_results = sprintf('aspot/data_sets/data_%s/data', data_set)
-
+  
   # List files
   audio_files = c(list.files(path_wavs,  '*wav', full.names = TRUE, 
                              recursive = TRUE), 
@@ -45,7 +45,8 @@ for(type in c('target', 'noise')){
     # Get start and end
     start = round((selection_table$Begin.Time..s.[selection]) * wave@samp.rate)
     if(length(start) == 0) 
-      start = round((selection_table$Begin.time..s.[selection]) * wave@samp.rate)
+      start = round((selection_table$Begin.time..s.[selection]) * 
+                      wave@samp.rate)
     end = round((selection_table$End.Time..s.[selection]) * wave@samp.rate)
     if(length(end) == 0) 
       end = round((selection_table$End.time..s.[selection]) * wave@samp.rate)
@@ -62,11 +63,12 @@ for(type in c('target', 'noise')){
     # Create new wave and save
     new_wave = wave[start:end]
     if(length(new_wave@left)/new_wave@samp.rate > 0.005){
-      orig_max = max(abs(new_wave@left))
-      new_wave = ffilter(new_wave, from = bandpass[1], to = bandpass[2],
-                         output = 'Wave')
-      new_wave@left = round(new_wave@left / max(abs(new_wave@left)) * orig_max)
-      new_wave = downsample(new_wave, resample_rate)
+      # orig_max = max(abs(new_wave@left))
+      # new_wave = ffilter(new_wave, from = bandpass[1], to = bandpass[2],
+      #                    output = 'Wave')
+      # new_wave@left = round(new_wave@left / max(abs(new_wave@left)) 
+      # * orig_max)
+      # new_wave = downsample(new_wave, resample_rate)
       new_name = paste0(path_results, '/', type, '/', new_name, '.wav')
       writeWave(new_wave, new_name, extensible = FALSE)
     }
@@ -108,7 +110,7 @@ for(type in c('target', 'noise')){
 # Move some noise to aug data
 files = sprintf('%s/noise', path_results) |>
   list.files(full.names = TRUE) |>
-  sample(600) 
+  sample(n_aug_noise) 
 file.rename(files, str_replace(files, 'data/noise', 'aug_data'))
 
 # Message
