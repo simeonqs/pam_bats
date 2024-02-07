@@ -16,17 +16,19 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Settings
-bandpass = c(1000, 95000)
-resample_rate = 192000
 wing = 0.01 # how much to add before and after detection
 
 # Paths 
-path_detections = 
-  '/home/au472091/Documents/results_aspot/NS13_A_STRANDING/selection_tables'
-path_audio = 
-  '/media/au472091/T7 Shield/temp/NS13_A_STRANDING/Data'
-path_out = 
-  '/home/au472091/Documents/results_aspot/NS13_A_STRANDING/specs_detections'
+folder = 'NS28S_A_Spring23'
+path_detections = sprintf(
+  '/home/au472091/Documents/results_aspot/%s/selection_tables', folder)
+path_audio = sprintf(
+  '/media/au472091/T7 Shield/temp/%s/Data', folder)
+path_out = sprintf(
+  '/home/au472091/Documents/results_aspot/%s/specs_detections', folder)
+# path_detections = 'aspot/models/m49/selection_tables'
+# path_audio = 'aspot/test_data_sets/test_data'
+# path_out = 'aspot/models/m49/specs_detections'
 
 # Load selection tables
 detections = load.selection.tables(path_detections)
