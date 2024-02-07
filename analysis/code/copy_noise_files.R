@@ -16,8 +16,9 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths
-path_predictions = 'aspot/models/m49/selection_tables_noise_land'
-path_wavs = '/home/au472091/Documents/large_data/land_for_noise_genera_model'
+path_predictions = '/home/au472091/Desktop/selection_tables'
+path_wavs = 
+  '/home/au472091/Documents/large_data/additional_noise_land_to_predict_copy'
 path_out = '/home/au472091/Desktop'
 
 # List files
@@ -26,7 +27,8 @@ file_infos = file.info(files)
 sizes = file_infos$size
 
 # Copy wavs to desktop
-to_copy = files[order(sizes, decreasing = TRUE)][251:300]
+n = 251
+to_copy = files[order(sizes, decreasing = TRUE)][n:(n+50)]
 wav_names = to_copy |> basename() |> 
   str_remove('_predict_output.log.annotation.result.txt')
 file.copy(sprintf('%s/%s.wav', path_wavs, wav_names),
