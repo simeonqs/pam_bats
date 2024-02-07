@@ -62,18 +62,37 @@ summary_aspot = files_aspot |>
 summary_aspot_bats = files_aspot_bats |>
   lapply(read.csv) |> bind_rows()
 
-# Fix two station names
+# Fix station names
 summary_aspot$station = 
   ifelse(summary_aspot$station == 'HR3_4', 'HR3-4S-C',
          ifelse(summary_aspot$station == 'T3-NS26', 'T3-NS26-C',
-                summary_aspot$station))
+                ifelse(summary_aspot$station == 'NS6', 'NS6-C',
+                       ifelse(summary_aspot$station == 'NS24', 'NS24S',
+                              summary_aspot$station))))
 summary_aspot_bats$station = 
   ifelse(summary_aspot_bats$station == 'HR3_4', 'HR3-4S-C',
          ifelse(summary_aspot_bats$station == 'T3-NS26', 'T3-NS26-C',
-                summary_aspot_bats$station))
+                ifelse(summary_aspot_bats$station == 'NS6', 'NS6-C',
+                       ifelse(summary_aspot_bats$station == 'NS24', 'NS24S',
+                              summary_aspot_bats$station))))
+summary$station = 
+  ifelse(summary$station == 'T3-NS26C', 'T3-NS26-C',
+         ifelse(summary$station == 'NS6', 'NS6-C',
+                ifelse(summary$station == 'NS19-LOT1', 'NS19',
+                       ifelse(summary$station == 'NS28', 'NS28S',
+                              summary$station))))
+summary_detections$station = 
+  ifelse(summary_detections$station == 'T3-NS26C', 'T3-NS26-C',
+         ifelse(summary_detections$station == 'NS6', 'NS6-C',
+                ifelse(
+                  summary_detections$station == 'NS19-LOT1', 'NS19',
+                  ifelse(summary_detections$station == 'NS24', 'NS24S',
+                         ifelse(summary_detections$station == 'NS28', 'NS28S',
+                                summary_detections$station)))))
 
 # Plot
-unique_stations = summary$station |> unique() |> sort(decreasing = TRUE)
+unique_stations = summary_detections$station |> unique() |> 
+  sort(decreasing = TRUE)
 trans_stations = seq_along(unique_stations)
 names(trans_stations) = unique_stations
 ## create colour gradient
@@ -81,7 +100,7 @@ colfunc = colorRampPalette(c('#FAD7A0', '#0B5345'))
 cols = colfunc(max(summary$n))
 for(season in c('Forår 2023', 'Efterår 2023')){
   png(sprintf('%s/%s.png', path_png, season),
-      width = 11.5, height = 8, units = 'in', res = 1000) # open PNG
+      width = 12.5, height = 11.5, units = 'in', res = 1000) # open PNG
   # season = 'Forår 2023'
   par(mar = c(5, 7, 3, 1))
   ## subset per season and adjust xlims
@@ -98,7 +117,7 @@ for(season in c('Forår 2023', 'Efterår 2023')){
     sub_aspot_bats = 
       summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) < 
                                  as.Date('2023-07-15')),]
-    xlim = as.Date(c('2023-04-10', '2023-06-10'))
+    xlim = as.Date(c('2023-04-10', '2023-06-30'))
   } else {
     sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') > 
                           as.Date('2023-06-15')),]
@@ -112,7 +131,7 @@ for(season in c('Forår 2023', 'Efterår 2023')){
     sub_aspot_bats = 
       summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) > 
                                  as.Date('2023-07-15')),]
-    xlim = as.Date(c('2023-07-30', '2023-11-05'))
+    xlim = as.Date(c('2023-07-30', '2023-11-15'))
   }
   ## create empty plot
   plot(as.Date(sub$DATE, format = '%Y-%b-%d'),
@@ -147,12 +166,7 @@ for(season in c('Forår 2023', 'Efterår 2023')){
        labels = paste0(unique_months, '-10') |> str_sub(6, 10))
   axis(1, at = as.Date(paste0(unique_months, '-20')), 
        labels = paste0(unique_months, '-20') |> str_sub(6, 10))
-  if(season == 'Efterår 2023'){
-    axis(2, trans_stations, str_replace(names(trans_stations), '16', '19'), 
-         las = 1)
-  } else {
-    axis(2, trans_stations, names(trans_stations), las = 1)
-  }
+  axis(2, trans_stations, names(trans_stations), las = 1)
   dev.off() # close PNG
 }
 
