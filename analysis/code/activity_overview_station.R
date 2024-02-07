@@ -14,6 +14,10 @@ for(lib in libraries){
 # Clean R
 rm(list=ls()) 
 
+# Settings
+station = 'NS35'
+ylim = c(-100, 2000)
+
 # Paths 
 path_summaries = 'analysis/results/activity_overview/summaries/summaries'
 path_detections = 'analysis/results/activity_overview/summaries/detections'
@@ -68,14 +72,12 @@ my_shape1 = list(x = c(-0.1, 0.1, 0.1, -0.1)/ dev,
 meta$Station.ID = str_remove(meta$Station.ID, 'T3/')
 
 # Subset for station and plot
-station = 'NS26'
-ylim = c(-100, 600)
 # create colour gradient
 colfunc = colorRampPalette(c('#FAD7A0', '#0B5345'))
 cols = colfunc(max(summary$n))
 # get data
-x = as.Date(summary_detections$DATE[summary_detections$station == station], 
-            format = '%Y-%b-%d')
+x = as.Date(summary_detections$date[summary_detections$station == station], 
+            format = '%Y-%m-%d')
 y = summary_detections$n[summary_detections$station == station][order(x)]
 x = x[order(x)]
 pdf(sprintf('%s/%s.pdf', path_pdf, station), 5, 3)
@@ -122,8 +124,9 @@ for(i in seq_len(nrow(summary[summary$station == station,]))){
                   summary$station == station,]$n[i]])
 }
 lines(x, y, col = '#2471A3', lwd = 2)
-lines(summary_aspot$DATE[summary_aspot$station == station] |> as.Date(), 
-      summary_aspot$n[summary_aspot$station == station], 
+x = summary_aspot$DATE[summary_aspot$station == station] |> as.Date()
+y = summary_aspot$n[summary_aspot$station == station]
+lines(sort(x), y[order(x)], 
       col = '#E74C3C', lwd = 2)
 points(summary_aspot_bats$DATE[summary_aspot_bats$station == station] |> 
          as.Date(), 
