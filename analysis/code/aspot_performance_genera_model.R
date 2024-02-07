@@ -17,9 +17,9 @@ rm(list=ls())
 
 # Paths 
 path_segmentation = 'aspot/models/m49/selection_tables'
-path_classifiction = 'aspot/models_g/m12/selection_tables'
-path_logs = 'aspot/models_g/m12/predict'
-path_combined_selection_tables = 'aspot/models_g/m12/combined_selection_tables'
+path_classifiction = 'aspot/models_g/m13/selection_tables'
+path_logs = 'aspot/models_g/m13/predict'
+path_combined_selection_tables = 'aspot/models_g/m13/combined_selection_tables'
 path_grount_truth = 'analysis/results/test_data/ground_truth_selection_tables'
 path_pdf = 'analysis/results/confusion_matrix_genus_model.pdf'
 path_txt = 'analysis/results/confusion_matrix_genus_model.txt'
@@ -28,6 +28,14 @@ path_txt = 'analysis/results/confusion_matrix_genus_model.txt'
 seg_files = list.files(path_segmentation, '*txt', full.names = TRUE)
 class_files = list.files(path_classifiction, '*txt', full.names = TRUE)
 log_files = list.files(path_logs, full.names = TRUE)
+
+# Function to calculate overlap
+calc.iou = function(st_d, st_g, end_d, end_g){
+  union = max(end_d, end_g) - min(st_d, st_g)
+  intercept = min(end_d, end_g) - max(st_d, st_g)
+  if(intercept > union) stop('Error in calc.overlap.')
+  return(intercept/union)
+}
 
 # For each file, get all classification files and filled out annotations
 for(seg_file in seg_files){
@@ -100,10 +108,7 @@ files = list.files(path_grount_truth) |> str_remove('.Table.1.selections.txt')
 
 # Create place holders for output
 fps = fns = tps = c()
-class_results = data.frame(row_d = character(),
-                           row_g = character(),
-                           d = character(),
-                           g = character())
+class_results = data.frame()
 
 # Run through images
 for(file in files){
@@ -117,17 +122,38 @@ for(file in files){
                      row_g = numeric())
   for(row_d in rownames(d)){
     for(row_g in rownames(g)){
-      keep_start = d[row_d,]$Begin.time..s. > g[row_g,]$Begin.Time..s. & 
-        d[row_d,]$Begin.time..s. < g[row_g,]$End.Time..s.
-      keep_end = d[row_d,]$End.time..s. > g[row_g,]$Begin.Time..s. & 
-        d[row_d,]$End.time..s. < g[row_g,]$End.Time..s.
-      keep_around = d[row_d,]$Begin.time..s. <= g[row_g,]$Begin.Time..s. & 
-        d[row_d,]$End.time..s. >= g[row_g,]$End.Time..s.
-      if(keep_start | keep_end | keep_around) 
-        links = rbind(links,
-                      data.frame(row_d = row_d, row_g = row_g))
+      links = rbind(links,
+                    data.frame(file = file,
+                               row_d = row_d, 
+                               row_g = row_g, 
+                               g = manual[row_g,]$Annotation,
+                               d = aspot[row_d,]$Sound.type,
+                               iou = calc.iou(d[row_d,]$Begin.time..s.,
+                                              g[row_g,]$Begin.Time..s.,
+                                              d[row_d,]$End.time..s.,
+                                              g[row_g,]$End.Time..s.)))
     }
   }
+  
+  ## only keep if some overlap
+  links = links[links$iou > 0,]
+  
+  ## run through ground truths and remove all but one link
+  ## first order so that the ones with highest overlap are at the top
+  ## then remove duplications (which will not be the top entry)
+  if(nrow(links) > 1){
+    links = links[order(links$iou, decreasing = TRUE),]
+    links = links[!duplicated(links$row_g),]
+    links = links[!duplicated(links$row_d),]
+  }
+  
+  ## check if there are any duplications left
+  if(any(duplicated(links$row_d)) | any(duplicated(links$row_g)))
+    stop('Found duplications in file ', image, '.')
+  
+  ## store remaining
+  class_results = rbind(class_results,
+                        links)
   
   ## get fps
   new_fps = rownames(d)[!rownames(d) %in% links$row_d]
@@ -137,70 +163,39 @@ for(file in files){
   new_fns = rownames(g)[!rownames(g) %in% links$row_g]
   fns = c(fns, new_fns)
   
-  ## look at true positives and classification
-  ### deal with multiple detections for single ground truth
-  gs_with_multiple_ds = unique(links$row_g[duplicated(links$row_g)])
-  for(x in gs_with_multiple_ds){
-    sub = links[links$row_g == x,]
-    temp = data.frame(g = manual[sub$row_g,]$Annotation,
-                      d = aspot[sub$row_d,]$Sound.type)
-    temp$match = temp$g == temp$d
-    ### if any match, pick one to be correct classification, remove the rest
-    if(any(temp$match)){
-      row_name_match = sample(sub$row_d[temp$match], 1)
-      row_name_others = sub$row_d[!sub$row_d == row_name_match]
-      new_fps = row_name_others
-      fps = c(fps, new_fps)
-      links = links[-which(links$row_d %in% row_name_others),]
-    } else {
-      ### if non match, pick one to be wrong classification
-      row_name_non_match = sample(sub$row_d, 1)
-      row_name_others = sub$row_d[!sub$row_d == row_name_non_match]
-      new_fps = row_name_others
-      fps = c(fps, new_fps)
-      links = links[-which(links$row_d %in% row_name_others),]
-    }
-    
-  }
-  ### store remaining
-  class_results = rbind(class_results,
-                        data.frame(row_d = links$row_d,
-                                   row_g = links$row_g,
-                                   g = manual[links$row_g,]$Annotation,
-                                   d = aspot[links$row_d,]$Sound.type))
-  
 } # end image loop
 
-# Add all false positives to the class_results as noise in the ground truth
-for(fp in fps){
-  d = aspot[fp,]
-  g = manual[manual$file == d$file,]
-  keep_start = d$Begin.time..s. > g$Begin.Time..s. & 
-    d$Begin.time..s. < g$End.Time..s.
-  keep_end = d$End.time..s. > g$Begin.Time..s. & 
-    d$End.time..s. < g$End.Time..s.
-  keep_around = d$Begin.time..s. <= g$Begin.Time..s. & 
-    d$End.time..s. >= g$End.Time..s.
-  keep = keep_start | keep_end | keep_around
-  if(length(which(keep)) > 1) 
-    warning(sprintf('Found multiple ground truths for fp %s.', fp))
-  if(length(which(keep)) == 1) 
-    class_results =  rbind(class_results,
-                           data.frame(row_d = fp,
-                                      row_g = rownames(g[keep,]),
-                                      g = g[keep,]$Annotation,
-                                      d = d$Sound.type))
-  if(length(which(keep)) == 0) 
-    class_results =  rbind(class_results,
-                           data.frame(row_d = fp,
-                                      row_g = 'NaN',
-                                      g = 'noise',
-                                      d = d$Sound.type))
-}
+# Add false positives as such
+class_results = rbind(class_results,
+                      data.frame(file = aspot[fps,]$file,
+                                 row_d = fps,
+                                 row_g = 'NA',
+                                 d = aspot[fps,]$Sound.type,
+                                 g = 'noise',
+                                 iou = NA))
+
+# Add false negatives as such
+class_results = rbind(class_results,
+                      data.frame(file = manual[fns,]$file,
+                                 row_d = 'NA',
+                                 row_g = fns,
+                                 d = 'noise',
+                                 g = manual[fns,]$Annotation,
+                                 iou = NA))
+
+# Run checks
+if(any(duplicated(class_results$row_d[class_results$row_d != 'NA']))) 
+  stop('Duplications in row d.')
+if(any(duplicated(class_results$row_g[class_results$row_g != 'NA']))) 
+  stop('Duplications in row g.')
+if(any(!rownames(aspot) %in% class_results$row_d)) 
+  stop('Missing rows from Animal Spot.')
+if(any(!rownames(manual[manual$Multiple != 'empty',]) %in% 
+       class_results$row_g)) 
+  stop('Missing rows from ground truth.')
 
 # Plot confusion matrix
 pdf(path_pdf)
-class_results = class_results[class_results$g != '',]
 levels = c('m', 'p', 'v', 'noise')
 conf_matrix = table(factor(class_results$d, levels = levels), 
                     factor(class_results$g, levels = levels))
