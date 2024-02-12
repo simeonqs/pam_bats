@@ -16,13 +16,18 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_segmentation = 'aspot/models/m49/selection_tables'
-path_classifiction = 'aspot/models_g/m13/selection_tables'
-path_logs = 'aspot/models_g/m13/predict'
-path_combined_selection_tables = 'aspot/models_g/m13/combined_selection_tables'
+model_1 = 49
+model_2 = 13
+path_segmentation = sprintf('aspot/models/m%s/selection_tables', model_1)
+path_classifiction = sprintf('aspot/models_g/m%s/selection_tables', model_2)
+path_logs = sprintf('aspot/models_g/m%s/predict', model_2)
+path_combined_selection_tables = 
+  sprintf('aspot/models_g/m%s/combined_selection_tables', model_2)
 path_grount_truth = 'analysis/results/test_data/ground_truth_selection_tables'
-path_pdf = 'analysis/results/confusion_matrix_genus_model.pdf'
-path_txt = 'analysis/results/confusion_matrix_genus_model.txt'
+path_pdf = sprintf('analysis/results/confusion_matrix_genus_model_m%s+m%s.pdf',
+                   model_1, model_2)
+path_txt = sprintf('analysis/results/confusion_matrix_genus_model_m%s+m%s.txt',
+                   model_1, model_2)
 
 # List files
 seg_files = list.files(path_segmentation, '*txt', full.names = TRUE)
@@ -105,6 +110,13 @@ aspot = load.selection.tables(path_combined_selection_tables)
 
 # List unique files
 files = list.files(path_grount_truth) |> str_remove('.Table.1.selections.txt')
+
+# Subset to LAND files only
+message('Subsetting for LAND.')
+files = files[!str_detect(files, 'NS') & !str_detect(files, 'ONBOARD') &
+                !str_detect(files, 'HR')]
+aspot = aspot[aspot$file %in% files,]
+manual = manual[manual$file %in% files,]
 
 # Create place holders for output
 fps = fns = tps = c()
