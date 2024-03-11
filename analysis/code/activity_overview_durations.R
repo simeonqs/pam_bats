@@ -36,8 +36,10 @@ read.log = function(lf){
 
 # Make summary per folder
 folders = list.files(path_data, full.names = TRUE)
-folders = folders[!folders %in% c('aspot/results/maybe_bats',
-                                  'aspot/results/defenitely_bats')]
+folders = folders[!folders %in% 
+                    c('/home/au472091/Documents/results_aspot/defenitely_bats',
+                      '/home/au472091/Documents/results_aspot/maybe_bats',
+                      '/home/au472091/Documents/results_aspot/noise')]
 for(folder in folders){
   
   # List log files
@@ -50,13 +52,23 @@ for(folder in folders){
     as.data.frame()
   out$duration = predict_infos$duration
   out$n_windows = predict_infos$n_windows
-  out$station = gsub('.*(NS\\d+).*', '\\1', folder) |> 
+  out$station = folder |> basename() |> 
+    strsplit('_A') |> sapply(`[`, 1) |> 
+    strsplit('_B') |> sapply(`[`, 1) |> 
     as.character()
+  ## get season
+  season = 'no_season'
+  if(str_detect(folder, 'Fall')) season = 'fall'
+  if(str_detect(folder, 'Spring')) season = 'spring'
+  if(str_detect(folder, 'Summer')) season = 'summer'
+  if(str_detect(folder, 'Spring')) season = 'spring'
+  if(str_detect(folder, 'Summer')) season = 'summer'
   
   # Write output
-  write.csv(out, sprintf('%s/%s.csv',
+  write.csv(out, sprintf('%s/%s_%s.csv',
                          path_csv,
-                         basename(folder)),
+                         basename(folder),
+                         season),
             row.names = FALSE)
   
 }
