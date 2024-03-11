@@ -16,8 +16,8 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-model_1 = 49
-model_2 = 13
+model_1 = 52
+model_2 = 16
 path_segmentation = sprintf('aspot/models/m%s/selection_tables', model_1)
 path_classifiction = sprintf('aspot/models_g/m%s/selection_tables', model_2)
 path_logs = sprintf('aspot/models_g/m%s/predict', model_2)
@@ -72,6 +72,7 @@ for(seg_file in seg_files){
         if(length(type) > 1){
           lf = cfs |> basename() |> str_remove('.annotation.result.txt')
           lf = str_replace(lf, '\\+', '\\\\+') # brilliant fix
+          lf = paste0('/', lf)
           pred = readLines(log_files[str_detect(log_files, lf)])
           ## loop through prediction file to extract classes and probs
           classes = probs = c()
