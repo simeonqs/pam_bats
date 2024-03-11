@@ -65,30 +65,52 @@ summary_aspot_bats = files_aspot_bats |>
 # Fix station names
 summary_aspot$station = 
   ifelse(summary_aspot$station == 'HR3_4', 'HR3-4S-C',
-         ifelse(summary_aspot$station == 'T3-NS26', 'T3-NS26-C',
-                ifelse(summary_aspot$station == 'NS6', 'NS6-C',
-                       ifelse(summary_aspot$station == 'NS24', 'NS24S',
-                              summary_aspot$station))))
+         ifelse(
+           summary_aspot$station == 'T3-NS26', 'T3-NS26-C',
+           ifelse(
+             summary_aspot$station == 'NS6', 'NS6-C',
+             ifelse(
+               summary_aspot$station == 'NS24', 'NS24S',
+               ifelse(
+                 summary_aspot$station == 'NS32', 'NS32S',
+                 ifelse(
+                   summary_aspot$station == 'NS28', 'NS28S',
+                   ifelse(
+                     summary_aspot$station == 'NS6', 'NS6C',
+                     summary_aspot$station)))))))
 summary_aspot_bats$station = 
-  ifelse(summary_aspot_bats$station == 'HR3_4', 'HR3-4S-C',
-         ifelse(summary_aspot_bats$station == 'T3-NS26', 'T3-NS26-C',
-                ifelse(summary_aspot_bats$station == 'NS6', 'NS6-C',
-                       ifelse(summary_aspot_bats$station == 'NS24', 'NS24S',
-                              summary_aspot_bats$station))))
+  ifelse(
+    summary_aspot_bats$station == 'HR3_4', 'HR3-4S-C',
+    ifelse(
+      summary_aspot_bats$station == 'T3-NS26', 'T3-NS26-C',
+      ifelse(
+        summary_aspot_bats$station == 'NS6', 'NS6-C',
+        ifelse(
+          summary_aspot_bats$station == 'NS24', 'NS24S',
+          ifelse(
+            summary_aspot_bats$station == 'NS6C', 'NS6-C',
+            summary_aspot_bats$station)))))
 summary$station = 
   ifelse(summary$station == 'T3-NS26C', 'T3-NS26-C',
          ifelse(summary$station == 'NS6', 'NS6-C',
                 ifelse(summary$station == 'NS19-LOT1', 'NS19',
                        ifelse(summary$station == 'NS28', 'NS28S',
-                              summary$station))))
+                              ifelse(summary$station == 'NS24', 'NS24S',
+                                     ifelse(summary$station == 'NS32', 'NS32S',
+                                            summary$station))))))
 summary_detections$station = 
   ifelse(summary_detections$station == 'T3-NS26C', 'T3-NS26-C',
-         ifelse(summary_detections$station == 'NS6', 'NS6-C',
-                ifelse(
-                  summary_detections$station == 'NS19-LOT1', 'NS19',
-                  ifelse(summary_detections$station == 'NS24', 'NS24S',
-                         ifelse(summary_detections$station == 'NS28', 'NS28S',
-                                summary_detections$station)))))
+         ifelse(
+           summary_detections$station == 'NS6', 'NS6-C',
+           ifelse(
+             summary_detections$station == 'NS19-LOT1', 'NS19',
+             ifelse(
+               summary_detections$station == 'NS24', 'NS24S',
+               ifelse(
+                 summary_detections$station == 'NS28', 'NS28S',
+                 ifelse(
+                   summary_detections$station == 'NS32', 'NS32S',
+                   summary_detections$station))))))
 
 # Plot
 unique_stations = summary_detections$station |> unique() |> 
