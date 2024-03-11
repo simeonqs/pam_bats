@@ -15,6 +15,9 @@ for(lib in libraries){
 # Clean R
 rm(list=ls()) 
 
+# Run land detections?
+run_land = TRUE
+
 # Paths 
 path_data = '/media/au472091/T7 Shield/temp'
 path_summaries = 'analysis/results/activity_overview/summaries'
@@ -53,6 +56,31 @@ for(file in files){
             row.names = FALSE)
   ## get detections
   folder = str_remove(file, basename(file))
+  detections = list.files(folder, pattern = '*.wav', 
+                          recursive = TRUE, full.names = TRUE)
+  ## get dates and station name from detections 
+  dat_detections = data.frame(
+    date = detections |> str_extract('\\d{8}') |> as.Date(format = '%Y%m%d')
+  )
+  ## create summary
+  summary_detections = dat_detections |>
+    group_by(date) |>
+    count() |> 
+    na.omit()
+  summary_detections$station = station
+  ## store summary data
+  write.csv(summary_detections, 
+            sprintf('%s/detections/%s_%s.csv',
+                    path_summaries,
+                    file |> basename() |> str_remove('_Summary.txt'),
+                    season),
+            row.names = FALSE)
+}
+
+# Find detections for LAND
+if(run_land){
+  ## get detections
+  folder = path_data
   detections = list.files(folder, pattern = '*.wav', 
                           recursive = TRUE, full.names = TRUE)
   ## get dates and station name from detections 
