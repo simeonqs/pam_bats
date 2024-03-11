@@ -16,12 +16,12 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths
-folder = 'NS13_A_STRANDING'
-path_folder = sprintf('/media/au472091/T7 Shield/temp/%s/Data',
-                      folder)
+folder = 'Mandoe'
+path_folder = sprintf(
+  '/media/au472091/T7 Shield/temp/%s_all',folder)
 path_pdf = sprintf('analysis/results/longterm_spectrograms/%s.pdf', folder)
-path_intermediate = sprintf('analysis/results/longterm_spectrograms/%s.RData', 
-                            folder)
+path_intermediate = sprintf(
+  'analysis/results/longterm_spectrograms/%s.RData', folder)
 
 # List files
 files = list.files(path_folder, full.names = TRUE)
@@ -57,7 +57,8 @@ spectra = files |> vapply(create.av.spec, numeric(500))
 pdf(path_pdf, 7, 4)
 wave = readWave(files[1])
 s = spec(wave[1:(1+window_length)], plot = FALSE)
-imagep(t(spectra), drawPalette = FALSE, axes = FALSE, mar = c(4, 4, 1, 3))
+imagep(t(spectra), drawPalette = FALSE, axes = FALSE, mar = c(4, 4, 1, 3),
+       decimate = FALSE)
 index = seq(1, length(dts), length.out = 5)
 axis(1, index, dates[index])
 index = seq(1, nrow(s), 100)
