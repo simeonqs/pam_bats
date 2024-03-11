@@ -28,7 +28,8 @@ files = list.files(path_data, pattern = '*.txt',
 folders = list.files(path_data, full.names = TRUE)
 folders = folders[!folders %in% 
                     c('/home/au472091/Documents/results_aspot/defenitely_bats',
-                      '/home/au472091/Documents/results_aspot/maybe_bats')]
+                      '/home/au472091/Documents/results_aspot/maybe_bats',
+                      '/home/au472091/Documents/results_aspot/noise')]
 for(folder in folders){
   detections = load.selection.tables(sprintf('%s/selection_tables', folder))
   ## get dates
@@ -38,6 +39,8 @@ for(folder in folders){
   ## get season
   season = 'no_season'
   if(str_detect(folder, 'Fall')) season = 'fall'
+  if(str_detect(folder, 'Spring')) season = 'spring'
+  if(str_detect(folder, 'Summer')) season = 'summer'
   if(str_detect(folder, 'Spring')) season = 'spring'
   if(str_detect(folder, 'Summer')) season = 'summer'
   ## make summary
@@ -69,6 +72,8 @@ for(folder in folders){
   ## get season
   season = 'no_season'
   if(str_detect(folder, 'Fall')) season = 'fall'
+  if(str_detect(folder, 'NS32_A_STRANDING_Recovered')) season = 'fall'
+  if(str_detect(folder, 'NS32_B_STRANDING')) season = 'fall'
   if(str_detect(folder, 'Spring')) season = 'spring'
   if(str_detect(folder, 'Summer')) season = 'summer'
   ## make summary
