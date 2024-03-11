@@ -14,14 +14,25 @@ for(lib in libraries){
 # Clean R
 rm(list=ls()) 
 
+# Settings
+subset_land = FALSE
+
 # Paths 
-model = 'm42'
+model = 'm54'
 path_gt = 'analysis/results/test_data/ground_truth_selection_tables'
 path_d = sprintf('aspot/models/%s/selection_tables', model)
 path_performance = sprintf('aspot/models/%s/performance/', model)
 
 # List files
 d_files = list.files(path_d, full.names = TRUE)
+
+# Subset for LAND
+if(subset_land){
+  message('Subsetting for LAND.')
+  d_files = d_files[!str_detect(d_files, 'NS') & 
+                      !str_detect(d_files, 'ONBOARD') &
+                      !str_detect(d_files, 'HR')]
+}
 
 # Function to process file
 process.file = function(path){
@@ -105,7 +116,13 @@ write.csv(perf_overview, sprintf('%s0_summary.csv', path_performance),
 
 # Calculate overall performance
 d = load.selection.tables(path_d)
+if(subset_land) d = d[!str_detect(d$file, 'NS') & 
+                        !str_detect(d$file, 'ONBOARD') &
+                        !str_detect(d$file, 'HR'),]
 gt = load.selection.tables(path_gt)
+if(subset_land) gt = gt[!str_detect(gt$file, 'NS') & 
+                          !str_detect(gt$file, 'ONBOARD') &
+                          !str_detect(gt$file, 'HR'),]
 perf = calc.perf(d, gt)
 
 # Message
