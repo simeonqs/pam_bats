@@ -2,6 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
+analysis/code/models/m_night
+analysis/code/models/m_night_spatial
 analysis/data
 analysis/results
 aspot
