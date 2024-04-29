@@ -127,22 +127,22 @@ for(season in c('Forår 2023', 'Efterår 2023')){
   par(mar = c(5, 7, 3, 1))
   ## subset per season and adjust xlims
   if(season == 'Forår 2023'){
-    sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') < 
-                          as.Date('2023-06-15')),]
+    sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') <= 
+                          as.Date('2023-07-15')),]
     sub_detections = 
       summary_detections[which(as.Date(summary_detections$date, 
-                                       format = '%Y-%m-%d') < 
+                                       format = '%Y-%m-%d') <= 
                                  as.Date('2023-07-15')),]
     sub_aspot = 
-      summary_aspot[which(as.Date(summary_aspot$DATE) < 
+      summary_aspot[which(as.Date(summary_aspot$DATE) <= 
                             as.Date('2023-07-15')),]
     sub_aspot_bats = 
-      summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) < 
+      summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) <= 
                                  as.Date('2023-07-15')),]
     xlim = as.Date(c('2023-04-10', '2023-06-30'))
   } else {
     sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') > 
-                          as.Date('2023-06-15')),]
+                          as.Date('2023-07-15')),]
     sub_detections = 
       summary_detections[which(as.Date(summary_detections$date, 
                                        format = '%Y-%m-%d') > 
