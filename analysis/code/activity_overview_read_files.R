@@ -16,10 +16,10 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Run land detections?
-run_land = TRUE
+run_land = FALSE
 
 # Paths 
-path_data = '/media/au472091/T7 Shield/temp'
+path_data = '/media/au472091/T7 Shield/LOT1_HRIII_DATA'
 path_summaries = 'analysis/results/activity_overview/summaries'
 
 # List files
@@ -37,6 +37,10 @@ for(file in files){
   if(str_detect(file, 'Fall')) season = 'fall'
   if(str_detect(file, 'Spring')) season = 'spring'
   if(str_detect(file, 'Summer')) season = 'summer'
+  if(str_detect(file, 'ONBOARD')){
+    split = strsplit(file, '/')[[1]]
+    season = split[length(split)-1]
+  } 
   ## read file
   dat = read.csv(file) 
   ## remove extra headers
@@ -56,8 +60,10 @@ for(file in files){
             row.names = FALSE)
   ## get detections
   folder = str_remove(file, basename(file))
+  print(folder)
+  recursive = ifelse(str_detect(file, 'FUGLE'), FALSE, TRUE)
   detections = list.files(folder, pattern = '*.wav', 
-                          recursive = TRUE, full.names = TRUE)
+                          recursive = recursive, full.names = TRUE)
   ## get dates and station name from detections 
   dat_detections = data.frame(
     date = detections |> str_extract('\\d{8}') |> as.Date(format = '%Y%m%d')
