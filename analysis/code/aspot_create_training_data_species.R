@@ -7,7 +7,7 @@
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Loading libraries
-libraries = c('stringr', 'seewave', 'tuneR', 'callsync')
+libraries = c('stringr', 'seewave', 'tuneR')
 for(lib in libraries){
   if(! lib %in% installed.packages()) lapply(lib, install.packages)
   lapply(libraries, require, character.only = TRUE)
@@ -17,16 +17,14 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Settings
-data_set = 2
+data_set = 01
 types_include = c('m', 'p', 'v')
 
 # Paths 
 path_results = sprintf('aspot/data_sets_s/data_%s', data_set)
-path_selections_1 = 'aspot/test_data_sets/boeje_test_data/txt'
-path_selections_2 = 'analysis/data/aspot_selections/target/pam_guard'
-path_selections_3 = 'analysis/data/data_sendttilKristianBerglertilNeuralNet'
+path_selections = 'aspot/test_data_sets/boeje_test_data/txt'
 path_sono = 'analysis/results/sonochiro/results.csv'
-path_wavs = 'analysis/data'
+path_wavs = 'aspot/test_data_sets/boeje_test_data/wav'
 
 # Create directories
 if(!file.exists(path_results)) dir.create(path_results, recursive = TRUE)
@@ -38,9 +36,7 @@ audio_files = c(list.files(path_wavs,  '*wav', full.names = TRUE,
                            recursive = TRUE))
 
 # Find the selection tables
-selection_tables_1 = load.selection.tables(path_selections_1)
-selection_tables_2 = load.selection.tables(path_selections_2)
-selection_tables_3 = load.selection.tables(path_selections_3, recursive = TRUE)
+selection_tables = load.selection.tables(path_selections)
 
 # Create translation table for sonochiro annotations
 trans_sono = c(ENVsp = 'ENVsp',
