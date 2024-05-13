@@ -1,7 +1,7 @@
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Project: pam_bats  
 # Author: Simeon Q. Smeele
-# Description: Plots overview of active periods and detections in png. 
+# Description: Plots overview of active periods and detections in pdf. 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Loading libraries
@@ -45,12 +45,20 @@ my_shape1 = list(x = c(-0.1, 0.1, 0.1, -0.1)/ dev,
 # List files
 files_summaries = list.files(path_summaries, pattern = '*.csv', 
                              recursive = TRUE, full.names = TRUE)
+files_summaries = files_summaries[str_detect(files_summaries, 'NS') | 
+                                    str_detect(files_summaries, 'HR3-4')]
 files_detections = list.files(path_detections, pattern = '*.csv', 
                               recursive = TRUE, full.names = TRUE)
+files_detections = files_detections[str_detect(files_detections, 'NS') | 
+                                      str_detect(files_detections, 'HR3-4')]
 files_aspot = list.files(path_aspot, pattern = '*.csv', 
                          recursive = TRUE, full.names = TRUE)
+files_aspot = files_aspot[str_detect(files_aspot, 'NS') | 
+                            str_detect(files_aspot, 'HR3')]
 files_aspot_bats = list.files(path_aspot_bats, pattern = '*.csv', 
                               recursive = TRUE, full.names = TRUE)
+files_aspot_bats = files_aspot_bats[str_detect(files_aspot_bats, 'NS') | 
+                                      str_detect(files_aspot_bats, 'HR3')]
 
 # Read all files
 summary = files_summaries |>
@@ -121,8 +129,8 @@ names(trans_stations) = unique_stations
 colfunc = colorRampPalette(c('#FAD7A0', '#0B5345'))
 cols = colfunc(max(summary$n))
 for(season in c('Forår 2023', 'Efterår 2023')){
-  png(sprintf('%s/%s.png', path_png, season),
-      width = 12.5, height = 11.5, units = 'in', res = 1000) # open PNG
+  pdf(sprintf('%s/%s_bøjer.pdf', path_png, str_replace(season, ' ', '_')),
+      width = 15, height = 12) # , units = 'in', res = 1000
   # season = 'Forår 2023'
   par(mar = c(5, 7, 3, 1))
   ## subset per season and adjust xlims
