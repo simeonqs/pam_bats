@@ -15,11 +15,8 @@ for(lib in libraries){
 # Clean R
 rm(list=ls()) 
 
-# Run land detections?
-run_land = FALSE
-
 # Paths 
-path_data = '/media/au472091/T7 Shield/LOT1_HRIII_DATA'
+path_data = '/media/au472091/T7 Shield/LAND_winter_23'
 path_summaries = 'analysis/results/activity_overview/summaries'
 
 # List files
@@ -32,20 +29,14 @@ for(file in files){
   station = file |> basename() |> 
     strsplit('_A') |> sapply(`[`, 1) |> 
     strsplit('_B') |> sapply(`[`, 1)
-  ## get season
-  season = 'no_season'
-  if(str_detect(file, 'Fall')) season = 'fall'
-  if(str_detect(file, 'Spring')) season = 'spring'
-  if(str_detect(file, 'Summer')) season = 'summer'
-  if(str_detect(file, 'ONBOARD')){
-    split = strsplit(file, '/')[[1]]
-    season = split[length(split)-1]
-  } 
+  ## get folder
+  split = strsplit(file, '/')[[1]]
+  folder = split[length(split)-1]
   ## read file
   dat = read.csv(file) 
   ## remove extra headers
   dat = dat[dat$DATE != 'DATE',] 
-  ## make summary for each station
+  ## make summary for file
   summary = dat |> 
     group_by(DATE) |>
     count() |> 
@@ -55,58 +46,34 @@ for(file in files){
   write.csv(summary, 
             sprintf('%s/summaries/%s_%s.csv',
                     path_summaries,
-                    file |> basename() |> str_remove('_Summary.txt'),
-                    season),
-            row.names = FALSE)
-  ## get detections
-  folder = str_remove(file, basename(file))
-  print(folder)
-  recursive = ifelse(str_detect(file, 'FUGLE'), FALSE, TRUE)
-  detections = list.files(folder, pattern = '*.wav', 
-                          recursive = recursive, full.names = TRUE)
-  ## get dates and station name from detections 
-  dat_detections = data.frame(
-    date = detections |> str_extract('\\d{8}') |> as.Date(format = '%Y%m%d')
-  )
-  ## create summary
-  summary_detections = dat_detections |>
-    group_by(date) |>
-    count() |> 
-    na.omit()
-  summary_detections$station = station
-  ## store summary data
-  write.csv(summary_detections, 
-            sprintf('%s/detections/%s_%s.csv',
-                    path_summaries,
-                    file |> basename() |> str_remove('_Summary.txt'),
-                    season),
+                    folder,
+                    file |> basename() |> str_remove('_Summary.txt')),
             row.names = FALSE)
 }
 
-# Find detections for LAND
-if(run_land){
-  ## get detections
-  folder = path_data
-  detections = list.files(folder, pattern = '*.wav', 
-                          recursive = TRUE, full.names = TRUE)
-  ## get dates and station name from detections 
-  dat_detections = data.frame(
-    date = detections |> str_extract('\\d{8}') |> as.Date(format = '%Y%m%d')
-  )
-  ## create summary
-  summary_detections = dat_detections |>
-    group_by(date) |>
-    count() |> 
-    na.omit()
-  summary_detections$station = station
-  ## store summary data
-  write.csv(summary_detections, 
-            sprintf('%s/detections/%s_%s.csv',
-                    path_summaries,
-                    file |> basename() |> str_remove('_Summary.txt'),
-                    season),
-            row.names = FALSE)
+# Get detections
+detections = list.files(path_data, pattern = '*.wav', 
+                        recursive = TRUE, full.names = TRUE)
+## get dates and station name from detections 
+dat = data.frame(
+  date = detections |> str_extract('\\d{8}') |> as.Date(format = '%Y%m%d'),
+  station = detections |> basename() |> strsplit('_') |> sapply(`[`, 1))
+for(station in unique(dat$station)){
+  sub = dat[dat$station == station,]
+  for(date in unique(sub$date)){
+    summary_detections = data.frame(DATE = as.Date(date),
+                                    station = station,
+                                    n = nrow(sub[sub$date == date,]))
+    ## store summary data
+    write.csv(summary_detections, 
+              sprintf('%s/detections/%s_%s.csv',
+                      path_summaries,
+                      station,
+                      as.Date(date)),
+              row.names = FALSE)
+  }
 }
 
 # Message
-message(sprintf('Processed %s file(s).', length(files)))
+message(sprintf('Processed %s file(s) and %s detection(s).', length(files),
+                length(detections)))
