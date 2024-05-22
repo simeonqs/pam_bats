@@ -106,7 +106,8 @@ weather = read.csv(path_weather)
 
 # Extract weather of interest
 dat_model$datetime = paste0(dat_model$date, 'T21:00:00')
-dat_model = merge(dat_model, weather[c('datetime', 'temp')],
+dat_model = merge(dat_model, 
+                  weather[c('datetime', 'temp', 'winddir', 'windspeed')],
                   all.x = TRUE, all.y = FALSE)
 
 # Number day of year
