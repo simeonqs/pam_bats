@@ -17,7 +17,7 @@ rm(list=ls())
 # Paths
 path_species_overview = 'analysis/results/species_overview'
 path_sun = 'analysis/data/sunrise_sunset_west_coast_DK.csv'
-path_pdf = 'analysis/results/nightly_activity'
+path_pdf = 'analysis/results/nightly_activity.pdf'
 
 # Load data
 sun = read.csv(path_sun)
@@ -62,97 +62,97 @@ colours = c(
 )
 stations = files |> basename() |> str_remove('.csv')
 
-# Run through years
-for(year in c(2023, 2024)){
+# Open PDF
+pdf(path_pdf, 8, 7)
+layout(matrix(c(1, 1, 1, 2, 2, 2, 3, 3, 3, 13,
+                4, 4, 4, 5, 5, 5, 6, 6, 6, 13,
+                7, 7, 7, 8, 8, 8, 9, 9, 9, 14,
+                10, 10, 10, 11, 11, 11, 12, 12, 12, 14),
+              byrow = TRUE, nrow = 4, ncol = 10))
+par(mar = rep(0.5, 4), oma = c(3.5, 3.5, 0.5, 0.5))
+
+# Run through stations
+for(file in files){
   
-  print(year)
+  # Make empty plot
+  plot(NULL, 
+       xlim = as.Date(c('2023-04-20', '2024-04-20')), 
+       ylim = c(0, 1440),
+       xaxt = 'n', yaxt = 'n', xlab = '', ylab = '')
   
-  # Open PDF
-  pdf(sprintf('%s_%s.pdf', path_pdf, year), 10, 4)
-  layout(matrix(c(1, 1, 2, 2, 3, 3, 7,
-                  4, 4, 5, 5, 6, 6, 7),
-                byrow = TRUE, nrow = 2, ncol = 7))
-  par(mar = rep(0.5, 4), oma = c(3.5, 3.5, 0.5, 0.5))
+  # Make shadow for night
+  sun_sub = sun[sun$Date > as.Date('2023-04-20') &
+                  sun$Date < as.Date('2024-04-20'),]
+  polygon(x = c(as.Date(sun_sub$Date)+1, rev(as.Date(sun_sub$Date))),
+          y = c(sun_sub$rise_min, rev(sun_sub$set_min)),
+          col = '#D6DBDF', border = '#D6DBDF')
+  
+  # Load data
+  dat = read.csv(file)
+  dat = dat[which(dat$n_detections > 5),]
+  dat = dat[!str_detect(dat$file, 'TWJ'),]
+  station = file |> basename() |> str_remove('.csv')
+  
+  # Fix dates and times
+  split = dat$file |> strsplit('_')
+  dates = sapply(split, function(x) x[length(x)-1])
+  times = sapply(split, function(x) x[length(x)])
+  rounded_times = format(strptime(times, '%H%M%S'), '%H:%M')
+  dates_times = paste(dates, times, sep = '_')
+  new_dates_times = ymd_hms(dates_times) - hours(12)
+  dat$new_dates = new_dates_times |>
+    as.Date(format = '%Y:%m:%d')
+  new_times_strings = new_dates_times |> as.character() |> strsplit(' ') |> 
+    sapply(`[`, 2)
+  dat$new_times = vapply(new_times_strings, function(time_str) {
+    as.numeric(strsplit(time_str, ':')[[1]]) %*% c(60, 1, 1/60)
+  }, numeric(1))
   
   # Run through species
   species = c('M', 'NVE', 'Paur', 'Pnat', 'Ppip', 'Ppyg')
   for(sp in species){
     
-    print(sp)
+    # Subset for species
+    sub = dat[dat$species == sp,]
     
-    # Make empty plot
-    plot(NULL, 
-         xlim = as.Date(c(sprintf('%s-01-01', year), 
-                          sprintf('%s-12-31', year))), 
-         ylim = c(0, 1440),
-         xaxt = 'n', yaxt = 'n', xlab = '', ylab = '')
+    # Only keep single entry per minute
+    sub = sub[!duplicated(sub$new_times),]
     
-    # Make shadow for night
-    sun_sub = sun[str_detect(sun$Date, as.character(year)),]
-    polygon(x = c(as.Date(sun_sub$Date)+1, rev(as.Date(sun_sub$Date))),
-            y = c(sun_sub$rise_min, rev(sun_sub$set_min)),
-            col = '#D6DBDF', border = '#D6DBDF')
-    
-    # Run through stations
-    for(file in files){
-      
-      # Load data
-      dat = read.csv(file)
-      dat = dat[which(dat$species == sp),]
-      dat = dat[which(dat$n_detections > 5),]
-      dat = dat[!str_detect(dat$file, 'TWJ'),]
-      dat = dat[str_detect(dat$file, paste0('_', year)),]
-      station = file |> basename() |> str_remove('.csv')
-      
-      # Fix dates and times
-      split = dat$file |> strsplit('_')
-      dates = sapply(split, function(x) x[length(x)-1])
-      times = sapply(split, function(x) x[length(x)])
-      rounded_times = format(strptime(times, '%H%M%S'), '%H:%M')
-      dates_times = paste(dates, times, sep = '_')
-      new_dates_times = ymd_hms(dates_times) - hours(12)
-      dat$new_dates = new_dates_times |>
-        as.Date(format = '%Y:%m:%d')
-      new_times_strings = new_dates_times |> as.character() |> strsplit(' ') |> 
-        sapply(`[`, 2)
-      dat$new_times = vapply(new_times_strings, function(time_str) {
-        as.numeric(strsplit(time_str, ':')[[1]]) %*% c(60, 1, 1/60)
-      }, numeric(1))
-      
-      # Only keep single entry per minute
-      dat = dat[!duplicated(dat$new_times),]
-      
-      # Plot
-      points(dat$new_dates, dat$new_times, 
-             pch = 20, col = alpha(colours[which(files == file)], 0.1))
-      
-    } # end file loop
-    
-    # Add info plot
-    text(as.Date(sprintf('%s-01-15', year)), 0.95*1400, sp, font = 2, adj = 0)
-    if(sp %in% c('M', 'Pnat')){
-      axis(2, at = 60*c(0, 6, 12, 18), c('12:00', '18:00', '24:00', '06:00'))
-      mtext('Time [hh:mm]', 2, 2.5, cex = 0.75)
-    }
-    if(sp %in% c('Pnat', 'Ppip', 'Ppyg')){
-      axis.Date(side = 1, at = c(as.Date(sprintf('%s-01-01', year)), 
-                                 as.Date(sprintf('%s-04-01', year)), 
-                                 as.Date(sprintf('%s-07-01', year)), 
-                                 as.Date(sprintf('%s-10-01', year))), 
-                labels = c('Jan', 'Apr', 'Jul', 'Oct'), format='%b')    
-      mtext('Month', 1, 2.5, cex = 0.75)
-    }
-    
+    # Plot
+    points(sub$new_dates, sub$new_times, 
+           pch = 20, col = alpha(colours[which(species == sp)], 0.1))
+   
   } # end species loop
-  
-  # Print legend
-  plot.new()
-  legend('topright', legend = stations, col = colours, pch = 16)
-  
-  # Close PDF
-  dev.off()
-  
-} # end year loop
+ 
+  # Add info plot
+  text(as.Date('2023-05-01'), 0.95*1400, station, font = 2, adj = 0)
+  if(station %in% c('Ballum', 'Husby')){
+    axis(2, at = 60*c(0, 6, 12, 18), c('12:00', '18:00', '24:00', '06:00'))
+    mtext('Time [hh:mm]', 2, 2.5, cex = 0.75)
+  }
+  if(station %in% c('Pnat', 'Ppip', 'Ppyg')){
+    axis.Date(side = 1, at = c(as.Date('2023-05-01'), 
+                               as.Date('2023-08-01'), 
+                               as.Date('2023-11-01'), 
+                               as.Date('2024-02-01')), 
+              labels = c('May', 'Aug', 'Nov', 'Feb'), format='%b')    
+    mtext('Month', 1, 2.5, cex = 0.75)
+  }
+ 
+} # end file loop
+
+# Print legend
+plot.new()
+plot.new()
+plot.new()
+plot.new()
+plot.new()
+plot.new()
+plot.new()
+legend('topright', legend = species, col = colours, pch = 16)
+
+# Close PDF
+dev.off()
 
 # Message
 message('Printed all figures.')
