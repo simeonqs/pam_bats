@@ -17,7 +17,7 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Settings
-data_set = 11
+data_set = 32
 
 # Paths 
 path_results = sprintf('aspot/data_sets_s/data_%s', data_set)
@@ -55,8 +55,9 @@ export.selection = function(selection, selection_table, wave, file_name){
   
   # Create new name 
   type = selection_table$path[1] |> strsplit('/') |> sapply(`[`, 6)
-  # if(type == 'Mnat') type = 'noise'
-  # if(type == 'Mdau') type = 'target'
+  # if(type == 'Mbramys') type = 'noise'
+  if(type == 'Mdau') type = 'M'
+  if(type == 'Mnat') type = 'M'
   ID = round(runif(1) * 1e7)
   year = 2023
   tape_name = str_replace_all(file_name, '_', '-')
@@ -68,10 +69,11 @@ export.selection = function(selection, selection_table, wave, file_name){
   # Create new wave and save
   new_wave = wave[start:end]
   if(length(new_wave@left)/new_wave@samp.rate > 0.005){
-    if(type %in% c('Mnat', 'Mdau')){
+    # if(type %in% c('Mdaubramys')){
       new_name = paste0(path_results, '/', new_name, '.wav')
       writeWave(new_wave, new_name, extensible = FALSE)
-    }}
+    # }
+  }
   
 }
 
@@ -81,7 +83,7 @@ export.selections = function(file){
   # Read the table
   selection_table = load.selection.table(file)
   selection_table$path = file
-
+  
   # Find wav file name
   file_name = file |>
     basename() |>
@@ -105,4 +107,16 @@ export.selections = function(file){
 sapply(selection_tables_paths, export.selections)
 
 # Message
-message('Exported all selections.')
+files_stored = list.files(path_results, '*wav')
+types = files_stored |> strsplit('_') |> sapply(`[`, 1)
+message(sprintf('Exported %s selections with following types:',
+                length(files_stored)))
+print(table(types))
+
+files_stored = list.files(path_results, '*wav', full.names = TRUE)
+srs = sapply(files_stored, function(x){
+  wave = readWave(x)
+  return(wave@samp.rate)
+})
+message('Sample rates:')
+print(table(srs))
