@@ -32,41 +32,22 @@ folders = folders[!folders %in%
                       '/home/au472091/Documents/results_aspot/noise')]
 for(folder in folders){
   detections = load.selection.tables(sprintf('%s/selection_tables', folder))
+  if(nrow(detections) == 0) next
   ## get dates
   detections$DATE = detections$file |> 
     str_extract('\\d{8}') |> 
     as.Date(format = '%Y%m%d')
-  ## get season
-  season = 'no_season'
-  if(str_detect(folder, 'Fall')) season = 'fall'
-  if(str_detect(folder, 'Spring')) season = 'spring'
-  if(str_detect(folder, 'Summer')) season = 'summer'
-  if(str_detect(folder, 'Spring')) season = 'spring'
-  if(str_detect(folder, 'Summer')) season = 'summer'
   ## make summary
-  if(str_detect(folder, 'HRIII')){
-    detections$station = detections$file |> strsplit('_') |> sapply(`[`, 1)
-    summary = detections |> 
-      group_by(DATE, station) |>
-      count() |> 
-      na.omit()
-    
-  } else {
-    summary = detections |> 
-      group_by(DATE) |>
-      count() |> 
-      na.omit()
-    summary$station = folder |> basename() |> 
-      strsplit('_A') |> sapply(`[`, 1) |> 
-      strsplit('_B') |> sapply(`[`, 1) |> 
-      as.character()
-  }
+  detections$station = detections$file |> strsplit('_') |> sapply(`[`, 1)
+  summary = detections |> 
+    group_by(DATE, station) |>
+    count() |> 
+    na.omit()
   ## store summary data
   write.csv(summary, 
-            sprintf('%s/aspot/%s_%s.csv',
+            sprintf('%s/aspot/%s.csv',
                     path_summaries,
-                    basename(folder),
-                    season),
+                    basename(folder)),
             row.names = FALSE)
 }
 
@@ -78,36 +59,16 @@ for(folder in folders){
   detections$DATE = detections$file |> 
     str_extract('\\d{8}') |> 
     as.Date(format = '%Y%m%d')
-  ## get season
-  season = 'no_season'
-  if(str_detect(folder, 'Fall')) season = 'fall'
-  if(str_detect(folder, 'NS32_A_STRANDING_Recovered')) season = 'fall'
-  if(str_detect(folder, 'NS32_B_STRANDING')) season = 'fall'
-  if(str_detect(folder, 'Spring')) season = 'spring'
-  if(str_detect(folder, 'Summer')) season = 'summer'
   ## make summary
-  if(str_detect(folder, 'HRIII')){
-    detections$station = detections$file |> strsplit('_') |> sapply(`[`, 1)
-    summary = detections |> 
-      group_by(DATE, station) |>
-      count() |> 
-      na.omit()
-    
-  } else {
-    summary = detections |> 
-      group_by(DATE) |>
-      count() |> 
-      na.omit()
-    summary$station = folder |> basename() |> 
-      strsplit('_A') |> sapply(`[`, 1) |> 
-      strsplit('_B') |> sapply(`[`, 1) |> 
-      as.character()
-  }
+  detections$station = detections$file |> strsplit('_') |> sapply(`[`, 1)
+  summary = detections |> 
+    group_by(DATE, station) |>
+    count() |> 
+    na.omit()
   ## store summary data
   write.csv(summary, 
-            sprintf('%s/aspot_bats/%s_%s.csv',
+            sprintf('%s/aspot_bats/%s.csv',
                     path_summaries,
-                    basename(folder),
-                    season),
+                    basename(folder)),
             row.names = FALSE)
 }
