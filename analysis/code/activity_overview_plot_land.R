@@ -94,6 +94,8 @@ summary$station = ifelse(summary$station == 'LAND3', 'SKJERN',
                          summary$station) 
 summary$station = ifelse(summary$station == 'LAND4', 'STADILØ', 
                          summary$station) 
+summary$station = ifelse(summary$station == 'LAND5', 'HUSBY', 
+                         summary$station) 
 summary$station = ifelse(summary$station == 'LAND6-LOT1', 'BALLUM', 
                          summary$station) 
 summary$station = ifelse(summary$station == 'LAND7-LOT1', 'MANDØ', 
@@ -109,6 +111,10 @@ summary$station = ifelse(summary$station == 'NYMND-PLTG', 'NYMINDE',
 summary$station = ifelse(summary$station == 'ROEMOE', 'RØMØ', 
                          summary$station) 
 summary$station = ifelse(summary$station == 'STADILOE', 'STADILØ', 
+                         summary$station) 
+summary$station = ifelse(summary$station == 'BLAAVAND', 'BLÅVAND', 
+                         summary$station) 
+summary$station = ifelse(summary$station == 'FANO', 'FANØ', 
                          summary$station) 
 
 summary_detections$station = 
@@ -136,6 +142,9 @@ summary_detections$station =
   ifelse(summary_detections$station == 'LAND4', 'STADILØ', 
          summary_detections$station) 
 summary_detections$station = 
+  ifelse(summary_detections$station == 'LAND5', 'HUSBY', 
+         summary_detections$station) 
+summary_detections$station = 
   ifelse(summary_detections$station == 'LAND6-LOT1', 'BALLUM', 
          summary_detections$station) 
 summary_detections$station = 
@@ -159,20 +168,76 @@ summary_detections$station =
 summary_detections$station = 
   ifelse(summary_detections$station == 'STADILOE', 'STADILØ', 
          summary_detections$station) 
+summary_detections$station =
+  ifelse(summary_detections$station == 'BLAAVAND', 'BLÅVAND', 
+         summary_detections$station) 
+summary_detections$station = 
+  ifelse(summary_detections$station == 'FANO', 'FANØ', 
+         summary_detections$station) 
 
-summary_aspot$station = toupper(summary_aspot$station)
-summary_aspot$station = ifelse(summary_aspot$station == 'BLAAVAND', 'BLÅVAND', 
-                               summary_aspot$station) 
-summary_aspot$station = ifelse(summary_aspot$station == 'FANOE', 'FANØ', 
-                               summary_aspot$station) 
-summary_aspot$station = ifelse(summary_aspot$station == 'MANDO', 'MANDØ', 
-                               summary_aspot$station) 
-summary_aspot$station = ifelse(summary_aspot$station == 'ROEMOE', 'RØMØ', 
-                               summary_aspot$station) 
-summary_aspot$station = ifelse(summary_aspot$station == 'STADILOE', 'STADILØ', 
-                               summary_aspot$station) 
+summary_aspot$station = summary_aspot$station |>
+  toupper() 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'KAMMER', 'KAMMERSLUSEN', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND-BALLUM', 'BALLUM', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND-MANDØ', 'MANDØ', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND1', 'KAMMERSLUSEN', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND10-LOT1', 'REJSBY', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND2', 'BLÅVAND', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND3', 'SKJERN', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND4', 'STADILØ', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND5', 'HUSBY', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND6-LOT1', 'BALLUM', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND7-LOT1', 'MANDØ', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND8-LOT1', 'NYMINDE', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'LAND9-LOT1', 'FANØ', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'MANDO', 'MANDØ', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'NYMND-PLTG', 'NYMINDE', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'ROEMOE', 'RØMØ', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'STADILOE', 'STADILØ', 
+         summary_aspot$station) 
+summary_aspot$station =
+  ifelse(summary_aspot$station == 'BLAAVAND', 'BLÅVAND', 
+         summary_aspot$station) 
+summary_aspot$station = 
+  ifelse(summary_aspot$station == 'FANO', 'FANØ', 
+         summary_aspot$station) 
 
-summary_aspot_bats$station = toupper(summary_aspot_bats$station)
+summary_aspot_bats$station = summary_aspot_bats$station |>
+  toupper() |> 
+  str_remove('LAND-')
 summary_aspot_bats$station = 
   ifelse(summary_aspot_bats$station == 'BLAAVAND', 'BLÅVAND', 
          summary_aspot_bats$station) 
@@ -197,40 +262,39 @@ names(trans_stations) = unique_stations
 ## create colour gradient
 colfunc = colorRampPalette(c('#FAD7A0', '#0B5345'))
 cols = colfunc(max(summary$n))
-for(season in c('Forår 2023', 'Efterår 2023')){
-  pdf(sprintf('%s/%s_land.pdf', path_png, str_replace(season, ' ', '_')),
-      width = 15, height = 12) # , units = 'in', res = 1000
-  # season = 'Forår 2023'
+for(year in c(2023, 2024)){
+  pdf(sprintf('%s/%s_land.pdf', path_png, str_replace(year, ' ', '_')),
+      width = 40, height = 12) # , units = 'in', res = 1000
   par(mar = c(5, 12, 3, 1))
-  ## subset per season and adjust xlims
-  if(season == 'Forår 2023'){
+  ## subset per year and adjust xlims
+  if(year == 2023){
     sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') <= 
-                          as.Date('2023-07-15')),]
+                          as.Date('2023-12-31')),]
     sub_detections = 
-      summary_detections[which(as.Date(summary_detections$date, 
+      summary_detections[which(as.Date(summary_detections$DATE, 
                                        format = '%Y-%m-%d') <= 
-                                 as.Date('2023-07-15')),]
+                                 as.Date('2023-12-31')),]
     sub_aspot = 
       summary_aspot[which(as.Date(summary_aspot$DATE) <= 
-                            as.Date('2023-07-15')),]
+                            as.Date('2023-12-31')),]
     sub_aspot_bats = 
       summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) <= 
-                                 as.Date('2023-07-15')),]
-    xlim = as.Date(c('2023-04-10', '2023-06-30'))
+                                 as.Date('2023-12-31')),]
+    xlim = as.Date(c('2023-01-01', '2023-12-31'))
   } else {
     sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') > 
                           as.Date('2023-07-15')),]
     sub_detections = 
-      summary_detections[which(as.Date(summary_detections$date, 
+      summary_detections[which(as.Date(summary_detections$DATE, 
                                        format = '%Y-%m-%d') > 
-                                 as.Date('2023-07-15')),]
+                                 as.Date('2023-12-31')),]
     sub_aspot = 
       summary_aspot[which(as.Date(summary_aspot$DATE) > 
-                            as.Date('2023-07-15')),]
+                            as.Date('2023-12-31')),]
     sub_aspot_bats = 
       summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) > 
-                                 as.Date('2023-07-15')),]
-    xlim = as.Date(c('2023-07-30', '2023-11-15'))
+                                 as.Date('2023-12-31')),]
+    xlim = as.Date(c('2024-01-01', '2024-12-31'))
   }
   ## create empty plot
   plot(as.Date(sub$DATE, format = '%Y-%b-%d'),
@@ -238,7 +302,7 @@ for(season in c('Forår 2023', 'Efterår 2023')){
        ylim = c(min(trans_stations) - 0.5, max(trans_stations) + 0.5),
        xlim = xlim,
        xaxt = 'n', yaxt = 'n', type = 'n',
-       xlab = 'Dato', ylab = '', main = season)
+       xlab = 'Dato', ylab = '', main = year)
   mtext('Station', 2, 10)
   ## add filled squares and colour by activity
   for(i in seq_len(nrow(sub))){
@@ -247,7 +311,7 @@ for(season in c('Forår 2023', 'Efterår 2023')){
                   my_shape1, col = cols[sub$n[i]])
   }
   ## add scaled dots for number detections
-  points(as.Date(sub_detections$date, format = '%Y-%m-%d'),
+  points(as.Date(sub_detections$DATE, format = '%Y-%m-%d'),
          trans_stations[sub_detections$station] + 0.15, pch = 16, 
          cex = log10(sub_detections$n)/4 + 0.1)
   ## add scaled dots for number detections from aspot
