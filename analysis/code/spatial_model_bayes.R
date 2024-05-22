@@ -97,4 +97,17 @@ mean_pred = apply(pred, 1, mean) |> inv_logit()
 shade(PI_pred, nights , col = '#AED6F1')
 lines(nights, mean_pred, lwd = 3, col = '#1B4F72')
 
+# Wind direction
+plot(dat_model$windspeed, 
+     dat_model$present,
+     ylim = c(0, 1),
+     pch = 16, col = '#AED6F1',
+     xlab = 'wind speed', ylab = 'probability presence per night')
+
+# Temperature
+plot(dat_model$temp, 
+     dat_model$present,
+     ylim = c(0, 1),
+     pch = 16, col = '#AED6F1',
+     xlab = 'temperature', ylab = 'probability presence per night')
 
