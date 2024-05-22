@@ -26,13 +26,15 @@ path_combined_selection_tables =
 path_grount_truth = 
   'analysis/results/test_data/ground_truth_selection_tables_species'
 path_pdf = sprintf(
-  'analysis/results/confusion_matrix_genus_model_m%s+m%s_per_file.pdf',
+  'analysis/results/confusion_matrix_species_model_m%s+m%s_per_chunk.pdf',
   model_1, model_2)
+path_audio = 'aspot/test_data_sets/test_data'
 
 # List files
 seg_files = list.files(path_segmentation, '*txt', full.names = TRUE)
 class_files = list.files(path_classifiction, '*txt', full.names = TRUE)
 log_files = list.files(path_logs, full.names = TRUE)
+audio_files = list.files(path_audio, full.names = TRUE)
 
 # Function to calculate overlap
 calc.iou = function(st_d, st_g, end_d, end_g){
@@ -132,50 +134,66 @@ class_results = data.frame()
 for(file in files){
   
   ## subset
-  d = aspot[aspot$file == file,]
-  g = manual[manual$file == file,]
+  d_sub = aspot[aspot$file == file,]
+  g_sub = manual[manual$file == file,]
   
-  ## remove species with less than three occurrences
-  table_species = table(d$Sound.type)
-  table_species = table_species[names(table_species) != 'noise']
-  table_species = table_species[table_species >= 5]
-  species_d = names(table_species)
-  
-  ## run through present species
-  species_g = unique(g$Annotation)
-  species_g = species_g[!species_g %in% c('?', 'o')]
-  for(sp in species_g){
-    if(sp %in% species_d){
-      class_results = rbind(class_results, data.frame(file = file,
-                                                      d = sp,
-                                                      g = sp)) 
-    } else {
-      if(sp == 'Ppippyg' & any(species_d %in% c('Ppip', 'Ppyg'))){
-        if(any(species_d == 'Ppip')){
-          class_results = rbind(class_results, data.frame(file = file,
-                                                          d = 'Ppip',
-                                                          g = sp))
-        }
-        if(any(species_d == 'Ppyg')){
-          class_results = rbind(class_results, data.frame(file = file,
-                                                          d = 'Ppyg',
-                                                          g = sp))
-        }
+  ## get duration and run per chunk
+  wave = readWave(audio_files[str_detect(audio_files, file)])
+  duration = length(wave@left)/wave@samp.rate
+  if(duration < 3) warning('File shorter than 3 seconds: ', file)
+  chunk_starts = seq(0, duration, 5)
+  chunk_starts = chunk_starts[duration-chunk_starts > 3]
+  for(chunk_start in chunk_starts){
+    
+    ### subset for chunk
+    d = d_sub[d_sub$Begin.time..s. >= chunk_start & 
+                d_sub$Begin.time..s. < (chunk_start+5),]
+    g = g_sub[g_sub$Begin.Time..s. >= chunk_start & 
+                g_sub$Begin.Time..s. < (chunk_start+5),]
+    
+    ### remove species with less than three occurrences
+    table_species = table(d$Sound.type)
+    table_species = table_species[names(table_species) != 'noise']
+    table_species = table_species[table_species >= 5]
+    species_d = names(table_species)
+    
+    ### run through present species
+    species_g = unique(g$Annotation)
+    species_g = species_g[!species_g %in% c('?', 'o')]
+    for(sp in species_g){
+      if(sp %in% species_d){
+        class_results = rbind(class_results, data.frame(file = file,
+                                                        d = sp,
+                                                        g = sp)) 
       } else {
-      class_results = rbind(class_results, data.frame(file = file,
-                                                      d = '-error-',
-                                                      g = sp))
-      } # end else loop
-    } # end else
-  } # end sp loop (species_g)
-  
-  ## run through false species
-  for(sp in species_d[!species_d %in% species_g]){
-    if(!(sp %in% c('Ppip', 'Ppyg') & any(species_g == 'Ppippyg')))
-      class_results = rbind(class_results, data.frame(file = file,
-                                                      d = sp,
-                                                      g = '-error-'))
-  } # end sp loop (species_d)
+        if(sp == 'Ppippyg' & any(species_d %in% c('Ppip', 'Ppyg'))){
+          if(any(species_d == 'Ppip')){
+            class_results = rbind(class_results, data.frame(file = file,
+                                                            d = 'Ppip',
+                                                            g = sp))
+          }
+          if(any(species_d == 'Ppyg')){
+            class_results = rbind(class_results, data.frame(file = file,
+                                                            d = 'Ppyg',
+                                                            g = sp))
+          }
+        } else {
+          class_results = rbind(class_results, data.frame(file = file,
+                                                          d = '-error-',
+                                                          g = sp))
+        } # end else loop
+      } # end else
+    } # end sp loop (species_g)
+    
+    ### run through false species
+    for(sp in species_d[!species_d %in% species_g]){
+      if(!(sp %in% c('Ppip', 'Ppyg') & any(species_g == 'Ppippyg')))
+        class_results = rbind(class_results, data.frame(file = file,
+                                                        d = sp,
+                                                        g = '-error-'))
+    } # end sp loop (species_d)
+    
+  } # end chunk_start
   
 } # end file loop
 
