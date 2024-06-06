@@ -16,11 +16,14 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_summaries = 'analysis/results/activity_overview/summaries/summaries'
-path_detections = 'analysis/results/activity_overview/summaries/detections'
+path_summaries = 
+  'analysis/results/activity_overview/summaries_backup/summaries'
+path_detections = 
+  'analysis/results/activity_overview/summaries_backup/detections'
 path_aspot = 'analysis/results/activity_overview/summaries/aspot'
 path_aspot_bats = 'analysis/results/activity_overview/summaries/aspot_bats'
-path_png = 'analysis/results/activity_overview'
+path_pdf = 'analysis/results/activity_overview/activity_overview_'
+path_meta = 'analysis/data/meta_data_bird_surveys.csv'
 
 # Plotting function
 points_custom <- function(x, y, shape, col = 'black', cex = 1, ...) {
@@ -50,85 +53,98 @@ files_summaries = files_summaries[str_detect(files_summaries, 'ONBOARD')]
 files_detections = list.files(path_detections, pattern = '*.csv', 
                               recursive = TRUE, full.names = TRUE)
 files_detections = files_detections[str_detect(files_detections, 'ONBOARD')]
-files_aspot = list.files(path_aspot, pattern = '*.csv', 
-                         recursive = TRUE, full.names = TRUE)
-files_aspot = files_aspot[str_detect(files_aspot, 'togter_no_season')]
+# files_aspot = list.files(path_aspot, pattern = '*.csv', 
+#                          recursive = TRUE, full.names = TRUE)
+# files_aspot = files_aspot[str_detect(files_aspot, 'togter_no_season')]
+files_aspot_bats = list.files(path_aspot_bats, pattern = '*.csv', 
+                              recursive = TRUE, full.names = TRUE)
+files_aspot_bats = files_aspot_bats[str_detect(files_aspot_bats, 
+                                               'togter')]
 
 # Read all files
 summary = files_summaries |>
   lapply(read.csv) |> bind_rows()
 summary_detections = files_detections |>
   lapply(read.csv) |> bind_rows()
-summary_aspot = files_aspot |>
+# summary_aspot = files_aspot |>
+#   lapply(read.csv) |> bind_rows()
+summary_aspot_bats = files_aspot_bats |>
   lapply(read.csv) |> bind_rows()
+meta = read.csv(path_meta, na.strings = '')
+
+# Subset for only start and end dates
+meta = meta[,c('start_date', 'start_time', 'end_date', 'end_time')]
+if(nrow(meta) < 3) stop('Meta not complete.')
+for(i in 2:nrow(meta)){
+  if(is.na(meta$start_date[i])){
+    meta$start_date[i] = meta$start_date[i-1]
+    meta$start_time[i] = meta$start_time[i-1]
+  }
+}
+for(i in (nrow(meta)-1):1){
+  if(is.na(meta$end_date[i])){
+    meta$end_date[i] = meta$end_date[i+1]
+    meta$end_time[i] = meta$end_time[i+1]
+  }
+}
+meta = unique(meta)
+
+# Make proper date columns
+summary$DATE = as.Date(summary$DATE, format = '%Y-%b-%d')
+summary_detections$date = as.Date(summary_detections$date, 
+                                  format = '%Y-%m-%d')
+summary_aspot_bats$DATE = as.Date(summary_aspot_bats$DATE)
+meta$start_date = as.Date(meta$start_date)
+meta$end_date = as.Date(meta$end_date)
 
 # Plot
-unique_stations = summary_detections$station |> unique() |> 
-  sort(decreasing = TRUE)
-trans_stations = seq_along(unique_stations)
-names(trans_stations) = unique_stations
+pdf(sprintf('%sfugle_togter.pdf', path_pdf),
+    width = 40, height = 2.5) 
+par(mar = c(5, 7, 3, 1))
 ## create colour gradient
 colfunc = colorRampPalette(c('#FAD7A0', '#0B5345'))
 cols = colfunc(max(summary$n))
-for(season in c('Forår 2023', 'Efterår 2023')){
-  png(sprintf('%s/%s_fugletogter.png', path_png, season),
-      width = 12.5, height = 2, units = 'in', res = 1000) # open PNG
-  # season = 'Forår 2023'
-  par(mar = c(5, 7, 3, 1))
-  ## subset per season and adjust xlims
-  if(season == 'Forår 2023'){
-    sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') <= 
-                          as.Date('2023-07-15')),]
-    sub_detections = 
-      summary_detections[which(as.Date(summary_detections$date, 
-                                       format = '%Y-%m-%d') <=
-                                 as.Date('2023-07-15')),]
-    sub_aspot = 
-      summary_aspot[which(as.Date(summary_aspot$DATE) <= 
-                            as.Date('2023-07-15')),]
-    xlim = as.Date(c('2023-04-10', '2023-06-30'))
-  } else {
-    sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') > 
-                          as.Date('2023-07-15')),]
-    sub_detections = 
-      summary_detections[which(as.Date(summary_detections$date, 
-                                       format = '%Y-%m-%d') > 
-                                 as.Date('2023-07-15')),]
-    sub_aspot = 
-      summary_aspot[which(as.Date(summary_aspot$DATE) > 
-                            as.Date('2023-07-15')),]
-    xlim = as.Date(c('2023-07-30', '2023-11-15'))
-  }
-  ## create empty plot
-  plot(as.Date(sub$DATE, format = '%Y-%b-%d'),
-       trans_stations[sub$station],
-       ylim = c(min(trans_stations) - 0.5, max(trans_stations) + 0.5),
-       xlim = xlim,
-       xaxt = 'n', yaxt = 'n', type = 'n',
-       xlab = 'Dato', ylab = '', main = season)
-  ## add filled squares and colour by activity
-  for(i in seq_len(nrow(sub))){
-    points_custom(as.Date(sub$DATE[i], format = '%Y-%b-%d'),
-                  trans_stations[sub$station[i]], 
-                  my_shape1, col = cols[sub$n[i]])
-  }
-  ## add scaled dots for number detections
-  points(as.Date(sub_detections$date, format = '%Y-%m-%d'),
-         trans_stations[sub_detections$station] + 0.15, pch = 16, 
-         cex = log10(sub_detections$n)/4 + 0.1)
-  ## add scaled dots for number detections from aspot
-  points(as.Date(sub_aspot$DATE),
-         trans_stations[sub_aspot$station] - 0.15, pch = 16, 
-         cex = log10(sub_aspot$n)/4 + 0.1)
-  ## add axes
-  unique_months = unique(format(ymd(sub$DATE), '%Y-%m'))
-  axis(1, at = as.Date(paste0(unique_months, '-01')), 
-       labels = paste0(unique_months, '-01') |> str_sub(6, 10))
-  axis(1, at = as.Date(paste0(unique_months, '-10')), 
-       labels = paste0(unique_months, '-10') |> str_sub(6, 10))
-  axis(1, at = as.Date(paste0(unique_months, '-20')), 
-       labels = paste0(unique_months, '-20') |> str_sub(6, 10))
-  dev.off() # close PNG
+## subset per season and adjust xlims
+if(TRUE){
+  sub = summary[which(summary$DATE < as.Date('2024-04-10')),]
+  sub_detections = 
+    summary_detections[which(summary_detections$date < as.Date('2024-04-10')),]
+  # sub_aspot = 
+  #   summary_aspot[which(as.Date(summary_aspot$DATE) < 
+  #                         as.Date('2024-04-10')),]
+  sub_aspot_bats =
+    summary_aspot_bats[which(summary_aspot_bats$DATE <
+                               as.Date('2024-04-10')),]
+  xlim = as.Date(c('2023-04-10', '2024-04-10'))
+} else {}
+## create empty plot
+plot(sub$DATE,
+     ylim = c(0, 1),
+     xlim = xlim,
+     xaxt = 'n', yaxt = 'n', type = 'n',
+     xlab = 'Dato', ylab = '')
+## add filled squares and colour by activity
+for(i in seq_len(nrow(sub))){
+  points_custom(sub$DATE[i], 0.5,
+                my_shape1, col = cols[sub$n[i]])
 }
+# ## add scaled dots for number detections
+points(sub_detections$date, rep(0.5 + 0.15, nrow(sub_detections)), 
+       pch = 16, cex = log10(sub_detections$n)/4 + 0.1)
+## add scaled dots for number detections from aspot
+# points(as.Date(sub_aspot$DATE),
+#        trans_stations[sub_aspot$station] - 0.15, pch = 16, 
+#        cex = log10(sub_aspot$n)/4 + 0.1)
+points(sub_aspot_bats$DATE, rep(0.5 - 0.15, nrow(sub_aspot_bats)), 
+       pch = 16, cex = log10(sub_aspot_bats$n)/4 + 0.1, col = '#28B463')
+## add axes
+unique_months = unique(format(ymd(sub$DATE), '%Y-%m'))
+axis(1, at = as.Date(paste0(unique_months, '-01')), 
+     labels = paste0(unique_months, '-01'), las = 1)
+# axis(1, at = as.Date(paste0(unique_months, '-10')), 
+#      labels = paste0(unique_months, '-10'), las = 0)
+# axis(1, at = as.Date(paste0(unique_months, '-20')), 
+#      labels = paste0(unique_months, '-20'), las = 0.5)
+dev.off() # close PDF
 
 
