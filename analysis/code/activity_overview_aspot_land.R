@@ -51,7 +51,7 @@ for(folder in folders){
     as.character()
   ## store summary data
   write.csv(summary, 
-            sprintf('%s/aspot_bats/%s_%s.csv',
+            sprintf('%s/aspot_bats/%s.csv',
                     path_summaries,
                     basename(folder)),
             row.names = FALSE)
