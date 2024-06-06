@@ -127,7 +127,7 @@ summary_detections$station =
 
 meta$Station.ID = ifelse(meta$Station.ID %in% c('HR3_4', 'HR3-4'), 'HR3-4S-C',
                          meta$Station.ID)
-meta$Station.ID = ifelse(str_detect(meta$Station.ID, 'NS28'), 'NS28',
+meta$Station.ID = ifelse(str_detect(meta$Station.ID, 'H_R3_6'), 'H_R3_6',
                          meta$Station.ID)
 meta$Station.ID = ifelse(meta$Station.ID == 'T3/NS26', 'T3-NS26-C',
                          meta$Station.ID)
@@ -153,6 +153,19 @@ meta$Deployment..Service.date = meta$Deployment..Service.date |>
 meta$recovery.date = meta$recovery.date |> 
   as.character() |>
   as.Date(format = '%Y%m%d')
+
+# Fix station HR3-6, which has prefix NS28
+summary$station[summary$station == 'NS28S' & 
+                  summary$DATE >= as.Date('2023-11-20') &
+                  summary$DATE <= as.Date('2024-03-19')] = 'H_R3_6'
+summary_detections$station[
+  summary_detections$station == 'NS28S' & 
+    summary_detections$date >= as.Date('2023-11-20') &
+    summary_detections$date <= as.Date('2024-03-19')] = 'H_R3_6'
+summary_aspot_bats$station[
+  summary_aspot_bats$station == 'NS28S' & 
+    summary_aspot_bats$DATE >= as.Date('2023-11-20') &
+    summary_aspot_bats$DATE <= as.Date('2024-03-19')] = 'H_R3_6'
 
 # Plot
 unique_stations = summary_detections$station |> unique() |> 
@@ -191,7 +204,7 @@ if(TRUE){
                                as.Date('2023-07-15')),]
   xlim = as.Date(c('2023-07-30', '2023-11-15'))
 }
-## remove out before and after deployment
+## remove before and after deployment
 for(st in unique_stations){
   sub_meta = meta[meta$Station.ID == st,]
   dates_station = c(sub$DATE[sub$station == st],
