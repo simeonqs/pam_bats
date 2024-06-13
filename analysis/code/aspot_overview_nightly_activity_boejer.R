@@ -16,7 +16,7 @@ rm(list=ls())
 
 # Paths
 path_sun = 'analysis/data/sunrise_sunset_west_coast_DK.csv'
-path_pdf = 'analysis/results/nightly_activity/nightly_activity_bøjer.pdf'
+path_png = 'analysis/results/nightly_activity/nightly_activity_bøjer.png'
 path_data_bats = '/home/au472091/Documents/results_aspot/defenitely_bats'
 path_meta_boejer = 'analysis/data/meta_data_boejer.csv'
 path_trigger = 'analysis/results/activity_overview/summaries_backup/detections'
@@ -88,13 +88,13 @@ colours = c(
 species = c('M', 'NVE', 'Paur', 'Pnat', 'Ppip', 'Ppyg')
 names(colours) = species
 
-# Open PDF
-pdf(path_pdf, 12, 6)
+# Open png
+png(path_png, 12, 6, units = 'in', res = 800)
 layout(matrix(c(1, 1, 1, 2, 2, 2, 3, 3, 3,
                 4, 4, 4, 5, 5, 5, 6, 6, 6,
                 7, 7, 7, 8, 8, 8, 9, 9, 9),
               byrow = TRUE, nrow = 3, ncol = 9))
-par(mar = rep(0.5, 4), oma = c(3.5, 3.5, 0.5, 0.5))
+par(mar = rep(0.5, 4), oma = c(3.5, 4, 0.5, 0.5))
 
 # Run through stations
 for(folder in folders){
@@ -115,7 +115,7 @@ for(folder in folders){
     end = sub_meta$recovery.date[i] 
     keep_dates = c(keep_dates, 
                    dates_station[dates_station > start &
-                                   dates_station < (end - 1)] |> 
+                                   dates_station < (end - 2)] |> 
                      as.character())
   } 
   remove_dates = dates_station[!dates_station %in% keep_dates]
@@ -149,10 +149,13 @@ for(folder in folders){
   }, numeric(1))
 
   # Get summary data
+  print(st)
   file_trigger_station = 
     files_trigger[str_detect(files_trigger, st)]
   summary = file_trigger_station |>
     lapply(read.csv) |> bind_rows()
+  summary$date[is.na(summary$date)] = 
+    summary$DATE[is.na(summary$date)]
   summary = summary[as.Date(summary$date) > as.Date('2023-04-10') &
                       as.Date(summary$date) < as.Date('2024-04-10'),]
   
@@ -184,18 +187,19 @@ for(folder in folders){
          pch = 20, col = 'white', cex = 1)
   
   # Add info plot
-  text(as.Date('2023-04-15'), 0.93*1440, st, font = 2, adj = 0)
-  if(st %in% c('NS19', 'NS31', 'NS35')){
-    axis(2, at = 60*c(0, 6, 12, 18), c('12:00', '18:00', '24:00', '06:00'))
-    mtext('Time [hh:mm UTC]', 2, 2.5, cex = 0.75)
+  text(as.Date('2023-04-15'), 0.93*1440, st, font = 2, adj = 0, cex = 1.5)
+  if(st %in% c('NS19', 'NS30', 'NS33')){
+    axis(2, at = 60*c(2, 10, 18), c('14:00', '20:00', '06:00'), cex.axis = 1.4)
+    mtext('Time (UTC)', 2, 2.8, cex = 1)
   }
   if(st %in% c('NS35', 'NS33', 'NS34')){
     axis.Date(side = 1, at = c(as.Date('2023-05-01'), 
                                as.Date('2023-08-01'), 
                                as.Date('2023-11-01'), 
-                               as.Date('2024-02-01')), 
+                               as.Date('2024-02-01')),
+              cex.axis = 1.4,
               labels = c('May', 'Aug', 'Nov', 'Feb'), format='%b')    
-    mtext('Month', 1, 2.5, cex = 0.75)
+    mtext('Month', 1, 2.8, cex = 1)
   }
   
 } # end file loop
@@ -204,7 +208,7 @@ for(folder in folders){
 # plot.new()
 # legend('bottomright', legend = species, col = colours, pch = 16)
 
-# Close PDF
+# Close png
 dev.off()
 
 # Message
