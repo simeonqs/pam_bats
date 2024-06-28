@@ -30,26 +30,26 @@ folders = folders[!folders %in%
                     c('/home/au472091/Documents/results_aspot/defenitely_bats',
                       '/home/au472091/Documents/results_aspot/maybe_bats',
                       '/home/au472091/Documents/results_aspot/noise')]
-for(folder in folders){
-  detections = load.selection.tables(sprintf('%s/selection_tables', folder))
-  if(nrow(detections) == 0) next
-  ## get dates
-  detections$DATE = detections$file |> 
-    str_extract('\\d{8}') |> 
-    as.Date(format = '%Y%m%d')
-  ## make summary
-  detections$station = detections$file |> strsplit('_') |> sapply(`[`, 1)
-  summary = detections |> 
-    group_by(DATE, station) |>
-    count() |> 
-    na.omit()
-  ## store summary data
-  write.csv(summary, 
-            sprintf('%s/aspot/%s.csv',
-                    path_summaries,
-                    basename(folder)),
-            row.names = FALSE)
-}
+# for(folder in folders){
+#   detections = load.selection.tables(sprintf('%s/selection_tables', folder))
+#   if(nrow(detections) == 0) next
+#   ## get dates
+#   detections$DATE = detections$file |> 
+#     str_extract('\\d{8}') |> 
+#     as.Date(format = '%Y%m%d')
+#   ## make summary
+#   detections$station = detections$file |> strsplit('_') |> sapply(`[`, 1)
+#   summary = detections |> 
+#     group_by(DATE, station) |>
+#     count() |> 
+#     na.omit()
+#   ## store summary data
+#   write.csv(summary, 
+#             sprintf('%s/aspot/%s.csv',
+#                     path_summaries,
+#                     basename(folder)),
+#             row.names = FALSE)
+# }
 
 # Make summary per folder where bats were detected
 folders = list.files(path_data_bats, full.names = TRUE)
