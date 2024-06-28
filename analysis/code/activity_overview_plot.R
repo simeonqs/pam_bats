@@ -1,7 +1,7 @@
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # Project: pam_bats  
 # Author: Simeon Q. Smeele
-# Description: Plots overview of active periods and detections in pdf. 
+# Description: Plots overview of active periods and detections in png. 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Loading libraries
@@ -22,7 +22,7 @@ path_detections =
 # path_aspot = 'analysis/results/activity_overview/summaries_backup/aspot'
 path_aspot_bats = 
   'analysis/results/activity_overview/summaries_backup/aspot_bats'
-path_pdf = 'analysis/results/activity_overview/activity_overview'
+path_png = 'analysis/results/activity_overview/activity_overview'
 path_meta_boejer = 'analysis/data/meta_data_boejer.csv'
 
 # Plotting function
@@ -63,17 +63,24 @@ files_aspot_bats = list.files(path_aspot_bats, pattern = '*.csv',
                               recursive = TRUE, full.names = TRUE)
 files_aspot_bats = files_aspot_bats[str_detect(files_aspot_bats, 'NS') | 
                                       str_detect(files_aspot_bats, 'HR3')]
+files_aspot_bats = files_aspot_bats[!str_detect(files_aspot_bats, 'NS29')]
 
 # Read all files
 summary = files_summaries |>
   lapply(read.csv) |> bind_rows()
+summary = unique(summary)
 summary_detections = files_detections |>
   lapply(read.csv) |> bind_rows()
+summary_detections = unique(summary_detections)
 # summary_aspot = files_aspot |>
 #   lapply(read.csv) |> bind_rows()
 summary_aspot_bats = files_aspot_bats |>
   lapply(read.csv) |> bind_rows()
 meta = read.csv(path_meta_boejer)
+
+# Fix data and DATE column
+summary_detections$date[is.na(summary_detections$date)] = 
+  summary_detections$DATE[is.na(summary_detections$date)]
 
 # Fix station names
 # summary_aspot$station = 
@@ -92,38 +99,80 @@ meta = read.csv(path_meta_boejer)
 #                      summary_aspot$station == 'NS6', 'NS6C',
 #                      summary_aspot$station)))))))
 summary_aspot_bats$station = 
-  ifelse(
-    summary_aspot_bats$station == 'HR3_4', 'HR3-4S-C',
-    ifelse(
-      summary_aspot_bats$station == 'T3-NS26', 'T3-NS26-C',
-      ifelse(
-        summary_aspot_bats$station == 'NS6', 'NS6-C',
-        ifelse(
-          summary_aspot_bats$station == 'NS24', 'NS24S',
-          ifelse(
-            summary_aspot_bats$station == 'NS6C', 'NS6-C',
-            summary_aspot_bats$station)))))
+  ifelse(summary_aspot_bats$station == 'HR3_4', 'HR3-4S-C', 
+         summary_aspot_bats$station)
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'T3-NS26', 'T3-NS26-C', 
+         summary_aspot_bats$station)
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'NS6', 'NS6-C', 
+         summary_aspot_bats$station)
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'NS24', 'NS24S', 
+         summary_aspot_bats$station)
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'NS6C', 'NS6-C', 
+         summary_aspot_bats$station)
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'NS27', 'NS27S', 
+       summary_aspot_bats$station)
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'NS19-LOT1', 'NS19', 
+         summary_aspot_bats$station)
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'NS28', 'NS28S', 
+         summary_aspot_bats$station)
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'NS24', 'NS24S', 
+         summary_aspot_bats$station)
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'NS32', 'NS32S', 
+         summary_aspot_bats$station)
+
 summary$station = 
-  ifelse(summary$station == 'T3-NS26C', 'T3-NS26-C',
-         ifelse(summary$station == 'NS6', 'NS6-C',
-                ifelse(summary$station == 'NS19-LOT1', 'NS19',
-                       ifelse(summary$station == 'NS28', 'NS28S',
-                              ifelse(summary$station == 'NS24', 'NS24S',
-                                     ifelse(summary$station == 'NS32', 'NS32S',
-                                            summary$station))))))
+  ifelse(summary$station == 'T3-NS26C', 'T3-NS26-C', summary$station)
+summary$station = 
+  ifelse(summary$station == 'T3-NS26', 'T3-NS26-C', summary$station)
+summary$station = 
+  ifelse(summary$station == 'NS6', 'NS6-C', summary$station)
+summary$station = 
+  ifelse(summary$station == 'NS27', 'NS27S', summary$station)
+summary$station = 
+  ifelse(summary$station == 'NS19-LOT1', 'NS19', summary$station)
+summary$station = 
+  ifelse(summary$station == 'NS28', 'NS28S', summary$station)
+summary$station = 
+  ifelse(summary$station == 'NS24', 'NS24S', summary$station)
+summary$station = 
+  ifelse(summary$station == 'NS32', 'NS32S', summary$station)
+
 summary_detections$station = 
-  ifelse(summary_detections$station == 'T3-NS26C', 'T3-NS26-C',
-         ifelse(
-           summary_detections$station == 'NS6', 'NS6-C',
-           ifelse(
-             summary_detections$station == 'NS19-LOT1', 'NS19',
-             ifelse(
-               summary_detections$station == 'NS24', 'NS24S',
-               ifelse(
-                 summary_detections$station == 'NS28', 'NS28S',
-                 ifelse(
-                   summary_detections$station == 'NS32', 'NS32S',
-                   summary_detections$station))))))
+  ifelse(summary_detections$station == 'HR3-4C', 'HR3-4S-C', 
+         summary_detections$station)
+summary_detections$station = 
+  ifelse(summary_detections$station == 'T3-NS26C', 'T3-NS26-C', 
+         summary_detections$station)
+summary_detections$station = 
+  ifelse(summary_detections$station == 'T3-NS26', 'T3-NS26-C', 
+         summary_detections$station)
+summary_detections$station = 
+  ifelse(summary_detections$station == 'NS6', 'NS6-C', 
+         summary_detections$station)
+summary_detections$station = 
+  ifelse(summary_detections$station == 'NS27', 'NS27S', 
+         summary_detections$station)
+summary_detections$station = 
+  ifelse(summary_detections$station == 'NS19-LOT1', 'NS19', 
+         summary_detections$station)
+summary_detections$station = 
+  ifelse(summary_detections$station == 'NS28', 'NS28S', 
+         summary_detections$station)
+summary_detections$station = 
+  ifelse(summary_detections$station == 'NS24', 'NS24S', 
+         summary_detections$station)
+summary_detections$station = 
+  ifelse(summary_detections$station == 'NS32', 'NS32S', 
+         summary_detections$station)
 
 meta$Station.ID = ifelse(meta$Station.ID %in% c('HR3_4', 'HR3-4'), 'HR3-4S-C',
                          meta$Station.ID)
@@ -142,7 +191,7 @@ meta$Station.ID = ifelse(meta$Station.ID == 'NS28', 'NS28S',
 meta$Station.ID = ifelse(meta$Station.ID == 'NS32', 'NS32S',
                          meta$Station.ID)
 
-# Make proper date columsn
+# Make proper date columns
 summary$DATE = as.Date(summary$DATE, format = '%Y-%b-%d')
 summary_detections$date = as.Date(summary_detections$date, 
                                   format = '%Y-%m-%d')
@@ -154,30 +203,56 @@ meta$recovery.date = meta$recovery.date |>
   as.character() |>
   as.Date(format = '%Y%m%d')
 
-# Fix station HR3-6, which has prefix NS28
-summary$station[summary$station == 'NS28S' & 
-                  summary$DATE >= as.Date('2023-11-20') &
-                  summary$DATE <= as.Date('2024-03-19')] = 'H_R3_6'
+# For now moving HR3-6 back to NS28 row, mention this in figure text
+# # Fix station HR3-6, which has prefix NS28
+# summary$station[summary$station == 'NS28S' & 
+#                   summary$DATE >= as.Date('2023-11-20') &
+#                   summary$DATE <= as.Date('2024-03-19')] = 'H_R3_6'
+# summary_detections$station[
+#   summary_detections$station == 'NS28S' & 
+#     summary_detections$date >= as.Date('2023-11-20') &
+#     summary_detections$date <= as.Date('2024-03-19')] = 'H_R3_6'
+# summary_aspot_bats$station[
+#   summary_aspot_bats$station == 'NS28S' & 
+#     summary_aspot_bats$DATE >= as.Date('2023-11-20') &
+#     summary_aspot_bats$DATE <= as.Date('2024-03-19')] = 'H_R3_6'
+
+# Fix station NS16, which has prefix NS6
+summary$station[summary$station == 'NS6-C' &
+                  summary$DATE >= as.Date('2024-02-24') &
+                  summary$DATE <= as.Date('2024-05-18')] = 'NS16'
 summary_detections$station[
-  summary_detections$station == 'NS28S' & 
-    summary_detections$date >= as.Date('2023-11-20') &
-    summary_detections$date <= as.Date('2024-03-19')] = 'H_R3_6'
+  summary_detections$station == 'NS6-C' &
+    summary_detections$date >= as.Date('2024-02-24') &
+    summary_detections$date <= as.Date('2024-05-18')] = 'NS16'
 summary_aspot_bats$station[
-  summary_aspot_bats$station == 'NS28S' & 
-    summary_aspot_bats$DATE >= as.Date('2023-11-20') &
-    summary_aspot_bats$DATE <= as.Date('2024-03-19')] = 'H_R3_6'
+  summary_aspot_bats$station == 'NS6-C' &
+    summary_aspot_bats$DATE >= as.Date('2024-02-24') &
+    summary_aspot_bats$DATE <= as.Date('2024-05-18')] = 'NS16'
 
 # Plot
 unique_stations = summary_detections$station |> unique() |> 
   sort(decreasing = TRUE)
+labels_stations = unique_stations |> 
+  str_remove('-C') |> 
+  str_remove_all('S') |> 
+  str_replace('N', 'NS') |>
+  str_remove('T3-') |> 
+  str_remove('_') |> 
+  str_replace('_', '-') |>
+  vapply(function(st) if(str_detect(st, 'NS')) 
+    sprintf('NS%02d', as.numeric(strsplit(st, 'NS')[[1]][2])) else
+      st, character(1))
 trans_stations = seq_along(unique_stations)
-names(trans_stations) = unique_stations
+names(trans_stations) = 
+  unique_stations[order(labels_stations, decreasing = TRUE)]
+labels_stations = sort(labels_stations, decreasing = TRUE)
 ## create colour gradient
-colfunc = colorRampPalette(c('#FAD7A0', '#0B5345'))
+colfunc = colorRampPalette(c('#EAEDED', '#5F6A6A'))
 cols = colfunc(max(summary$n))
-pdf(sprintf('%s_bøjer.pdf', path_pdf),
-    width = 40, height = 12) # , units = 'in', res = 1000
-par(mar = c(5, 7, 1, 1))
+png(sprintf('%s_bøjer.png', path_png),
+    width = 40, height = 18, units = 'in', res = 800)
+par(mar = c(5, 10, 1, 1), xaxs = 'i', yaxs = 'i')
 ## subset per season and adjust xlims
 if(TRUE){
   sub = summary[which(summary$DATE < as.Date('2024-04-10')),]
@@ -216,7 +291,7 @@ for(st in unique_stations){
     end = sub_meta$recovery.date[i] 
     keep_dates = c(keep_dates, 
                    dates_station[dates_station > start &
-                                   dates_station < (end - 1)] |> 
+                                   dates_station < (end - 2)] |> 
                      as.character())
   } 
   remove_dates = dates_station[!dates_station %in% keep_dates]
@@ -231,13 +306,26 @@ for(st in unique_stations){
   #               my_shape1, col = 'darkred')
 }
 ## create empty plot
+ymin = min(trans_stations) - 0.45
+ymax = max(trans_stations) + 0.45
 plot(sub$DATE,
      trans_stations[sub$station],
-     ylim = c(min(trans_stations) - 0.5, max(trans_stations) + 0.5),
+     ylim = c(ymin, ymax),
      xlim = xlim,
      xaxt = 'n', yaxt = 'n', type = 'n',
-     xlab = 'Dato', ylab = '')
-mtext('Station', 2, 5)
+     xlab = '', ylab = '')
+mtext('Date', 1, 3.5, cex = 2.5)
+mtext('Station', 2, 7.8, cex = 2.5)
+## add shaded area for migration
+polygon(as.Date(c('2023-04-10', '2023-04-10', '2023-05-15','2023-05-15')),
+        c(ymin, ymax, ymax, ymin),
+        col = '#E8DAEF', border = NA)
+polygon(as.Date(c('2023-08-15', '2023-08-15', '2023-10-15','2023-10-15')),
+        c(ymin, ymax, ymax, ymin),
+        col = '#E8DAEF', border = NA)
+polygon(as.Date(c('2024-04-01', '2024-04-01', '2024-04-10','2024-04-10')),
+        c(ymin, ymax, ymax, ymin),
+        col = '#E8DAEF', border = NA)
 ## add filled squares and colour by activity
 for(i in seq_len(nrow(sub))){
   points_custom(sub$DATE[i],
@@ -254,12 +342,14 @@ points(sub_detections$date,
 #        cex = log10(sub_aspot$n)/4 + 0.1)
 points(sub_aspot_bats$DATE,
        trans_stations[sub_aspot_bats$station] - 0.15, pch = 16, 
-       cex = log10(sub_aspot_bats$n)/4 + 0.1, col = '#28B463')
+       cex = 1.5, col = '#D68910')
 ## add axes
 unique_months = unique(format(ymd(sub$DATE), '%Y-%m'))
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
-     labels = paste0(unique_months, '-01'))
-axis(2, trans_stations, names(trans_stations), las = 1)
-dev.off() # close PDF
+     labels = paste0(unique_months, '-01'),
+     cex.axis = 2)
+labels_stations[labels_stations == 'NS26'] = 'T3-NS26'
+axis(2, trans_stations, labels_stations, las = 1, cex.axis = 2)
+dev.off() # close png
 
 
