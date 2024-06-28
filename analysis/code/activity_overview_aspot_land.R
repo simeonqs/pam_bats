@@ -32,6 +32,7 @@ folders = c('/home/au472091/Documents/results_aspot/Ballum',
             '/home/au472091/Documents/results_aspot/Stadiloe')
 
 # Make summary per folder where bats detected
+species = c('M', 'NVE', 'Paur', 'Pnat', 'Ppip', 'Ppyg')
 for(folder in folders){
   detections = load.selection.tables(
     sprintf('%s/selection_tables_species', folder))
