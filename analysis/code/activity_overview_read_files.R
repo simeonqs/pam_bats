@@ -16,7 +16,7 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_data = '/media/au472091/T7 Shield/LAND_winter_23'
+path_data = '/media/au472091/T7 Shield/read_summaries'
 path_summaries = 'analysis/results/activity_overview/summaries'
 
 # List files
@@ -25,6 +25,7 @@ files = list.files(path_data, pattern = '*.txt',
 
 # Run through files and process data
 for(file in files){
+  print(file)
   ## get station 
   station = file |> basename() |> 
     strsplit('_A') |> sapply(`[`, 1) |> 
