@@ -17,8 +17,8 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths and settings
-station = 'Roemoe'
-type = 'classification'
+station = 'Skagen'
+type = 'segmentation'
 
 if(type == 'classification'){
   path_logs = sprintf(
@@ -29,10 +29,10 @@ if(type == 'classification'){
 } 
 if(type == 'segmentation'){
   path_logs = sprintf(
-    '/home/au472091/Documents/results_aspot/%s/predict', station)
+    '/home/au472091/Documents/results_aspot/HRIII/predict', station)
   path_wavs = sprintf(
-    '/media/au472091/T7 Shield/LAND_winter_23/%s_all', station)
-  path_out = '/media/au472091/T7 Shield/missed_land'
+    '/media/au472091/T7 Shield/HRIII_all', station)
+  path_out = '/media/au472091/T7 Shield/HRIII_missed'
 }
 
 # Create directory if not existing
@@ -71,7 +71,7 @@ for(file in files){
   
 } # end files loop
 
-message('Checked all files.')
+message(sprintf('Checked all files for %s.', station))
 
 
 
