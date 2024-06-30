@@ -20,33 +20,50 @@ path_png = 'analysis/results/nightly_activity/nightly_activity_bøjer.png'
 path_data_bats = '/home/au472091/Documents/results_aspot/defenitely_bats'
 path_meta_boejer = 'analysis/data/meta_data_boejer.csv'
 path_trigger = 'analysis/results/activity_overview/summaries_backup/detections'
+path_species_offshore = 'analysis/data/species_offshore.csv'
 
 # Load data
 sun = read.csv(path_sun)
 folders = list.files(path_data_bats, full.names = TRUE)
-folders = folders[str_detect(folders, 'NS')]
+folders = folders[str_detect(folders, 'NS') | str_detect(folders, 'HR3-4')]
+folders = folders[!str_detect(folders, 'NS29')]
 meta = read.csv(path_meta_boejer)
+meta = meta[!is.na(meta$recovery.date),]
+species_offshore = read.csv(path_species_offshore)
 
 # List files with summaries of detections
 files_trigger = list.files(path_trigger, pattern = '*.csv', 
                            recursive = TRUE, full.names = TRUE)
 
+# Fix Signes species names
+species_offshore$sp = species_offshore$art
+species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'rold'),
+                             'Pnat', species_offshore$sp)
+species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'langøre'),
+                             'NVE', species_offshore$sp)
+species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'ENV'),
+                             'NVE', species_offshore$sp)
+species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'dværgflagermus'),
+                             'Ppyg', species_offshore$sp)
+species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'Myo'),
+                             'M', species_offshore$sp)
+
 # Fix station names
-meta$Station.ID = ifelse(meta$Station.ID %in% c('HR3_4', 'HR3-4'), 'HR3-4S-C',
+meta$Station.ID = ifelse(meta$Station.ID %in% c('HR3_4', 'HR3-4'), 'HR3-4',
                          meta$Station.ID)
-meta$Station.ID = ifelse(str_detect(meta$Station.ID, 'H_R3_6'), 'H_R3_6',
+meta$Station.ID = ifelse(str_detect(meta$Station.ID, 'H_R3_6'), 'HR3-6',
                          meta$Station.ID)
-meta$Station.ID = ifelse(meta$Station.ID == 'T3/NS26', 'T3-NS26-C',
+meta$Station.ID = ifelse(meta$Station.ID == 'T3/NS26', 'NS26',
                          meta$Station.ID)
-meta$Station.ID = ifelse(meta$Station.ID == 'NS6', 'NS6-C',
+meta$Station.ID = ifelse(meta$Station.ID == 'NS6S', 'NS6',
                          meta$Station.ID)
-meta$Station.ID = ifelse(meta$Station.ID == 'NS24', 'NS24S',
+meta$Station.ID = ifelse(meta$Station.ID == 'NS24S', 'NS24',
                          meta$Station.ID)
-meta$Station.ID = ifelse(meta$Station.ID == 'NS27', 'NS27S',
+meta$Station.ID = ifelse(meta$Station.ID == 'NS27S', 'NS27',
                          meta$Station.ID)
-meta$Station.ID = ifelse(meta$Station.ID == 'NS28', 'NS28S',
+meta$Station.ID = ifelse(meta$Station.ID == 'NS28S', 'NS28',
                          meta$Station.ID)
-meta$Station.ID = ifelse(meta$Station.ID == 'NS32', 'NS32S',
+meta$Station.ID = ifelse(meta$Station.ID == 'NS32S', 'NS32',
                          meta$Station.ID)
 
 # Translate times and dates
@@ -80,27 +97,33 @@ meta$recovery.date = meta$recovery.date |>
 colours = c(
   '#1f77b4', # A soft blue
   '#2ca02c', # A strong green
-  '#9467bd', # A moderate purple
-  '#F7DC6F', # A soft yellow
-  '#E67E22', # A pastel orange
+  '#FFC107', # A soft yellow
   '#B03A2E'  # A dark red
 )
-species = c('M', 'NVE', 'Paur', 'Pnat', 'Ppip', 'Ppyg')
+species = c('M', 'NVE', 'Pnat', 'Ppyg')
 names(colours) = species
 
 # Open png
-png(path_png, 12, 6, units = 'in', res = 800)
+png(path_png, 12, 8, units = 'in', res = 800)
 layout(matrix(c(1, 1, 1, 2, 2, 2, 3, 3, 3,
                 4, 4, 4, 5, 5, 5, 6, 6, 6,
-                7, 7, 7, 8, 8, 8, 9, 9, 9),
-              byrow = TRUE, nrow = 3, ncol = 9))
-par(mar = rep(0.5, 4), oma = c(3.5, 4, 0.5, 0.5))
+                7, 7, 7, 8, 8, 8, 9, 9, 9,
+                10, 10, 10, 11, 11, 11, 12, 12, 12),
+              byrow = TRUE, nrow = 4, ncol = 9))
+par(mar = rep(0.5, 4), oma = c(3.5, 3.5, 0.5, 0.5))
 
 # Run through stations
-for(folder in folders){
+stations = folders |> basename() |> strsplit('_') |> sapply(`[`, 1) 
+stations_with_leading_0 = stations |>
+  vapply(function(st) if(str_detect(st, 'NS')) 
+    sprintf('NS%02d', as.numeric(strsplit(st, 'NS')[[1]][2])) else
+      st, character(1))
+for(i in order(stations_with_leading_0, decreasing = FALSE)){
   
   # Get detections
-  st = folder |> basename() |> strsplit('_') |> sapply(`[`, 1)
+  folder = folders[i]
+  st = stations[i]
+  st_0 = stations_with_leading_0[i]
   files = list.files(folder, '*wav')
   dates = files |> strsplit('_') |> sapply(`[`, 2) |> 
     as.Date(format = '%Y%m%d')
@@ -125,16 +148,20 @@ for(folder in folders){
   # Skip if no dates left
   if(length(dates) == 0) next
   
+  # Add species(complex)
+  species_station = vapply(str_remove(files, '.wav'), function(x){
+    species_offshore$sp[species_offshore$Fil == x]
+  }, character(1))
+  
   # Make empty plot
   plot(NULL, 
        xlim = as.Date(c('2023-04-10', '2024-04-10')), 
        ylim = c(0, 1440),
        xaxt = 'n', yaxt = 'n', xlab = '', ylab = '')
-  axis.Date(side = 1, at = c(as.Date('2023-05-01'), 
-                             as.Date('2023-08-01'), 
-                             as.Date('2023-11-01'), 
-                             as.Date('2024-02-01')), 
-            labels = rep('', 4))
+  axis.Date(side = 1, at = seq(as.Date('2023-05-01'),
+                               as.Date('2024-04-01'),
+                               by = 'month'), 
+            labels = '')
   
   # Fix dates and times
   rounded_times = format(strptime(times, '%H%M%S'), '%H:%M')
@@ -184,29 +211,32 @@ for(folder in folders){
   
   # Plot points
   points(new_dates, new_times, 
-         pch = 20, col = 'white', cex = 1)
+         pch = 20, col = colours[species_station], cex = 1)
   
   # Add info plot
-  text(as.Date('2023-04-15'), 0.93*1440, st, font = 2, adj = 0, cex = 1.5)
-  if(st %in% c('NS19', 'NS30', 'NS33')){
+  text(as.Date('2023-04-15'), 0.93*1440, st_0, font = 2, adj = 0, cex = 1.5)
+  if(st %in% c('HR3-4', 'NS25', 'NS30', 'NS34')){
     axis(2, at = 60*c(2, 10, 18), c('14:00', '20:00', '06:00'), cex.axis = 1.4)
     mtext('Time (UTC)', 2, 2.8, cex = 1)
   }
   if(st %in% c('NS35', 'NS33', 'NS34')){
-    axis.Date(side = 1, at = c(as.Date('2023-05-01'), 
-                               as.Date('2023-08-01'), 
-                               as.Date('2023-11-01'), 
-                               as.Date('2024-02-01')),
+    axis.Date(side = 1, at = seq(as.Date('2023-05-01'),
+                                 as.Date('2024-04-01'),
+                                 by = 'month'),
               cex.axis = 1.4,
-              labels = c('May', 'Aug', 'Nov', 'Feb'), format='%b')    
+              labels = c('M', 'J', 'J', 'A',
+                         'S', 'O', 'N', 'D', 'J',
+                         'F', 'M', 'A'), format='%b')    
     mtext('Month', 1, 2.8, cex = 1)
   }
   
 } # end file loop
 
-# # Print legend
-# plot.new()
-# legend('bottomright', legend = species, col = colours, pch = 16)
+# Print legend
+plot.new()
+legend('bottomright', legend = species |> str_replace('NVE', 'ENV'), 
+       col = colours, pch = 16,
+       cex = 1.5)
 
 # Close png
 dev.off()
