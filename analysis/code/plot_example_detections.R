@@ -21,15 +21,11 @@ path_detections = sprintf(
 path_audio = sprintf('%s/NS33_20230827_233738.wav', folder)
 path_ground_truth = paste0('aspot/test_data_sets/boeje_test_data/',
                            'txt/NS33_20230827_233738.Table.1.selections.txt')
-
-path_detections = '/home/au472091/Documents/results_aspot/defenitely_bats/fall/T3-NS26_A_Fall2023_Recovered/T3-NS26C_20230906_213232_predict_output.log.annotation.result.txt'
-path_audio = '/home/au472091/Documents/results_aspot/defenitely_bats/fall/T3-NS26_A_Fall2023_Recovered/T3-NS26C_20230906_213232.wav'
-
 path_out = '~/Desktop/test.pdf'
 
 # Settings
-from = 8
-to = 8.5
+from = 6.5
+to = 7
 
 # Load audio
 wave = readWave(path_audio, from = from, to = to, units = 'seconds')
