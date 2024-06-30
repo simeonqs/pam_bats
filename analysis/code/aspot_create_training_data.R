@@ -16,8 +16,8 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Settings
-data_set = 21
-n_aug_noise = 1200
+data_set = 25
+n_aug_noise = 1000
 # bandpass = c(1000, 95000)
 # resample_rate = 192000
 
@@ -28,7 +28,12 @@ for(type in c('target', 'noise')){
   path_selections = sprintf('analysis/data/aspot_selections/%s', type)
   path_wavs = 'analysis/data'
   path_results = sprintf('aspot/data_sets/data_%s/data', data_set)
+  path_aug = sprintf('aspot/data_sets/data_%s/aug_data', data_set)
   
+  # Creates paths
+  if(!dir.exists(sprintf('%s/%s', path_results, type))) 
+    dir.create(sprintf('%s/%s', path_results, type), recursive = TRUE)
+
   # List files
   audio_files = c(list.files(path_wavs,  '*wav', full.names = TRUE, 
                              recursive = TRUE), 
@@ -108,6 +113,7 @@ for(type in c('target', 'noise')){
 } # end type loop
 
 # Move some noise to aug data
+if(!dir.exists(path_aug)) dir.create(path_aug)
 files = sprintf('%s/noise', path_results) |>
   list.files(full.names = TRUE) |>
   sample(n_aug_noise) 
