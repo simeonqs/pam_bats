@@ -16,26 +16,31 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths
-path_wavs = '/home/au472091/Documents/large_data/test_2'
-path_pdf = '/home/au472091/Desktop/test.pdf'
+path_wavs = '/media/au472091/Samsung_T5/long_term_noise'
+path_spec_files = 'analysis/results/longterm_spectrograms/spec_files'
+path_pdf = 
+  'analysis/results/longterm_spectrograms/longterm_spectrogram_noise.pdf'
 
 # List files
 files = list.files(path_wavs, full.names = TRUE)
+file_backup = files[1]
 
 # Settings 
 window_length = 512
 
 # Function to load wave and create average spectrum 
-create.spec = function(file){
+create.spec = function(file, path_out){
   wave = readWave(file)
   duration = wave@left |> length()
   start = sample(duration - window_length, 1)
   wave = wave[start:(start+window_length*3)]
-  wave = ffilter(wave, wl = window_length,
-                 from = 5000, to = 100000, output = 'Wave')
+  # wave = ffilter(wave, wl = window_length,
+  #                from = 5000, to = 100000, output = 'Wave')
   wave = wave[window_length:(window_length+window_length)]
   spectrum = log(spec(wave, plot = FALSE, norm = FALSE)[,2])
-  return(spectrum)
+  save(spectrum, file = sprintf('%s/%s.RData',
+                                path_spec_files,
+                                str_remove(basename(file), '.wav')))
 }
 
 # Get dates and keep one file per hour
@@ -45,8 +50,18 @@ keep = !duplicated(dts)
 files = files[keep]
 dts = dts[keep]
 
-# Create spectra
-spectra = files |> vapply(create.spec, numeric(256))
+# Run for all that have not yet been done
+files_done = list.files(path_spec_files, full.names = TRUE)
+files = files[!str_remove(basename(files), '.wav') %in%
+                str_remove(basename(files_done), '.RData')]
+files |> lapply(create.spec, path_out = path_spec_files)
+
+# Load results
+files_results = list.files(path_spec_files, full.names = TRUE)
+spectra = vapply(files_results, function(f){
+  load(f) 
+  return(spectrum)
+}, numeric(256))
 
 # Add empty spectra for missing minutes
 new_spectra = spectra[,1]
@@ -75,12 +90,12 @@ for(i in seq_along(dts)[-1]){
 
 # Create long-term spectrogram
 pdf(path_pdf, 12, 3)
-wave = readWave(files[1])
+wave = readWave(file_backup[1])
 s = spec(wave[1:(1+window_length)], plot = FALSE)
 imagep(t(new_spectra[1:180,]), drawPalette = FALSE, axes = FALSE, 
        decimate = FALSE, mar = c(4, 4, 1, 3))
 dates = as.Date(new_dts)
-index = seq(1, length(new_dts), length.out = 5)
+index = seq(1, length(new_dts), length.out = 4)
 axis(1, index, dates[index])
 index = seq(1, 180, 50)
 axis(2, index, round(s[index,1]))
