@@ -19,7 +19,7 @@ subset_land = FALSE
 
 # Paths 
 model = 'm54'
-path_gt = 'analysis/results/test_data/ground_truth_selection_tables'
+path_gt = 'analysis/results/test_data/ground_truth_selection_tables_species'
 path_d = sprintf('aspot/models/%s/selection_tables', model)
 path_performance = sprintf('aspot/models/%s/performance/', model)
 
