@@ -17,8 +17,9 @@ rm(list=ls())
 # Paths 
 path_summaries = 'analysis/results/activity_overview/summaries/summaries'
 path_detections = 'analysis/results/activity_overview/summaries/detections'
+path_species_overview = 'analysis/results/species_overview'
 # path_aspot = 'analysis/results/activity_overview/summaries/aspot'
-path_aspot_bats = 'analysis/results/activity_overview/summaries/aspot_bats'
+# path_aspot_bats = 'analysis/results/activity_overview/summaries/aspot_bats'
 path_png = 'analysis/results/activity_overview/activity_overview_'
 
 # Plotting function
@@ -61,12 +62,15 @@ files_detections = files_detections[!str_detect(files_detections, 'NS') &
 #                             !str_detect(files_aspot, 'HR') &
 #                             # !str_detect(files_aspot, 'TWJ') &
 #                             !str_detect(files_aspot, 'togter')]
-files_aspot_bats = list.files(path_aspot_bats, pattern = '*.csv', 
-                              recursive = TRUE, full.names = TRUE)
-files_aspot_bats = files_aspot_bats[!str_detect(files_aspot_bats, 'NS') & 
-                                      !str_detect(files_aspot_bats, 'HR') &
-                                      # !str_detect(files_aspot_bats, 'TWJ') &
-                                      !str_detect(files_aspot_bats, 'togter')]
+# files_aspot_bats = list.files(path_aspot_bats, pattern = '*.csv', 
+#                               recursive = TRUE, full.names = TRUE)
+# files_aspot_bats = 
+#   files_aspot_bats[!str_detect(files_aspot_bats, 'NS') & 
+#                      !str_detect(files_aspot_bats, 'HR') &
+#                      # !str_detect(files_aspot_bats, 'TWJ') &
+#                      !str_detect(files_aspot_bats, 'togter')]
+files_species = list.files(path_species_overview, '*csv', full.names = TRUE)
+
 # Read all files
 summary = files_summaries |>
   lapply(read.csv) |> bind_rows()
@@ -74,8 +78,8 @@ summary_detections = files_detections |>
   lapply(read.csv) |> bind_rows()
 # summary_aspot = files_aspot |>
 #   lapply(read.csv) |> bind_rows()
-summary_aspot_bats = files_aspot_bats |>
-  lapply(read.csv) |> bind_rows()
+# summary_aspot_bats = files_aspot_bats |>
+#   lapply(read.csv) |> bind_rows()
 
 # Fix station names
 summary$station = ifelse(summary$station == 'KAMMER', 'KAMMERSLUSEN', 
@@ -240,24 +244,50 @@ summary_detections$station =
 #   ifelse(summary_aspot$station == 'FANO', 'FANØ', 
 #          summary_aspot$station) 
 
-summary_aspot_bats$station = summary_aspot_bats$station |>
-  toupper() |> 
-  str_remove('LAND-')
-summary_aspot_bats$station = 
-  ifelse(summary_aspot_bats$station == 'BLAAVAND', 'BLÅVAND', 
-         summary_aspot_bats$station) 
-summary_aspot_bats$station = 
-  ifelse(summary_aspot_bats$station == 'FANOE', 'FANØ', 
-         summary_aspot_bats$station) 
-summary_aspot_bats$station = 
-  ifelse(summary_aspot_bats$station == 'MANDOE', 'MANDØ', 
-         summary_aspot_bats$station) 
-summary_aspot_bats$station = 
-  ifelse(summary_aspot_bats$station == 'ROEMOE', 'RØMØ', 
-         summary_aspot_bats$station) 
-summary_aspot_bats$station = 
-  ifelse(summary_aspot_bats$station == 'STADILOE', 'STADILØ', 
-         summary_aspot_bats$station) 
+# summary_aspot_bats$station = summary_aspot_bats$station |>
+#   toupper() |> 
+#   str_remove('LAND-')
+# summary_aspot_bats$station = 
+#   ifelse(summary_aspot_bats$station == 'BLAAVAND', 'BLÅVAND', 
+#          summary_aspot_bats$station) 
+# summary_aspot_bats$station = 
+#   ifelse(summary_aspot_bats$station == 'FANOE', 'FANØ', 
+#          summary_aspot_bats$station) 
+# summary_aspot_bats$station = 
+#   ifelse(summary_aspot_bats$station == 'MANDOE', 'MANDØ', 
+#          summary_aspot_bats$station) 
+# summary_aspot_bats$station = 
+#   ifelse(summary_aspot_bats$station == 'ROEMOE', 'RØMØ', 
+#          summary_aspot_bats$station) 
+# summary_aspot_bats$station = 
+#   ifelse(summary_aspot_bats$station == 'STADILOE', 'STADILØ', 
+#          summary_aspot_bats$station) 
+
+species_dat = files_species |> lapply(read.csv) |> bind_rows(.id = 'station')
+species_dat = species_dat[species_dat$n_detections >= 5,]
+split = species_dat$file |> strsplit('_')
+species_dat$date = sapply(split, function(x) x[length(x)-1]) |> 
+  as.Date(format = '%Y%m%d')
+species_dat$station = 
+  files_species[as.numeric(species_dat$station)] |> basename() |> 
+  strsplit('_') |> sapply(`[`, 1) |> str_remove('.csv') |> toupper()
+species_dat = unique(species_dat[c('date', 'station')])
+
+species_dat$station =
+  ifelse(species_dat$station == 'STADILOE', 'STADILØ',
+         species_dat$station)
+species_dat$station =
+  ifelse(species_dat$station == 'BLAAVAND', 'BLÅVAND',
+         species_dat$station)
+species_dat$station =
+  ifelse(species_dat$station == 'FANOE', 'FANØ',
+         species_dat$station)
+species_dat$station =
+  ifelse(species_dat$station == 'MANDOE', 'MANDØ',
+         species_dat$station)
+species_dat$station =
+  ifelse(species_dat$station == 'ROEMOE', 'RØMØ',
+         species_dat$station)
 
 # Plot
 unique_stations = summary_detections$station |> unique() |> 
@@ -282,9 +312,10 @@ if(TRUE){
   # sub_aspot = 
   #   summary_aspot[which(as.Date(summary_aspot$DATE) < 
   #                         as.Date('2024-04-10')),]
-  sub_aspot_bats = 
-    summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) < 
-                               as.Date('2024-04-10')),]
+  # sub_aspot_bats = 
+  #   summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) < 
+  #                              as.Date('2024-04-10')),]
+  sub_species_dat = species_dat[species_dat$date < as.Date('2024-04-10'),]
   xlim = as.Date(c('2023-04-10', '2024-04-10'))
 } else {
   sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') >= 
@@ -296,18 +327,18 @@ if(TRUE){
   # sub_aspot = 
   #   summary_aspot[which(as.Date(summary_aspot$DATE) >= 
   #                         as.Date('2023-12-31')),]
-  sub_aspot_bats = 
-    summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) >= 
-                               as.Date('2023-12-31')),]
+  # sub_aspot_bats = 
+  #   summary_aspot_bats[which(as.Date(summary_aspot_bats$DATE) >= 
+  #                              as.Date('2023-12-31')),]
   xlim = as.Date(c('2024-01-01', '2024-12-31'))
 }
 ## remove two points from Mandø
 sub_detections = 
   sub_detections[!(sub_detections$station == 'MANDØ' & 
                      sub_detections$DATE < as.Date('2023-05-01')),]
-sub_aspot_bats = 
-  sub_detections[!(sub_aspot_bats$station == 'MANDØ' & 
-                     sub_aspot_bats$DATE < as.Date('2023-05-01')),]
+# sub_aspot_bats = 
+#   sub_detections[!(sub_aspot_bats$station == 'MANDØ' & 
+#                      sub_aspot_bats$DATE < as.Date('2023-05-01')),]
 ## create empty plot
 ymin = min(trans_stations) - 0.45
 ymax = max(trans_stations) + 0.45
@@ -343,8 +374,8 @@ points(as.Date(sub_detections$DATE, format = '%Y-%m-%d'),
 # points(as.Date(sub_aspot$DATE),
 #        trans_stations[sub_aspot$station] - 0.15, pch = 16, 
 #        cex = log10(sub_aspot$n)/4 + 0.1)
-points(as.Date(sub_aspot_bats$DATE),
-       trans_stations[sub_aspot_bats$station] - 0.15, pch = 16, 
+points(as.Date(sub_species_dat$date),
+       trans_stations[sub_species_dat$station] - 0.15, pch = 16, 
        cex = 1.1, col = '#D68910')
 ## add axes
 unique_months = unique(format(ymd(sub$DATE), '%Y-%m'))
