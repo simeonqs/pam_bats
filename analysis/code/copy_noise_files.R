@@ -18,7 +18,7 @@ rm(list=ls())
 # Paths
 path_predictions = '/home/au472091/Desktop/selection_tables'
 path_wavs = 
-  '/home/au472091/Documents/large_data/additional_noise_land_to_predict_copy'
+  '/home/au472091/Documents/large_data/noise_land_3_copy'
 path_out = '/home/au472091/Desktop'
 
 # List files
@@ -27,7 +27,7 @@ file_infos = file.info(files)
 sizes = file_infos$size
 
 # Copy wavs to desktop
-n = 251
+n = 201
 to_copy = files[order(sizes, decreasing = TRUE)][n:(n+50)]
 wav_names = to_copy |> basename() |> 
   str_remove('_predict_output.log.annotation.result.txt')
