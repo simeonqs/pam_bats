@@ -18,7 +18,7 @@ rm(list=ls())
 path_species_overview = 'analysis/results/species_overview'
 path_sun = 'analysis/data/sunrise_sunset_west_coast_DK.csv'
 path_trigger = 'analysis/results/activity_overview/summaries/detections'
-path_pdf = 'analysis/results/nightly_activity/nightly_activity'
+path_png = 'analysis/results/nightly_activity/nightly_activity'
 
 # Load data
 sun = read.csv(path_sun)
@@ -64,8 +64,8 @@ names(colours) = species
 # Run through species
 for(sp in species){
   
-  # Open PDF
-  pdf(sprintf('%s_%s.pdf', path_pdf, sp), 12, 7)
+  # Open png
+  png(sprintf('%s_%s.png', path_png, sp), 12, 7, units = 'in', res = 800)
   layout(matrix(c(1, 1, 1, 2, 2, 2, 3, 3, 3,
                   4, 4, 4, 5, 5, 5, 6, 6, 6,
                   7, 7, 7, 8, 8, 8, 9, 9, 9,
@@ -81,15 +81,14 @@ for(sp in species){
          xlim = as.Date(c('2023-04-10', '2024-04-10')), 
          ylim = c(0, 1440),
          xaxt = 'n', yaxt = 'n', xlab = '', ylab = '')
-    axis.Date(side = 1, at = c(as.Date('2023-05-01'), 
-                               as.Date('2023-08-01'), 
-                               as.Date('2023-11-01'), 
-                               as.Date('2024-02-01')), 
-              labels = rep('', 4))
+    axis.Date(side = 1, at = seq(as.Date('2023-05-01'),
+                                 as.Date('2024-04-01'),
+                                 by = 'month'), 
+              labels = '')
     
     # Load data
     dat = read.csv(file)
-    dat = dat[which(dat$n_detections > 5),]
+    dat = dat[which(dat$n_detections >= 5),]
     dat = dat[dat$species == sp,]
     
     # Fix TWJ
@@ -166,23 +165,27 @@ for(sp in species){
            pch = 20, col = colours[dat$species], cex = 0.1)
     
     # Add info plot
-    text(as.Date('2023-04-15'), 0.93*1440, station, font = 2, adj = 0)
+    text(as.Date('2023-04-15'), 0.93*1440, station, 
+         font = 2, adj = 0, cex = 1.5)
     if(station %in% c('Ballum', 'Husby', 'Nyminde', 'Skjern')){
-      axis(2, at = 60*c(0, 6, 12, 18), c('12:00', '18:00', '24:00', '06:00'))
-      mtext('Time [hh:mm UTC]', 2, 2.5, cex = 0.75)
+      axis(2, at = 60*c(2, 10, 18), c('14:00', '20:00', '06:00'), 
+           cex.axis = 1.4)
+      mtext('Time (UTC)', 2, 2.8, cex = 1)
     }
     if(station %in% c('Roemoe', 'Skjern', 'Stadiloe')){
-      axis.Date(side = 1, at = c(as.Date('2023-05-01'), 
-                                 as.Date('2023-08-01'), 
-                                 as.Date('2023-11-01'), 
-                                 as.Date('2024-02-01')), 
-                labels = c('May', 'Aug', 'Nov', 'Feb'), format='%b')    
-      mtext('Month', 1, 2.5, cex = 0.75)
+      axis.Date(side = 1, at = seq(as.Date('2023-05-01'),
+                                   as.Date('2024-04-01'),
+                                   by = 'month'),
+                cex.axis = 1.4,
+                labels = c('M', 'J', 'J', 'A',
+                           'S', 'O', 'N', 'D', 'J',
+                           'F', 'M', 'A'), format='%b')    
+      mtext('Month', 1, 2.8, cex = 1)
     }
     
   } # end file loop
   
-  # Close PDF
+  # Close png
   dev.off()
   
 } # end sp loop
