@@ -223,5 +223,9 @@ mtext(rownames(conf_matrix), side = 2, at = seq_along(levels), las = 2,
 mtext(colnames(conf_matrix), side = 1, at = seq_along(levels), line = 0.75)
 dev.off()
 
+# Stats
+confusionMatrix(factor(class_results$d, levels = levels), 
+                factor(class_results$g, levels = levels))
+
 # Message
 message('Stored all results.')
