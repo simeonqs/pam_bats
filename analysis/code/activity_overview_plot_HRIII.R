@@ -20,7 +20,8 @@ path_summaries = 'analysis/results/activity_overview/summaries/summaries'
 path_detections = 'analysis/results/activity_overview/summaries/detections'
 # path_aspot = 'analysis/results/activity_overview/summaries/aspot'
 path_aspot_bats = 'analysis/results/activity_overview/summaries/aspot_bats'
-path_pdf = 'analysis/results/activity_overview'
+path_meta_HRIII = 'analysis/data/meta_data_HRIII.csv'
+path_png = 'analysis/results/activity_overview'
 
 # Plotting function
 points_custom <- function(x, y, shape, col = 'black', cex = 1, ...) {
@@ -51,7 +52,7 @@ files_summaries = files_summaries[!str_detect(files_summaries, 'HR3-4S')]
 files_detections = list.files(path_detections, pattern = '*.csv', 
                               recursive = TRUE, full.names = TRUE)
 files_detections = files_detections[str_detect(files_detections, 'HR')]
-files_detections = files_detections[!str_detect(files_detections, 'HR3-4S')]
+files_detections = files_detections[!str_detect(files_detections, 'HR3-4')]
 # files_aspot = list.files(path_aspot, pattern = '*.csv', 
 #                          recursive = TRUE, full.names = TRUE)
 # files_aspot = files_aspot[str_detect(files_aspot, 'HR')]
@@ -59,7 +60,6 @@ files_detections = files_detections[!str_detect(files_detections, 'HR3-4S')]
 files_aspot_bats = list.files(path_aspot_bats, pattern = '*.csv', 
                               recursive = TRUE, full.names = TRUE)
 files_aspot_bats = files_aspot_bats[str_detect(files_aspot_bats, 'HR')]
-files_aspot_bats = files_aspot_bats[!str_detect(files_aspot_bats, 'HR3-4S-C')]
 
 # Read all files
 summary = files_summaries |>
@@ -109,21 +109,64 @@ summary_detections$station = str_remove(summary_detections$station, 'C-')
 summary_aspot_bats$station = 
   ifelse(summary_aspot_bats$station == 'HR3-Z', 'C03', 
          summary_aspot_bats$station)
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'HR3-Y', 'E05', 
+         summary_aspot_bats$station)
+summary_aspot_bats$station = 
+  ifelse(summary_aspot_bats$station == 'HR3-X', 'A02', 
+         summary_aspot_bats$station)
 summary_aspot_bats$station = str_remove(summary_aspot_bats$station, 'HR-')
 summary_aspot_bats$station = str_remove(summary_aspot_bats$station, 'A-')
 summary_aspot_bats$station = str_remove(summary_aspot_bats$station, 'B-')
 
-# Plot
+# Make proper date columns
+summary$DATE = as.Date(summary$DATE, format = '%Y-%b-%d')
+summary_detections$DATE = as.Date(summary_detections$DATE, 
+                                  format = '%Y-%m-%d')
+summary_aspot_bats$DATE = as.Date(summary_aspot_bats$DATE)
+
+# Remove on-shore detections
 unique_stations = summary_detections$station |> unique() |> 
   sort(decreasing = TRUE)
+unique_stations = unique_stations[unique_stations != 'B01']
 trans_stations = seq_along(unique_stations)
 names(trans_stations) = unique_stations
+meta_HRIII = read.csv(path_meta_HRIII)
+meta_HRIII$Deployment.service.date = meta_HRIII$Deployment.service.date |> 
+  as.character() |>
+  as.Date(format = '%m/%d/%Y')
+meta_HRIII$Recovery.date = meta_HRIII$Recovery.date |> 
+  as.character() |>
+  as.Date(format = '%m/%d/%Y')
+for(st in unique_stations){
+  sub_meta = meta_HRIII[meta_HRIII$WT.ID == st,]
+  dates_station = c(summary$DATE, summary_detections$DATE)
+  keep_dates = c()
+  for(i in seq_len(nrow(sub_meta))){
+    start = sub_meta$Deployment.service.date[i]
+    end = sub_meta$Recovery.date[i] 
+    keep_dates = c(keep_dates, 
+                   dates_station[dates_station > start &
+                                   dates_station < (end - 2)] |> 
+                     as.character())
+  } 
+  remove_dates = dates_station[!dates_station %in% keep_dates]
+  summary = summary[!(summary$station == st & summary$DATE %in% remove_dates),]
+  summary_detections = 
+    summary_detections[!(summary_detections$station == st & 
+                           summary_detections$DATE %in% remove_dates),]
+  summary_aspot_bats = 
+    summary_aspot_bats[!(summary_aspot_bats$station == st & 
+                           summary_aspot_bats$DATE %in% remove_dates),]
+}
+
+# Plot
 ## create colour gradient
-colfunc = colorRampPalette(c('#FAD7A0', '#0B5345'))
+colfunc = colorRampPalette(c('#EAEDED', '#5F6A6A'))
 cols = colfunc(max(summary$n))
-pdf(sprintf('%s/activity_overview_HRIII.pdf', path_pdf),
-    width = 40, height = 8) # , units = 'in', res = 1000
-par(mar = c(5, 12, 1, 1))
+png(sprintf('%s/activity_overview_HRIII.png', path_png),
+    width = 40, height = 9.5, units = 'in', res = 800)
+par(mar = c(5, 8, 1, 1), xaxs = 'i', yaxs = 'i')
 ## subset per season and adjust xlims
 if(TRUE){
   sub = summary[which(as.Date(summary$DATE, format = '%Y-%b-%d') <
@@ -155,13 +198,26 @@ if(TRUE){
   xlim = as.Date(c('2023-07-30', '2023-11-15'))
 }
 ## create empty plot
+ymin = min(trans_stations) - 0.45
+ymax = max(trans_stations) + 0.45
 plot(as.Date(sub$DATE, format = '%Y-%b-%d'),
      trans_stations[sub$station],
-     ylim = c(min(trans_stations) - 0.5, max(trans_stations) + 0.5),
+     ylim = c(ymin, ymax),
      xlim = xlim,
      xaxt = 'n', yaxt = 'n', type = 'n',
-     xlab = 'Dato', ylab = '')
-mtext('Station', 2, 5)
+     xlab = '', ylab = '')
+mtext('Date', 1, 3.5, cex = 2.5)
+mtext('Station', 2, 5.5, cex = 2.5)
+## add shaded area for migration
+polygon(as.Date(c('2023-04-10', '2023-04-10', '2023-05-15','2023-05-15')),
+        c(ymin, ymax, ymax, ymin),
+        col = '#E8DAEF', border = NA)
+polygon(as.Date(c('2023-08-15', '2023-08-15', '2023-10-15','2023-10-15')),
+        c(ymin, ymax, ymax, ymin),
+        col = '#E8DAEF', border = NA)
+polygon(as.Date(c('2024-04-01', '2024-04-01', '2024-04-10','2024-04-10')),
+        c(ymin, ymax, ymax, ymin),
+        col = '#E8DAEF', border = NA)
 ## add filled squares and colour by activity
 for(i in seq_len(nrow(sub))){
   points_custom(as.Date(sub$DATE[i], format = '%Y-%b-%d'),
@@ -178,16 +234,15 @@ points(as.Date(sub_detections$DATE, format = '%Y-%m-%d'),
 #        cex = log10(sub_aspot$n)/4 + 0.1)
 points(as.Date(sub_aspot_bats$DATE),
        trans_stations[sub_aspot_bats$station] - 0.15, pch = 16, 
-       cex = log10(sub_aspot_bats$n)/4 + 0.1, col = '#28B463')
+       cex = 1.1, col = '#D68910')
 ## add axes
 unique_months = unique(format(ymd(sub$DATE), '%Y-%m'))
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
-     labels = paste0(unique_months, '-01'), las = 1)
+     labels = paste0(unique_months, '-01'), las = 1,
+     cex.axis = 2)
 # axis(1, at = as.Date(paste0(unique_months, '-10')), 
 #      labels = paste0(unique_months, '-10'), las = 0)
 # axis(1, at = as.Date(paste0(unique_months, '-20')), 
 #      labels = paste0(unique_months, '-20'), las = 0.5)
-axis(2, trans_stations, names(trans_stations), las = 1)
-dev.off() # close PDF
-
-
+axis(2, trans_stations, names(trans_stations), las = 1, cex.axis = 2)
+dev.off() # close png
