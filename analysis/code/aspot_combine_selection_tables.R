@@ -3,6 +3,7 @@
 # Author: Simeon Q. Smeele
 # Description: Combines selection tables from segmentation and classification.
 # Also creates an overview with species per 3-5 seconds chunks. 
+# source('analysis/code/aspot_combine_selection_tables.R')
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Loading libraries
@@ -16,7 +17,7 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-station = 'Husby'
+station = 'Stadiloe'
 path_segmentation = sprintf(
   '/home/au472091/Documents/results_aspot/%s/selection_tables', station)
 path_logs_segmentation = sprintf(
