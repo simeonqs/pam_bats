@@ -6,7 +6,7 @@
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Loading libraries
-libraries = c('stringr', 'callsync', 'caret')
+libraries = c('stringr', 'callsync', 'caret', 'tuneR')
 for(lib in libraries){
   if(! lib %in% installed.packages()) lapply(lib, install.packages)
   lapply(libraries, require, character.only = TRUE)
@@ -16,7 +16,7 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-model_1 = 52
+model_1 = 59
 model_2 = 45
 path_segmentation = sprintf('aspot/models/m%s/selection_tables', model_1)
 path_classifiction = sprintf('aspot/models_s/m%s/selection_tables', model_2)
@@ -26,7 +26,7 @@ path_combined_selection_tables =
 path_grount_truth = 
   'analysis/results/test_data/ground_truth_selection_tables_species'
 path_pdf = sprintf(
-  'analysis/results/confusion_matrix_species_model_m%s+m%s_per_chunk.pdf',
+  'analysis/results/confusion_matrices/confusion_matrix_species_model_m%s+m%s_per_chunk.pdf',
   model_1, model_2)
 path_audio = 'aspot/test_data_sets/test_data'
 
