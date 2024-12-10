@@ -1,0 +1,21 @@
+
+batdetect2 detect /home/au472091/OneDrive/au/projects/aspot_bats/analysis/data/call_detector/validation_data/audio/denmark /home/au472091/OneDrive/au/projects/aspot_bats/batdetect2/detections 0.4
+
+
+
+
+# Store the time before running the script
+start_time=$(date +%s.%N)
+
+# Run the script
+batdetect2 detect /home/au472091/OneDrive/au/projects/aspot_bats/analysis/data/call_detector/validation_data/audio/denmark /home/au472091/OneDrive/au/projects/aspot_bats/batdetect2/detections 0.3
+
+# Store the time after running the script
+end_time=$(date +%s.%N)
+
+# Calculate and print the time difference
+elapsed_time=$(echo "$end_time - $start_time" | bc)
+echo "Time taken: $elapsed_time seconds"
+
+
+# Time taken: 41.035301834 seconds
