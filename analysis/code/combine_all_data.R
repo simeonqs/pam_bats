@@ -30,7 +30,8 @@ rm(list=ls())
 
 # Paths 
 path_results = '/home/au472091/Documents/new_results_aspot'
-path_detections_bats = '/home/au472091/Documents/results_aspot/defenitely_bats'
+path_detections_bats = 
+  '/home/au472091/Documents/new_results_aspot/defenitely_bats'
 path_meta_togter = 'analysis/data/meta_data_bird_surveys.csv'
 path_meta_boejer = 'analysis/data/meta_data_boejer.csv'
 path_meta_HRIII = 'analysis/data/meta_data_HRIII.csv'
@@ -85,11 +86,11 @@ meta_togter$end = paste(meta_togter$end_date,
 
 ## boejer
 meta_boejer = read.csv(path_meta_boejer)
-meta_boejer = meta_boejer[!is.na(meta_boejer$recovery.date),]
-meta_boejer$Deployment..Service.date = meta_boejer$Deployment..Service.date |> 
+meta_boejer = meta_boejer[!is.na(meta_boejer$Recovery.date),]
+meta_boejer$Deployment.date = meta_boejer$Deployment.date |> 
   as.character() |>
   as.Date(format = '%Y%m%d')
-meta_boejer$recovery.date = meta_boejer$recovery.date |> 
+meta_boejer$Recovery.date = meta_boejer$Recovery.date |> 
   as.character() |>
   as.Date(format = '%Y%m%d')
 
@@ -404,8 +405,8 @@ for(st in unique(dat$station[dat$type_location == 'boejer'])){
     unique() |> sort()
   offshore_dates = c()
   for(i in seq_len(nrow(sub_meta))){
-    start = sub_meta$Deployment..Service.date[i]
-    end = sub_meta$recovery.date[i] 
+    start = sub_meta$Deployment.date[i]
+    end = sub_meta$Recovery.date[i] 
     offshore_dates = c(offshore_dates, 
                        dates_station[dates_station > start + 1 &
                                        dates_station < (end - 3)] |> 
@@ -446,8 +447,8 @@ for(st in unique(meta_boejer$Station.ID)){
     unique() |> sort()
   all_dates = c()
   for(i in seq_len(nrow(sub_meta))){
-    start = sub_meta$Deployment..Service.date[i] + 1
-    end = sub_meta$recovery.date[i] - 2
+    start = sub_meta$Deployment.date[i] + 1
+    end = sub_meta$Recovery.date[i] - 2
     if(end < start) stop('End smaller than start!')
     all_dates = seq(start, end, by = 'day')
     triggers_station = dat[dat$station == st,]
