@@ -16,26 +16,51 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-model_1 = 52
-model_2 = 45
-path_segmentation = sprintf('aspot/models/m%s/selection_tables', model_1)
-path_classifiction = sprintf('aspot/models_s/m%s/selection_tables', model_2)
-path_logs = sprintf('aspot/models_s/m%s/predict', model_2)
-path_combined_selection_tables = 
-  sprintf('aspot/models_s/m%s/combined_selection_tables', model_2)
-path_grount_truth = 
+path_aspot = 'aspot/models_s/m45/combined_selection_tables'
+path_ground_truth = 
   'analysis/results/test_data/ground_truth_selection_tables_species'
-path_pdf = sprintf(
-  'analysis/results/confusion_matrices/conf_mat_m%s+m%s_land.pdf',
-  model_1, model_2)
-path_txt = sprintf(
-  'analysis/results/confusion_matrices/conf_mat_m%s+m%s_land.txt',
-  model_1, model_2)
+path_pdf = 'analysis/results/confusion_matrices/conf_mat_m59+m45_OFFSHORE.pdf'
 
-# List files
-seg_files = list.files(path_segmentation, '*txt', full.names = TRUE)
-class_files = list.files(path_classifiction, '*txt', full.names = TRUE)
-log_files = list.files(path_logs, full.names = TRUE)
+# Load data
+detection_files = list.files(path_aspot, full.names = TRUE)
+aspot = load.selection.tables(path_aspot)
+manual = load.selection.tables(path_ground_truth, recursive = TRUE)
+rownames(manual) = seq_len(nrow(manual))
+
+# Subset
+# aspot = aspot[!str_detect(aspot$file, 'NS') &
+#                 !str_detect(aspot$file, 'HR') &
+#                 !str_detect(aspot$file, 'ONBOARD'),]
+# manual = manual[!str_detect(manual$file, 'NS') &
+#                   !str_detect(manual$file, 'HR') &
+#                   !str_detect(manual$file, 'ONBOARD'),]
+aspot = aspot[str_detect(aspot$file, 'NS') |
+                str_detect(aspot$file, 'HR') |
+                str_detect(aspot$file, 'ONBOARD'),]
+manual = manual[str_detect(manual$file, 'NS') |
+                  str_detect(manual$file, 'HR') |
+                  str_detect(manual$file, 'ONBOARD'),]
+
+# Test if all files in are in the manual data frame
+files_gt = list.files(path_ground_truth, recursive = TRUE) |> 
+  basename() |> 
+  str_remove('.Table.1.selections.txt') |>
+  str_remove('.Band.Limited.Energy.Detector.selections.txt')
+files_as = detection_files |> 
+  basename() |> 
+  str_remove('_predict_output.log.annotation.result.txt')
+if(any(!files_as %in% files_gt)) stop('Missing ground truth.')
+if(any(!files_gt %in% files_as)) stop('Missing detections.')
+
+# Translate classes from manual
+manual$Annotation[manual$Annotation %in% c('Mdau', 'Mdas', 'Mnat', 'm')] = 'M'
+manual$Annotation[manual$Annotation %in% c('EVN', 'Nnoc', 'Vmur', 'Eser')] = 
+  'NVE'
+manual$Annotation[manual$Annotation %in% c('b', 'a')] = 'B'
+manual$Annotation[manual$Annotation %in% c('s')] = 'S'
+
+# Social and buzz are noise -> turn all noise into separate category
+aspot$Annotations[aspot$Annotations %in% c('S', 'B', 'noise')] = '-noise-'
 
 # Function to calculate overlap
 calc.iou = function(st_d, st_g, end_d, end_g){
@@ -45,93 +70,15 @@ calc.iou = function(st_d, st_g, end_d, end_g){
   return(intercept/union)
 }
 
-# For each file, get all classification files and filled out annotations
-for(seg_file in seg_files){
-  
-  # Get subset 
-  ext = 'predict_output.log.annotation.result.txt'
-  finder_thingy = paste0('/', str_remove(basename(seg_file), ext)) |>
-    str_replace('\\+', '\\\\+')
-  class_files_sub = 
-    class_files[str_detect(class_files, finder_thingy)]
-  
-  # If empty, copy empty table
-  if(length(class_files_sub) == 0) 
-    file.copy(seg_file, 
-              paste(path_combined_selection_tables, 
-                    basename(seg_file), sep = '/'))
-  
-  # If not empty, go through detections and store updated table
-  if(!length(class_files_sub) == 0){
-    selection_table = load.selection.table(seg_file)
-    for(cfs in class_files_sub){
-      class_table = load.selection.table(cfs)
-      type = unique(class_table$Sound.type)
-      sel = cfs |> str_extract('(\\d+)_predict') |> 
-        str_remove('_predict') |> as.numeric()
-      if(length(type) == 1){
-        selection_table$Sound.type[sel] = type
-      } else {
-        if(length(type) > 1){
-          lf = cfs |> basename() |> str_remove('.annotation.result.txt')
-          lf = str_replace(lf, '\\+', '\\\\+') # brilliant fix
-          lf = paste0('/', lf)
-          pred = readLines(log_files[str_detect(log_files, lf)])
-          ## loop through prediction file to extract classes and probs
-          classes = probs = c()
-          for(line in pred){
-            if(str_detect(line, '\\|I\\|time=')){
-              classes = c(classes,
-                          str_extract(line, 'class=([a-zA-Z]+)') |>
-                            str_remove('class='))
-              probs = c(probs,
-                        str_extract(line, 'prob=(\\d+\\.\\d+)') |>
-                          str_remove('prob=')) |> as.numeric()
-            } # end if str_detect loop
-          } # end line loop
-          type = classes[probs == max(probs)][1]
-          selection_table$Sound.type[sel] = type
-        } else {
-          type = 'noise'
-          selection_table$Sound.type[sel] = type
-        } # end type greater 1
-      } # end one type loop
-    } # end cfs loop
-    write.table(selection_table, paste(path_combined_selection_tables, 
-                                       basename(seg_file), sep = '/'),
-                row.names = FALSE,
-                sep = '\t', quote = FALSE)
-  } # if loop length greater 0
-  
-} # end file loop
-
-# Message progress
-message('Filled out all classifications and stored results.')
-
-# Load selection tables for annotated detections and ground truth
-manual = load.selection.tables(path_grount_truth)
-aspot = load.selection.tables(path_combined_selection_tables)
-
-# Translate entries
-manual$Annotation[manual$Annotation %in% c('Mdau', 'Mdas', 'Mnat', 'm')] = 'M'
-manual$Annotation[manual$Annotation %in% c('EVN', 'Nnoc', 'Vmur', 'Eser')] = 
-  'NVE'
-
 # List unique files
-files = list.files(path_grount_truth) |> str_remove('.Table.1.selections.txt')
-
-# Subset to LAND files only
-message('Subsetting for LAND.')
-files = files[!str_detect(files, 'NS') & !str_detect(files, 'ONBOARD') &
-                !str_detect(files, 'HR')]
-aspot = aspot[aspot$file %in% files,]
-manual = manual[manual$file %in% files,]
+files = list.files(path_ground_truth, recursive = TRUE) |> basename() |>
+  str_remove('.Table.1.selections.txt')
 
 # Create place holders for output
 fps = fns = tps = c()
 class_results = data.frame()
 
-# Run through images
+# Run through recordings
 for(file in files){
   
   ## subset
@@ -148,10 +95,10 @@ for(file in files){
                                row_d = row_d, 
                                row_g = row_g, 
                                g = manual[row_g,]$Annotation,
-                               d = aspot[row_d,]$Sound.type,
-                               iou = calc.iou(d[row_d,]$Begin.time..s.,
+                               d = aspot[row_d,]$Annotations,
+                               iou = calc.iou(d[row_d,]$Begin.Time..s.,
                                               g[row_g,]$Begin.Time..s.,
-                                              d[row_d,]$End.time..s.,
+                                              d[row_d,]$End.Time..s.,
                                               g[row_g,]$End.Time..s.)))
     }
   }
@@ -170,7 +117,7 @@ for(file in files){
   
   ## check if there are any duplications left
   if(any(duplicated(links$row_d)) | any(duplicated(links$row_g)))
-    stop('Found duplications in file ', image, '.')
+    stop('Found duplications in file ', recording, '.')
   
   ## store remaining
   class_results = rbind(class_results,
@@ -184,49 +131,84 @@ for(file in files){
   new_fns = rownames(g)[!rownames(g) %in% links$row_g]
   fns = c(fns, new_fns)
   
-} # end image loop
+} # end recording loop
 
 # Add false positives as such
-class_results = rbind(class_results,
-                      data.frame(file = aspot[fps,]$file,
-                                 row_d = fps,
-                                 row_g = 'NA',
-                                 d = aspot[fps,]$Sound.type,
-                                 g = '-noise-',
-                                 iou = NA))
+if(length(fps) > 0)
+  class_results = rbind(class_results,
+                        data.frame(file = aspot[fps,]$file,
+                                   row_d = fps,
+                                   row_g = NA,
+                                   d = aspot[fps,]$Annotations,
+                                   g = 'noise',
+                                   iou = NA))
 
 # Add false negatives as such
-class_results = rbind(class_results,
-                      data.frame(file = manual[fns,]$file,
-                                 row_d = 'NA',
-                                 row_g = fns,
-                                 d = '-missed-',
-                                 g = manual[fns,]$Annotation,
-                                 iou = NA))
+if(length(fns) > 0)
+  class_results = rbind(class_results,
+                        data.frame(file = manual[fns,]$file,
+                                   row_d = NA,
+                                   row_g = fns,
+                                   d = '-missed-',
+                                   g = manual[fns,]$Annotation,
+                                   iou = NA))
 
 # Run checks
-if(any(duplicated(class_results$row_d[class_results$row_d != 'NA']))) 
+if(any(duplicated(class_results$row_d[!is.na(class_results$row_d)]))) 
   stop('Duplications in row d.')
-if(any(duplicated(class_results$row_g[class_results$row_g != 'NA']))) 
+if(any(duplicated(class_results$row_g[!is.na(class_results$row_g)]))) 
   stop('Duplications in row g.')
 if(any(!rownames(aspot) %in% class_results$row_d)) 
   stop('Missing rows from Animal Spot.')
-if(any(!rownames(manual[manual$Multiple != 'empty',]) %in% 
+if(any(!rownames(manual) %in% 
        class_results$row_g)) 
   stop('Missing rows from ground truth.')
 
 # Remove overlapping, social, etc. 
 class_results = class_results[!class_results$g %in% 
-                                c('a', 'b', '?', 'o', 's'),]
+                                c('B', '?', 'o', 'S', 'Ppippyg'),]
 
 # Fix some names
+class_results$g[class_results$g == 'noise'] = '-noise-'
 class_results$d[class_results$d == 'noise'] = '-noise-'
 
+# Compute stats
+accuracy_overall = length(which(class_results$d == class_results$g))/
+  nrow(class_results)
+tp_detection = length(which(class_results$g != '-noise-' &
+                              class_results$d != '-missed-'))
+fp_detection = length(which(class_results$g == '-noise-' &
+                              class_results$d != '-missed-'))
+fn_detection = length(which(class_results$g != '-noise-' &
+                              class_results$d == '-missed-'))
+# tp_detection = length(which(class_results$g != '-noise-' &
+#                               (!class_results$d %in% c('-noise-', 
+#                                                        '-missed-'))))
+# fp_detection = length(which(class_results$g == '-noise-' &
+#                               (!class_results$d %in% c('-noise-', 
+#                                                        '-missed-'))))
+# fn_detection = length(which(class_results$g != '-noise-' &
+#                               class_results$d %in% c('-noise-', 
+#                                                      '-missed-')))
+if(sum(tp_detection, fp_detection, fn_detection) != nrow(class_results))
+  stop('This doesn not add up.')
+accuracy_detection = tp_detection/nrow(class_results)
+precision_detection = tp_detection/sum(tp_detection, fp_detection)
+recall_detection = tp_detection/sum(tp_detection, fn_detection)
+f1_detection = 2*precision_detection*recall_detection/
+  (precision_detection+recall_detection)
+correct_classification = length(which(class_results$g == class_results$d &
+                                        class_results$g != '-noise-'))
+incorrect_classification = length(which(class_results$g != class_results$d &
+                                          class_results$g != '-noise-'))
+accuracy_classification = correct_classification/
+  sum(correct_classification, incorrect_classification)
+
 # Plot confusion matrix
-pdf(path_pdf, 8, 8)
-par(mar = c(5, 6, 0.5, 0.5))
+pdf(path_pdf, 10, 7.5)
+par(mar = c(3.5, 4.5, 1, 7.5))
 levels = sort(unique(c(class_results$d, class_results$g)))
-conf_matrix = table(factor(class_results$d, levels = levels), 
+conf_matrix = table(factor(class_results$d, levels = levels),
                     factor(class_results$g, levels = levels))
 percentages = conf_matrix
 for(i in seq_len(nrow(percentages))) 
@@ -235,38 +217,36 @@ color_gradient = colorRampPalette(c('lightblue', 'darkblue'))
 plot(seq_along(levels), type = 'n', xlab = '', ylab = '',
      xlim = c(0.5, length(levels)+0.5), ylim = c(0.5, length(levels)+0.5),
      xaxt = 'n', yaxt = 'n')
-mtext('aspot', 1, 3)
-mtext('ground truth', 2, 4)
+mtext('aspot', 1, 2.5)
+mtext('ground truth', 2, 3.5)
 for(i in seq_along(levels)){
   for(j in seq_along(levels)){
-    rect(i - 0.5, j - 0.5, i + 0.5, j + 0.5, 
+    rect(i - 0.5, j - 0.5, i + 0.5, j + 0.5,
          col = color_gradient(101)[as.numeric(percentages[i, j]+1)])
     text(i, j, labels = conf_matrix[i, j], col = 'white', cex = 1.5)
   }
 }
-mtext(rownames(conf_matrix), side = 2, at = seq_along(levels), las = 2, 
+mtext(rownames(conf_matrix), side = 2, at = seq_along(levels), las = 2,
       line = 0.75)
 mtext(colnames(conf_matrix), side = 1, at = seq_along(levels), line = 0.75)
+mtext('Overall:', side = 4, line = 1, at = 6, font = 2, las = 1, adj = 0)
+mtext(sprintf('accuracy = %.2f', round(accuracy_overall, 2)), 
+      side = 4, line = 1, at = 5.5, font = 1, las = 1, adj = 0)
+mtext('Detection:', side = 4, line = 1, at = 4.5, font = 2, las = 1, adj = 0)
+mtext(sprintf('accuracy = %.2f', round(accuracy_detection, 2)), 
+      side = 4, line = 1, at = 4, font = 1, las = 1, adj = 0)
+mtext(sprintf('precision = %.2f', round(precision_detection, 2)), 
+      side = 4, line = 1, at = 3.5, font = 1, las = 1, adj = 0)
+mtext(sprintf('recall = %.2f', round(recall_detection, 2)), 
+      side = 4, line = 1, at = 3, font = 1, las = 1, adj = 0)
+mtext(sprintf('F1 = %.2f', round(f1_detection, 2)), 
+      side = 4, line = 1, at = 2.5, font = 1, las = 1, adj = 0)
+mtext('Classification:', side = 4, line = 1, at = 1.5, 
+      font = 2, las = 1, adj = 0)
+mtext(sprintf('accuracy = %.2f', round(accuracy_classification, 2)), 
+      side = 4, line = 1, at = 1, font = 1, las = 1, adj = 0)
 dev.off()
-
-# Store stats
-conf_matrix = confusionMatrix(factor(class_results$d, levels = levels), 
-                              factor(class_results$g, levels = levels))
-sink(path_txt)
-cat(sprintf('Found %s false negative(s). 
-                These are the rownumbers in the manual labels for the 
-                false negative(s): %s. \n', 
-            length(fns),
-            paste(fns, collapse = ', ')))
-cat(sprintf('Found %s false positives(s). 
-                These are the rownumbers in the aspot labels for the 
-                false positive(s): %s. \n', 
-            length(fps),
-            paste(fps, collapse = ', ')))
-cat(sprintf('Found %s true positives(s) and plotted the confusion matrix.\n\n',
-            nrow(class_results)))
-print(conf_matrix)
-sink()
 
 # Message
 message('Stored all results.')
+
