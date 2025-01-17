@@ -19,7 +19,8 @@
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Loading libraries
-libraries = c('stringr', 'dplyr', 'lubridate', 'callsync')
+libraries = c('stringr', 'dplyr', 'lubridate', 'callsync', 'sf',
+              'rnaturalearth')
 for(lib in libraries){
   if(! lib %in% installed.packages()) lapply(lib, install.packages)
   lapply(libraries, require, character.only = TRUE)
@@ -43,6 +44,10 @@ path_all_buoys = 'analysis/data/locations_boejer.csv'
 path_combined_data = 'analysis/results/combined_data.RData'
 path_summary_per_station = 'analysis/results/summary_per_station.csv'
 path_offshore_bats = 'analysis/results/offshore_detections_bats.csv'
+path_lunar_data = 'analysis/data/lunar_data_esbjerg.csv'
+
+# Load weather stations
+weather_stations = read.csv(path_stations)
 
 # Load meta data and fix date/time columns
 ## fugletogter
@@ -241,6 +246,7 @@ dat$station = dat$station |>
   str_remove('-FALL23') |>
   str_remove('-LOT1') |>
   str_remove('T3-') |>
+  str_remove('T3') |>
   str_remove('C')
 dat$station = ifelse(dat$station == 'HR3-4S', 'HR3-4', dat$station)
 dat$station = ifelse(dat$station == 'HR-A01', 'A01', dat$station)
@@ -259,13 +265,29 @@ dat$station = ifelse(dat$station == 'NS24S', 'NS24', dat$station)
 dat$station = ifelse(dat$station == 'NS27S', 'NS27', dat$station)
 dat$station = ifelse(dat$station == 'NS28S', 'NS28', dat$station)
 dat$station = ifelse(dat$station == 'NS32S', 'NS32', dat$station)
+dat$station = ifelse(dat$station == 'BALLUM', 'Ballum', dat$station)
+dat$station = ifelse(dat$station == 'BLAAVAND', 'Blaavand', dat$station)
+dat$station = ifelse(dat$station == 'LAND2', 'Blaavand', dat$station)
+dat$station = ifelse(dat$station == 'FANO', 'Fanoe', dat$station)
+dat$station = ifelse(dat$station == 'LAND9', 'Fanoe', dat$station)
+dat$station = ifelse(dat$station == 'HUSBY', 'Husby', dat$station)
+dat$station = ifelse(dat$station == 'LAND5', 'Husby', dat$station)
+dat$station = ifelse(dat$station == 'NS6', 'NS06', dat$station)
+dat$station = ifelse(dat$station == 'NS8', 'NS08', dat$station)
+dat$station = ifelse(dat$station == 'VAT2', 'platform', dat$station)
+
+dat$station[dat$folder_name == 'E07_BoxD_card_A'] = 'E07'
+dat$station[dat$folder_name == 'G05_BoxA_card_A'] = 'G05'
+dat$station[dat$folder_name == 'G06_BoxB_card_A'] = 'G06'
 
 meta_boejer$Station.ID = meta_boejer$Station.ID |>
   str_remove('T3/') |>
+  str_remove('/T3') |>
   str_replace('_', '-')
 
 summary$station = summary$station |>
   str_remove('T3-') |>
+  str_remove('T3') |>
   str_remove('S-C') |>
   str_remove('-C') |>
   str_remove('LOT1-') |>
@@ -288,6 +310,24 @@ summary$station = ifelse(summary$station == 'NS27S', 'NS27', summary$station)
 summary$station = ifelse(summary$station == 'NS28S', 'NS28', summary$station)
 summary$station = ifelse(summary$station == 'NS32S', 'NS32', summary$station)
 summary$station = ifelse(summary$station == 'HR-06', 'C06', summary$station)
+summary$station = ifelse(summary$station == 'BALLUM', 'Ballum', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'BLAAVAND', 'Blaavand', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'LAND2', 'Blaavand', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'FANO', 'Fanoe', summary$station)
+summary$station = ifelse(summary$station == 'LAND9', 'Fanoe', summary$station)
+summary$station = ifelse(summary$station == 'HUSBY', 'Husby', summary$station)
+summary$station = ifelse(summary$station == 'LAND5', 'Husby', summary$station)
+summary$station = ifelse(summary$station == 'NS6', 'NS06', summary$station)
+summary$station = ifelse(summary$station == 'NS8', 'NS08', summary$station)
+summary$station = ifelse(summary$station == 'VAT2', 'platform', 
+                         summary$station)
+
+summary$station[summary$folder_name == 'E07_BoxD_card_A_D_A'] = 'E07'
+summary$station[summary$folder_name == 'G05_BoxA_card_A_A_A'] = 'G05'
+summary$station[summary$folder_name == 'G06_BoxB_card_A_B_A'] = 'G06'
 
 locations_all_buoys$Position.ID = locations_all_buoys$Position.ID |>
   str_remove('_SH') |>
@@ -301,6 +341,27 @@ message('Station names meta_boejer: ',
         paste(unique(meta_boejer$Station.ID), collapse = ', '))
 message('Station names summary: ', 
         paste(unique(summary$station), collapse = ', '))
+
+# Check if all stations are included as weather station
+dat_check = vapply(unique(dat$station), function(x) 
+  x %in% weather_stations$station_id, logical(1))
+if(!all(dat_check)){
+  warning('Could not find weather station for: ', 
+       paste(unique(dat$station)[!dat_check], collapse = ', '))
+}
+meta_boejer_check = vapply(unique(meta_boejer$Station.ID), function(x) 
+  x %in% weather_stations$station_id, logical(1))
+if(!all(meta_boejer_check)){
+  warning('Could not find weather station for: ', 
+       paste(unique(meta_boejer$Station.ID)[!meta_boejer_check], 
+             collapse = ', '))
+}
+summary_check = vapply(unique(summary$station), function(x) 
+  x %in% weather_stations$station_id, logical(1))
+if(!all(summary_check)){
+  warning('Could not find weather station for: ', 
+       paste(unique(summary$station)[!summary_check], collapse = ', '))
+}
 
 # Fix stations with incorrect prefix
 dat$station[dat$folder == 'HR3_6_SettingsNS28Mixup_B_Winter 2023'] = 
@@ -488,10 +549,9 @@ for(st in unique(meta_HRIII$WT.ID)){
                       ))
   }
 }
-dat_model = dat_model[dat_model$date < as.Date('2024-04-11'),]
+# dat_model = dat_model[dat_model$date < as.Date('2024-04-11'),]
 
 # Add weather
-weather_stations = read.csv(path_stations)
 ## add weather for each offshore night
 message('Getting weather for offshore nights.')
 for(st in unique(dat_model$station)){
@@ -509,8 +569,10 @@ for(st in unique(dat_model$station)){
                     as.numeric() &
                     weather$hour == 23,]
     if(nrow(sub) != 1) stop('Weather not found for row ', row)
-    dat_model[row, c('mean_temp', 'wind_speed', 'wind_direction', 'precip')] = 
-      sub[c('mean_temp', 'wind_speed', 'wind_direction', 'precip')]
+    dat_model[row, c('mean_temp', 'wind_speed', 'wind_direction', 'precip',
+                     'cloud_coverage', 'atm_pressure')] = 
+      sub[c('mean_temp', 'wind_speed', 'wind_direction', 'precip',
+            'cloud_coverage', 'atm_pressure')]
   }
 }
 
@@ -537,6 +599,11 @@ for(st in unique(dat_model$station)){
 #   }
 # }
 
+# Add lunar phase
+lunar_data = read.csv(path_lunar_data)
+dat_model = merge(dat_model, lunar_data, by = 'date', 
+                  all.x = TRUE, all.y = FALSE)
+
 # Remove first deployment A01 og all of B01
 summary = summary[!(summary$station == 'A01' & 
                       summary$date < as.Date('2023-10-01')),]
@@ -547,6 +614,15 @@ dat = dat[!dat$station == 'B01',]
 dat_model = merge(dat_model, weather_stations[,c('station_id', 'lat', 'long')],
                   by.x = 'station', by.y = 'station_id', 
                   all.x = TRUE, all.y = FALSE)
+
+# Calculate distance to coast and add to dat_model
+stations = unique(dat_model[c('station', 'lat', 'long')])
+world_coastline = ne_coastline(scale = 'large', returnclass = 'sf')
+stations_sf = st_as_sf(stations, coords = c('long', 'lat'), crs = 4326)
+nearest_coast_distance = st_distance(stations_sf, world_coastline)
+stations$distance_to_coast = (nearest_coast_distance |> apply(1, min))/1000
+dat_model = merge(dat_model, stations[c('station', 'distance_to_coast')], 
+                  by = 'station', all.x = TRUE, all.y = FALSE)
 
 # Colours species 
 colours = c(
@@ -571,7 +647,7 @@ offshore_bats = merge(offshore_bats, dat[c('file_name', 'station',
                       all.x = TRUE, all.y = FALSE)
 if(any(is.na(offshore_bats$offshore))) stop('Offshore column not complete!')
 offshore_bats = offshore_bats[offshore_bats$offshore,]
-  
+
 # Store output
 save(dat, dat_model, summary, summary_bats, sun, colours, 
      species_offshore, species, locations_all_buoys,
