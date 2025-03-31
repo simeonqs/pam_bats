@@ -30,9 +30,8 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_results = '/home/au472091/Documents/new_results_aspot'
-path_detections_bats = 
-  '/home/au472091/Documents/new_results_aspot/defenitely_bats'
+path_results = '/media/au472091/data/new_results_aspot'
+path_detections_bats = '/media/au472091/data/new_results_aspot/defenitely_bats'
 path_meta_togter = 'analysis/data/meta_data_bird_surveys.csv'
 path_meta_boejer = 'analysis/data/meta_data_boejer.csv'
 path_meta_HRIII = 'analysis/data/meta_data_HRIII.csv'
@@ -140,6 +139,7 @@ split = dat$night_date_time |> as.character() |> str_split(' ')
 dat$night_date = split |> vapply(function(x) x[1], character(1)) |> as.Date()
 dat$night_time_m = split |> vapply(function(x) 
   as.numeric(strsplit(x[2], ':')[[1]]) %*% c(60, 1, 1/60), numeric(1))
+rm(split)
 dat$file_name = dat$file_name |> str_remove('.wav')
 
 # List all summary files
@@ -154,31 +154,6 @@ names(summary) = files_summary |> basename() |>
 summary = summary |> bind_rows(.id = 'folder_name')
 summary$date = as.Date(summary$DATE, format = '%Y-%b-%d')
 summary$DATE = NULL
-
-# Add the type of location
-type_locations = files_prediction_checks |> strsplit('/') |> 
-  vapply(function(split) split[length(split)-2], character(1))
-names(type_locations) = unique(dat$folder_name)
-dat$type_location = type_locations[dat$folder_name]
-summary$type_location = NA
-summary$type_location = ifelse(str_detect(summary$folder_name, 'NS'), 
-                               'boejer', 
-                               summary$type_location)
-summary$type_location = ifelse(str_detect(summary$folder_name, 'HR'), 
-                               'HRIII', 
-                               summary$type_location)
-summary$type_location = ifelse(str_detect(summary$folder_name, 'HR3-4'), 
-                               'boejer', 
-                               summary$type_location)
-summary$type_location = ifelse(str_detect(summary$folder_name, 'HR3_4'), 
-                               'boejer', 
-                               summary$type_location)
-summary$type_location = ifelse(str_detect(summary$folder_name, 'HR3_6'), 
-                               'boejer', 
-                               summary$type_location)
-summary$type_location = ifelse(str_detect(summary$folder_name, 'ONBOARD'), 
-                               'fugletogter', 
-                               summary$type_location)
 
 # Load sun
 sun = read.csv(path_sun)
@@ -210,6 +185,7 @@ species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'rold'),
                              'Pnat', species_offshore$sp)
 species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'langøre'),
                              'NVE', species_offshore$sp)
+warning('Why is langøre here?')
 species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'ENV'),
                              'NVE', species_offshore$sp)
 species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'dværgflagermus'),
@@ -219,6 +195,13 @@ species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'Myo'),
 
 # Load location all buoys
 locations_all_buoys = read.csv(path_all_buoys)
+
+# Add type location dat
+type_locations = files_prediction_checks |> strsplit('/') |> 
+  vapply(function(split) split[length(split)-2], character(1))
+names(type_locations) = files_prediction_checks |> strsplit('/') |> 
+  vapply(function(split) split[length(split)-1], character(1))
+dat$type_location = type_locations[dat$folder_name]
 
 # Add and fix station names
 dat$station = NA
@@ -266,6 +249,8 @@ dat$station = ifelse(dat$station == 'NS27S', 'NS27', dat$station)
 dat$station = ifelse(dat$station == 'NS28S', 'NS28', dat$station)
 dat$station = ifelse(dat$station == 'NS32S', 'NS32', dat$station)
 dat$station = ifelse(dat$station == 'BALLUM', 'Ballum', dat$station)
+dat$station = ifelse(dat$station == 'LAND-BALLUM', 'Ballum', dat$station)
+dat$station = ifelse(dat$station == 'LAND6', 'Ballum', dat$station)
 dat$station = ifelse(dat$station == 'BLAAVAND', 'Blaavand', dat$station)
 dat$station = ifelse(dat$station == 'LAND2', 'Blaavand', dat$station)
 dat$station = ifelse(dat$station == 'FANO', 'Fanoe', dat$station)
@@ -275,10 +260,28 @@ dat$station = ifelse(dat$station == 'LAND5', 'Husby', dat$station)
 dat$station = ifelse(dat$station == 'NS6', 'NS06', dat$station)
 dat$station = ifelse(dat$station == 'NS8', 'NS08', dat$station)
 dat$station = ifelse(dat$station == 'VAT2', 'platform', dat$station)
+dat$station = ifelse(dat$station == 'KAMMER', 'Kammerslusen', dat$station)
+dat$station = ifelse(dat$station == 'LAND1', 'Kammerslusen', dat$station)
+dat$station = ifelse(dat$station == 'TWJ-08', 'Mandoe', dat$station)
+dat$station = ifelse(dat$station == 'MANDO', 'Mandoe', dat$station)
+dat$station = ifelse(dat$station == 'LAND-MANDØ', 'Mandoe', dat$station)
+dat$station = ifelse(dat$station == 'LAND7', 'Mandoe', dat$station)
+dat$station = ifelse(dat$station == 'NYMND-PLTG', 'Nyminde', dat$station)
+dat$station = ifelse(dat$station == 'REJSBY', 'Rejsby', dat$station)
+dat$station = ifelse(dat$station == 'LAND10', 'Rejsby', dat$station)
+dat$station = ifelse(dat$station == 'ROEMOE', 'Roemoe', dat$station)
+dat$station = ifelse(dat$station == 'SKAGEN', 'Skagen', dat$station)
+dat$station = ifelse(dat$station == 'SKJERN', 'Skjern', dat$station)
+dat$station = ifelse(dat$station == 'LAND3', 'Skjern', dat$station)
+dat$station = ifelse(dat$station == 'STADILOE', 'Stadiloe', dat$station)
+dat$station = ifelse(dat$station == 'LAND4', 'Stadiloe', dat$station)
+dat$station = ifelse(dat$station == 'STADILO', 'Stadiloe', dat$station)
+dat$station = ifelse(dat$station == 'LAND8', 'Nyminde', dat$station)
 
 dat$station[dat$folder_name == 'E07_BoxD_card_A'] = 'E07'
 dat$station[dat$folder_name == 'G05_BoxA_card_A'] = 'G05'
 dat$station[dat$folder_name == 'G06_BoxB_card_A'] = 'G06'
+dat$station[dat$folder_name == 'F07_BoxC_card_A'] = 'F07'
 
 meta_boejer$Station.ID = meta_boejer$Station.ID |>
   str_remove('T3/') |>
@@ -324,10 +327,53 @@ summary$station = ifelse(summary$station == 'NS6', 'NS06', summary$station)
 summary$station = ifelse(summary$station == 'NS8', 'NS08', summary$station)
 summary$station = ifelse(summary$station == 'VAT2', 'platform', 
                          summary$station)
+summary$station = ifelse(summary$station == 'ONBOARD', 'survey_ship', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'LAND6', 'Ballum', summary$station)
+summary$station = ifelse(summary$station == 'LAND-BALLUM', 'Ballum', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'KAMMER', 'Kammerslusen', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'LAND1', 'Kammerslusen', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'MANDO', 'Mandoe', summary$station)
+summary$station = ifelse(summary$station == 'LAND-MANDØ', 'Mandoe', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'TWJ-08', 'Mandoe', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'LAND7', 'Mandoe', summary$station)
+summary$station = ifelse(summary$station == 'NYMND-PLTG', 'Nyminde', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'LAND8', 'Nyminde', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'REJSBY', 'Rejsby', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'LAND10', 'Rejsby', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'ROEMOE', 'Roemoe', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'SKAGEN', 'Skagen', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'SKJERN', 'Skjern', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'LAND3', 'Skjern', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'STADILOE', 'Stadiloe', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'LAND4', 'Stadiloe', 
+                         summary$station)
+summary$station = ifelse(summary$station == 'STADILO', 'Stadiloe', 
+                         summary$station)
 
 summary$station[summary$folder_name == 'E07_BoxD_card_A_D_A'] = 'E07'
 summary$station[summary$folder_name == 'G05_BoxA_card_A_A_A'] = 'G05'
 summary$station[summary$folder_name == 'G06_BoxB_card_A_B_A'] = 'G06'
+summary$station[summary$folder_name == 'F07_BoxC_card_A_C_A'] = 'F07'
+summary$station[summary$folder_name == 'C06_A_FIRST_HR-C-C06_A'] = 'C06'
+summary$station[summary$folder_name == 
+                  'HR3_Z_C03_A_Fall2023_Recovered_HR3-Z_A'] = 'C03'
+summary$station[summary$folder_name == 
+                  'HR3_Z_C03_B_Fall2023_Recovered_HR3-Z_B'] = 'C03'
 
 locations_all_buoys$Position.ID = locations_all_buoys$Position.ID |>
   str_remove('_SH') |>
@@ -342,25 +388,56 @@ message('Station names meta_boejer: ',
 message('Station names summary: ', 
         paste(unique(summary$station), collapse = ', '))
 
+# Add the type of location for summary
+summary$type_location = NA
+summary$type_location = ifelse(str_detect(summary$folder_name, 'HR'), 
+                               'HRIII', 
+                               summary$type_location)
+summary$type_location = ifelse(str_detect(summary$folder_name, 'Box'), 
+                               'HRIII', 
+                               summary$type_location)
+summary$type_location = ifelse(str_detect(summary$folder_name, 'NS'), 
+                               'boejer', 
+                               summary$type_location)
+summary$type_location = ifelse(str_detect(summary$folder_name, 'HR3-4'), 
+                               'boejer', 
+                               summary$type_location)
+summary$type_location = ifelse(str_detect(summary$folder_name, 'HR3_4'), 
+                               'boejer', 
+                               summary$type_location)
+summary$type_location = ifelse(str_detect(summary$folder_name, 'HR3_6'), 
+                               'boejer', 
+                               summary$type_location)
+summary$type_location = ifelse(str_detect(summary$folder_name, 'ONBOARD'), 
+                               'fugletogter', 
+                               summary$type_location)
+summary$type_location = ifelse(summary$station %in% 
+                                 c('Ballum', 'Blaavand', 'Fanoe', 'Husby', 
+                                   'Kammerslusen', 'Mandoe', 'Nyminde', 
+                                   'Rejsby', 'Roemoe', 'Skagen', 'Skjern', 
+                                   'Stadiloe'), 
+                               'land', 
+                               summary$type_location)
+
 # Check if all stations are included as weather station
 dat_check = vapply(unique(dat$station), function(x) 
   x %in% weather_stations$station_id, logical(1))
 if(!all(dat_check)){
   warning('Could not find weather station for: ', 
-       paste(unique(dat$station)[!dat_check], collapse = ', '))
+          paste(unique(dat$station)[!dat_check], collapse = ', '))
 }
 meta_boejer_check = vapply(unique(meta_boejer$Station.ID), function(x) 
   x %in% weather_stations$station_id, logical(1))
 if(!all(meta_boejer_check)){
   warning('Could not find weather station for: ', 
-       paste(unique(meta_boejer$Station.ID)[!meta_boejer_check], 
-             collapse = ', '))
+          paste(unique(meta_boejer$Station.ID)[!meta_boejer_check], 
+                collapse = ', '))
 }
 summary_check = vapply(unique(summary$station), function(x) 
   x %in% weather_stations$station_id, logical(1))
 if(!all(summary_check)){
   warning('Could not find weather station for: ', 
-       paste(unique(summary$station)[!summary_check], collapse = ', '))
+          paste(unique(summary$station)[!summary_check], collapse = ', '))
 }
 
 # Fix stations with incorrect prefix
@@ -376,7 +453,7 @@ dat$station[dat$folder == 'NS28_A_June2024_NB_PREFIXISWRONG_NS25'] =
   'NS28'
 
 dat$station[dat$folder == 'NS6_juli24_A_locationISNS6butprefixsaysNS16'] = 
-  'NS6'
+  'NS06'
 
 dat$station[dat$folder == 'NS14_juli24_A_locationISNS14butprefixsaysNS25'] = 
   'NS14'
@@ -388,7 +465,7 @@ dat$station[dat$folder == 'NS13_A_Spring_2024'] =
   'NS25'
 
 dat$station[dat$folder == 'NS16_A_Spring2024'] = 
-  'NS6'
+  'NS06'
 
 dat$station[dat$folder == 'NS28_A_Spring2024'] = 
   'NS13'
@@ -411,7 +488,7 @@ summary$station[summary$folder_name ==
 
 summary$station[summary$folder_name == 
                   'NS6_juli24_A_locationISNS6butprefixsaysNS16_NS16_A'] = 
-  'NS6'
+  'NS06'
 
 summary$station[summary$folder_name == 
                   'NS14_juli24_A_locationISNS14butprefixsaysNS25_NS25_A'] = 
@@ -425,7 +502,7 @@ summary$station[summary$folder_name == 'NS13_A_Spring_2024_NS13_A'] =
   'NS25'
 
 summary$station[summary$folder_name == 'NS16_A_Spring2024_NS16_A'] = 
-  'NS6'
+  'NS06'
 
 summary$station[summary$folder_name == 'NS28_A_Spring2024_NS28_A'] = 
   'NS13'
@@ -438,10 +515,13 @@ summary_bats = data.frame(file = unique(st_bats$file),
                           n_bats = vapply(unique(st_bats$file), function(f)
                             nrow(st_bats[st_bats$file == f,]), numeric(1)))
 dat$n_bats = vapply(seq_len(nrow(dat)), function(i){
-  if(dat$type_location[i] == 'land') return(NA) else
+  if(dat$type_location[i] == 'land'){
+    return(NA)
+  } else {
     if(dat$file_name[i] %in% summary_bats$file) 
       return(summary_bats$n_bats[summary_bats$file == dat$file_name[i]]) else
         return(0)
+  }
 }, numeric(1))
 
 # Add if recordings were offshore
@@ -470,7 +550,7 @@ for(st in unique(dat$station[dat$type_location == 'boejer'])){
     end = sub_meta$Recovery.date[i] 
     offshore_dates = c(offshore_dates, 
                        dates_station[dates_station > start + 1 &
-                                       dates_station < (end - 3)] |> 
+                                       dates_station < (end - 2)] |> 
                          as.character())
   } 
   dat$offshore[which(dat$station == st)] = 
@@ -478,6 +558,49 @@ for(st in unique(dat$station[dat$type_location == 'boejer'])){
   summary$offshore[which(summary$station == st)] = 
     (summary$date[which(summary$station == st)] %in% offshore_dates)
 }
+# problem dates because of overlap in Bioconsult deployment dates, recorder
+# active on deck for multiple days or after buoy stranded
+dat$offshore[dat$station == 'NS06' & dat$date %in% 
+               as.Date(c('2024-04-16', '2024-04-17', 
+                         '2024-04-18', '2024-04-19'))] = FALSE
+summary$offshore[summary$station == 'NS06' & summary$date %in% 
+                   as.Date(c('2024-04-16', '2024-04-17', 
+                             '2024-04-18', '2024-04-19'))] = FALSE
+dat$offshore[dat$station == 'NS08' & dat$date %in% 
+               as.Date(c('2024-05-15', '2024-05-16'))] = FALSE
+summary$offshore[summary$station == 'NS08' & summary$date %in% 
+                   as.Date(c('2024-05-15', '2024-05-16'))] = FALSE
+
+dat$offshore[dat$folder_name == 'NS12_Summer 2024' & dat$date %in% 
+               as.Date(c('2024-05-15'))] = FALSE
+summary$offshore[summary$folder_name == 'A_NS12_A' & summary$date %in% 
+                   as.Date(c('2024-05-15'))] = FALSE
+
+dat$offshore[dat$station == 'NS13' & dat$date %in% 
+               as.Date(c('2024-04-16', '2024-04-17', 
+                         '2024-04-18', '2024-04-19'))] = FALSE
+summary$offshore[summary$station == 'NS13' & summary$date %in% 
+                   as.Date(c('2024-04-16', '2024-04-17', 
+                             '2024-04-18', '2024-04-19'))] = FALSE
+dat$offshore[dat$station == 'NS24' & dat$date %in% 
+               as.Date(c('2023-09-11'))] = FALSE
+dat$offshore[dat$station == 'NS20' & dat$date %in% 
+               as.Date(c('2024-05-15'))] = FALSE
+summary$offshore[summary$station == 'NS20' & summary$date %in% 
+                   as.Date(c('2024-05-15'))] = FALSE
+summary$offshore[summary$station == 'NS24' & summary$date %in% 
+                   as.Date(c('2023-09-11'))] = FALSE
+dat$offshore[dat$station == 'NS25' & dat$date %in% 
+               as.Date(c('2024-04-15', '2024-04-16', 
+                         '2024-04-17', '2024-04-18'))] = FALSE
+summary$offshore[summary$station == 'NS25' & summary$date %in% 
+                   as.Date(c('2024-04-14', '2024-04-15', '2024-04-16', 
+                             '2024-04-17', '2024-04-18'))] = FALSE
+dat$offshore[dat$station == 'NS29' & dat$date %in% 
+               as.Date(c('2024-05-15'))] = FALSE
+summary$offshore[summary$station == 'NS29' & summary$date %in% 
+                   as.Date(c('2024-05-15'))] = FALSE
+
 ## HRIII
 for(st in unique(dat$station[dat$type_location == 'HRIII'])){
   sub_meta = meta_HRIII[meta_HRIII$WT.ID == st,]
