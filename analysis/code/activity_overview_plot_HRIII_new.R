@@ -54,14 +54,14 @@ labels_stations = sort(labels_stations, decreasing = TRUE)
 ## create colour gradient
 colfunc = colorRampPalette(c('#EAEDED', '#5F6A6A'))
 cols = colfunc(max(summary$n))
-png(path_png, width = 30, height = 9.5, units = 'in', res = 800)
+png(path_png, width = 40, height = 9.5, units = 'in', res = 800)
 par(mar = c(5, 10, 1, 1), xaxs = 'i', yaxs = 'i')
 ## subset per season and adjust xlims
 if(TRUE){
   sub = dat[which(dat$date < as.Date('2024-04-10')),]
   sub_summary = 
     summary[which(summary$date < as.Date('2024-04-10')),]
-  xlim = as.Date(c('2023-04-10', '2023-12-01'))
+  xlim = as.Date(c('2023-04-10', '2024-04-10'))
 } else {
   xlim = as.Date(c('2023-07-30', '2023-11-15'))
 }
