@@ -3,6 +3,7 @@
 # Author: Simeon Q. Smeele
 # Description: Combines selection tables from segmentation and classification.
 # Also creates an overview with species per 3-5 seconds chunks. 
+# cd "/home/au472091/OneDrive/au/projects/pam_bats"
 # source('analysis/code/aspot_combine_selection_tables.R')
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -16,22 +17,41 @@ for(lib in libraries){
 # Clean R
 rm(list=ls()) 
 
+# Settings
+mc.cores = 20
+
 # Paths 
-station = 'Stadiloe'
+deployment = 'Ballum_0710_2024_B'
 path_segmentation = sprintf(
-  '/home/au472091/Documents/results_aspot/%s/selection_tables', station)
+  '/media/au472091/data/rerun_land/results_done/%s/selection_tables', 
+  deployment)
 path_logs_segmentation = sprintf(
-  '/home/au472091/Documents/results_aspot/%s/predict', station)
+  '/media/au472091/data/rerun_land/results_done/%s/predict', 
+  deployment)
 path_classifiction = sprintf(
-  '/home/au472091/Documents/results_aspot/%s/selection_tables_species', 
-  station)
+  '/media/au472091/data/rerun_land/results_done/%s/selection_tables_species',
+  deployment)
 path_logs = sprintf(
-  '/home/au472091/Documents/results_aspot/%s/predict_species', station)
+  '/media/au472091/data/rerun_land/results_done/%s/predict_species', deployment)
 path_combined_selection_tables = sprintf(
-  '/home/au472091/Documents/results_aspot/%s/combined_selection_tables', 
-  station)
+  '/media/au472091/data/rerun_land/results_done/%s/combined_selection_tables',
+  deployment)
 path_species_overview = sprintf(
-  'analysis/results/species_overview/%s.csv', station)
+  'analysis/results/species_overview/%s.csv', deployment)
+
+# path_segmentation = '/home/au472091/Documents/large_data/results_viborgvej_moensted_nnoc?/selection_tables'
+# path_logs_segmentation = '/home/au472091/Documents/large_data/results_viborgvej_moensted_nnoc?/predict'
+# path_classifiction = '/home/au472091/Documents/large_data/results_viborgvej_moensted_nnoc?/selection_tables_species'
+# path_logs = '/home/au472091/Documents/large_data/results_viborgvej_moensted_nnoc?/predict_species'
+# path_combined_selection_tables = '/home/au472091/Documents/large_data/results_viborgvej_moensted_nnoc?/combined_selection_tables'
+# path_species_overview = '/home/au472091/Documents/large_data/results_viborgvej_moensted_nnoc?/species_overview.csv'
+
+# path_segmentation = '/home/au472091/OneDrive/au/projects/pam_bats/aspot/models/m59/selection_tables'
+# path_logs_segmentation = '/home/au472091/OneDrive/au/projects/pam_bats/aspot/models/m59/predict'
+# path_classifiction = '/home/au472091/OneDrive/au/projects/pam_bats/aspot/models_s/batspot_classifier_m06/selection_tables'
+# path_logs = '/home/au472091/OneDrive/au/projects/pam_bats/aspot/models_s/batspot_classifier_m06/predict'
+# path_combined_selection_tables = '/home/au472091/OneDrive/au/projects/pam_bats/aspot/models_s/batspot_classifier_m06/combined_selection_tables'
+# path_species_overview = '/home/au472091/OneDrive/au/projects/pam_bats/aspot/models_s/batspot_classifier_m06/combined_selection_tables/species_overview.csv'
 
 # List files
 seg_files = list.files(path_segmentation, '*txt', full.names = TRUE)
@@ -99,14 +119,15 @@ for(seg_file in seg_files){
                               str_remove('prob=')) |> as.numeric()
                 } # end if str_detect loop
               } # end line loop
-              type = classes[probs == max(probs)][1]
+              type = classes[probs == max(probs[!classes %in% 
+                                                  c('noise', 'bbar')])][1]
             } else {
               type = 'noise'
             } # end type greater 1
           } # end one type loop
         } # end if class file found
         return(type)
-      }, mc.cores = 4) |> unlist() # end cfs mclapply
+      }, mc.cores = mc.cores) |> unlist() # end cfs mclapply
     
     ## fix format table
     selection_table$View = 'Spectrogram 1'
@@ -115,6 +136,10 @@ for(seg_file in seg_files){
                                'Low Freq (Hz)', 'High Freq (Hz)', 
                                'Annotations', 'Comments')
     selection_table = selection_table[-9]
+    
+    ## check if missing classifications
+    if(any(selection_table$Annotations == 'NA')) 
+      warning('Found missing classifications in ', seg_file, '.')
     
     ## write table
     write.table(selection_table, paste(path_combined_selection_tables, 
