@@ -45,14 +45,6 @@ dat = dat[which(dat$type_location == 'boejer'),]
 summary = summary[which(summary$type_location == 'boejer'),]
 
 # Plot
-unique_stations = dat$station |> unique() |> sort(decreasing = TRUE)
-labels_stations = vapply(unique_stations, function(st) if(str_detect(st, 'NS')) 
-    sprintf('NS%02d', as.numeric(strsplit(st, 'NS')[[1]][2])) else
-      st, character(1))
-trans_stations = seq_along(unique_stations)
-names(trans_stations) = 
-  unique_stations[order(labels_stations, decreasing = TRUE)]
-labels_stations = sort(labels_stations, decreasing = TRUE)
 ## create colour gradient
 colfunc = colorRampPalette(c('#EAEDED', '#5F6A6A'))
 cols = colfunc(max(summary$n))
@@ -65,16 +57,23 @@ if(FALSE){
     summary[which(summary$date < as.Date('2024-04-10')),]
   xlim = as.Date(c('2023-04-10', '2024-04-10'))
 } else {
-  sub = dat[which(dat$date > as.Date('2024-04-10') & 
+  sub = dat[which(dat$date >= as.Date('2024-04-10') & 
                     dat$date < as.Date('2025-04-10')),]
   sub_summary = 
-    summary[which(summary$date > as.Date('2024-04-10') & 
+    summary[which(summary$date >= as.Date('2024-04-10') & 
                     summary$date < as.Date('2025-04-10')),]
-  xlim = as.Date(c('2024-04-10', '2025-04-10'))
+  xlim = as.Date(c('2024-04-09', '2025-04-09'))
 }
 ## remove before and after deployment
 sub = sub[sub$offshore,]
 sub_summary = sub_summary[sub_summary$offshore,]
+## get stations
+unique_stations = sub$station |> unique() |> sort(decreasing = TRUE)
+labels_stations = unique_stations
+trans_stations = seq_along(unique_stations)
+names(trans_stations) =
+  unique_stations[order(labels_stations, decreasing = TRUE)]
+labels_stations = sort(labels_stations, decreasing = TRUE)
 ## create empty plot
 ymin = min(trans_stations) - 0.45
 ymax = max(trans_stations) + 0.45
@@ -108,8 +107,8 @@ summary_detections = sub |> group_by(station, date) |>
 points(summary_detections$date,
        trans_stations[summary_detections$station] + 0.15, pch = 16, 
        cex = log10(summary_detections$n)/4 + 0.1)
-points(sub$date[sub$n_bats > 0],
-       trans_stations[sub$station[sub$n_bats > 0]] - 0.15, pch = 16, 
+points(sub$date[!is.na(sub$species)],
+       trans_stations[sub$station[!is.na(sub$species)]] - 0.15, pch = 16, 
        cex = 1.5, col = '#D68910')
 ## add axes
 unique_months = unique(format(ymd(sub$date), '%Y-%m'))
