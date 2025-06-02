@@ -17,13 +17,13 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Settings
-data_set = 32
+data_set = 33
 
 # Paths 
 path_results = sprintf('aspot/data_sets_s/data_%s', data_set)
 path_data = 'analysis/data'
 path_selections = sprintf(
-  '%s/aspot_selections/target/data_sendttilKristianBerglertilNeuralNet',
+  '%s/aspot_selections/target_species/data_sendttilKristianBerglertilNeuralNet',
   path_data)
 path_wavs = sprintf(
   '%s/data_sendttilKristianBerglertilNeuralNet',
@@ -56,8 +56,8 @@ export.selection = function(selection, selection_table, wave, file_name){
   # Create new name 
   type = selection_table$path[1] |> strsplit('/') |> sapply(`[`, 6)
   # if(type == 'Mbramys') type = 'noise'
-  if(type == 'Mdau') type = 'M'
-  if(type == 'Mnat') type = 'M'
+  if(type == 'Nnoc') type = 'target'
+  # if(type == 'Mnat') type = 'M'
   ID = round(runif(1) * 1e7)
   year = 2023
   tape_name = str_replace_all(file_name, '_', '-')
@@ -69,10 +69,10 @@ export.selection = function(selection, selection_table, wave, file_name){
   # Create new wave and save
   new_wave = wave[start:end]
   if(length(new_wave@left)/new_wave@samp.rate > 0.005){
-    # if(type %in% c('Mdaubramys')){
+    if(type %in% c('target')){
       new_name = paste0(path_results, '/', new_name, '.wav')
       writeWave(new_wave, new_name, extensible = FALSE)
-    # }
+    }
   }
   
 }
@@ -96,7 +96,7 @@ export.selections = function(file){
   
   # Read the wave
   wave = readWave(audio_files[ grepl(paste0(file_name, '.wav'), audio_files,
-                                     ignore.case = TRUE) ])
+                                     ignore.case = TRUE) ][1])
   
   # Export for each piece
   sapply(seq_len(nrow(selection_table)), export.selection, 
