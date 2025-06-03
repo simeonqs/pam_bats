@@ -7,7 +7,8 @@
 # 2) dat_model - data frame with an entry per recording night for offshore
 # 3) summary - data frame with an entry per date (not night), combination of
 #    all summary files
-# 4) summary_bats - data frame with an entry per file with bat detection
+# 4) summary_bats - data frame with an entry per file with bat detection - not
+#    currently included
 # 5) sun - data frame with sun set and rise
 # 6) colours - named vector with colour codes per species
 # 7) species_offshore - data frame with Signes species classification for 
@@ -16,9 +17,11 @@
 # 9) locations_all_buoys - data frame with lat long for all buoys, including
 #    ones without bat equipment
 # All times should be in UTC. 
+# cd /home/au472091/OneDrive/au/projects/pam_bats
+# source("analysis/code/combine_all_data.R")
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-# Loading libraries
+# Loading libraries ----
 libraries = c('stringr', 'dplyr', 'lubridate', 'callsync', 'sf',
               'rnaturalearth')
 for(lib in libraries){
@@ -26,10 +29,10 @@ for(lib in libraries){
   lapply(libraries, require, character.only = TRUE)
 }
 
-# Clean R
+# Clean R ----
 rm(list=ls()) 
 
-# Paths 
+# Paths ----
 path_results = '/media/au472091/data/new_results_aspot'
 path_detections_bats = '/media/au472091/data/new_results_aspot/defenitely_bats'
 path_meta_togter = 'analysis/data/meta_data_bird_surveys.csv'
@@ -44,6 +47,11 @@ path_combined_data = 'analysis/results/combined_data.RData'
 path_summary_per_station = 'analysis/results/summary_per_station.csv'
 path_offshore_bats = 'analysis/results/offshore_detections_bats.csv'
 path_lunar_data = 'analysis/data/lunar_data_esbjerg.csv'
+
+# Load data ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting data load.')
 
 # Load weather stations
 weather_stations = read.csv(path_stations)
@@ -102,10 +110,10 @@ meta_boejer$Recovery.date = meta_boejer$Recovery.date |>
 meta_HRIII = read.csv(path_meta_HRIII)
 meta_HRIII$Deployment.service.date = meta_HRIII$Deployment.service.date |> 
   as.character() |>
-  as.Date(format = '%m/%d/%Y')
+  as.Date(format = '%Y%m%d')
 meta_HRIII$Recovery.date = meta_HRIII$Recovery.date |> 
   as.character() |>
-  as.Date(format = '%m/%d/%Y')
+  as.Date(format = '%Y%m%d')
 
 # List all prediction checks
 files_prediction_checks = list.files(path_results, 
@@ -122,7 +130,11 @@ dat = dat |> bind_rows(.id = 'folder_name')
 incomplete = which(dat$log_complete == 'False' & dat$broken == 'False')
 if(length(incomplete) > 0) stop('Some prediction logs were incomplete.')
 
-# Clean up
+# Clean up ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting clean up.')
+
 dat = dat[!duplicated(dat$file_name),] # removing duplicates caused by recovery
 dat$file_name = dat$file_name |> str_remove('.wav')
 dat$date = dat$file_name |> strsplit('_') |> sapply(`[`, 2) |> 
@@ -147,7 +159,11 @@ files_summary = list.files(path_results,
                            pattern = 'summary_',
                            recursive = TRUE, full.names = TRUE)
 
-# Read all summary files
+# Read all summary files ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting read summary files.')
+
 summary = lapply(files_summary, read.csv)
 names(summary) = files_summary |> basename() |> 
   str_remove('summary_') |> str_remove('.csv')
@@ -155,7 +171,11 @@ summary = summary |> bind_rows(.id = 'folder_name')
 summary$date = as.Date(summary$DATE, format = '%Y-%b-%d')
 summary$DATE = NULL
 
-# Load sun
+# Load sun ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting loading sun data.')
+
 sun = read.csv(path_sun)
 sun$rise_min = vapply(sun$Sunrise, function(time_str) {
   as.numeric(strsplit(time_str, ':')[[1]]) %*% c(60, 1, 1/60)
@@ -176,16 +196,17 @@ sun$set_min = vapply(sun$Sunset, function(time_str) {
          60, 0) - 
   12*60 
 
-# Load species offshore
+# Load species offshore ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting loading species offshore.')
+
 species_offshore = read.csv(path_species_offshore)
 
 # Fix Signes species names
 species_offshore$sp = species_offshore$art
 species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'rold'),
                              'Pnat', species_offshore$sp)
-species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'langøre'),
-                             'NVE', species_offshore$sp)
-warning('Why is langøre here?')
 species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'ENV'),
                              'NVE', species_offshore$sp)
 species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'dværgflagermus'),
@@ -196,14 +217,18 @@ species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'Myo'),
 # Load location all buoys
 locations_all_buoys = read.csv(path_all_buoys)
 
-# Add type location dat
+# Add type location dat ----
 type_locations = files_prediction_checks |> strsplit('/') |> 
   vapply(function(split) split[length(split)-2], character(1))
 names(type_locations) = files_prediction_checks |> strsplit('/') |> 
   vapply(function(split) split[length(split)-1], character(1))
 dat$type_location = type_locations[dat$folder_name]
 
-# Add and fix station names
+# Add and fix station names ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting fixing station names.')
+
 dat$station = NA
 ## fugletogter
 dat$station[dat$type_location == 'fugletogter'] = 'survey_ship'
@@ -282,6 +307,13 @@ dat$station[dat$folder_name == 'E07_BoxD_card_A'] = 'E07'
 dat$station[dat$folder_name == 'G05_BoxA_card_A'] = 'G05'
 dat$station[dat$folder_name == 'G06_BoxB_card_A'] = 'G06'
 dat$station[dat$folder_name == 'F07_BoxC_card_A'] = 'F07'
+dat$station = ifelse(dat$station == 'VAT-E', 'F01', dat$station)
+dat$station = ifelse(dat$station == 'VAT-F', 'F04', dat$station)
+dat$station = ifelse(dat$station == 'VAT-H', 'F07', dat$station)
+dat$station = ifelse(dat$station == 'VAT-G', 'G05', dat$station)
+dat$station = ifelse(dat$station == 'VA', 'G05', dat$station)
+dat$station = ifelse(dat$station == 'VAT1', 'F07', dat$station)
+dat$station = ifelse(dat$station == 'VAT4', 'E07', dat$station)
 
 meta_boejer$Station.ID = meta_boejer$Station.ID |>
   str_remove('T3/') |>
@@ -374,6 +406,13 @@ summary$station[summary$folder_name ==
                   'HR3_Z_C03_A_Fall2023_Recovered_HR3-Z_A'] = 'C03'
 summary$station[summary$folder_name == 
                   'HR3_Z_C03_B_Fall2023_Recovered_HR3-Z_B'] = 'C03'
+summary$station = ifelse(summary$station == 'VAT-E', 'F01', summary$station)
+summary$station = ifelse(summary$station == 'VAT-F', 'F04', summary$station)
+summary$station = ifelse(summary$station == 'VAT-H', 'F07', summary$station)
+summary$station = ifelse(summary$station == 'VAT-G', 'G05', summary$station)
+summary$station = ifelse(summary$station == 'VA', 'G05', summary$station)
+summary$station = ifelse(summary$station == 'VAT1', 'F07', summary$station)
+summary$station = ifelse(summary$station == 'VAT4', 'E07', summary$station)
 
 locations_all_buoys$Position.ID = locations_all_buoys$Position.ID |>
   str_remove('_SH') |>
@@ -507,24 +546,69 @@ summary$station[summary$folder_name == 'NS16_A_Spring2024_NS16_A'] =
 summary$station[summary$folder_name == 'NS28_A_Spring2024_NS28_A'] = 
   'NS13'
 
+# Species bats ----
 
-# Add how many bats were found per file - this includes some onshore detections
-## list all detection tables with bats
-st_bats = load.selection.tables(path_detections_bats, recursive = TRUE)
-summary_bats = data.frame(file = unique(st_bats$file),
-                          n_bats = vapply(unique(st_bats$file), function(f)
-                            nrow(st_bats[st_bats$file == f,]), numeric(1)))
-dat$n_bats = vapply(seq_len(nrow(dat)), function(i){
-  if(dat$type_location[i] == 'land'){
-    return(NA)
-  } else {
-    if(dat$file_name[i] %in% summary_bats$file) 
-      return(summary_bats$n_bats[summary_bats$file == dat$file_name[i]]) else
-        return(0)
-  }
-}, numeric(1))
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting adding offshore bat species.')
 
-# Add if recordings were offshore
+## go through dat and add species
+dat$species = NA
+for(row in which(dat$type_location %in% c('boejer', 'HRIII') &
+                 dat$file_name %in% species_offshore$Fil)){
+  sub = species_offshore[species_offshore$Fil == dat$file_name[row],]
+  dat$species[row] = ifelse(nrow(sub) == 1, sub$sp, NA)
+}
+
+# message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+#         '] Starting adding onshore bat species.')
+# 
+# for(folder in unique(dat$folder_name[which(dat$type_location == 'land')])){
+#   ## list files from land stations
+#   files = list.files(paste0(path_results, 
+#                                  sprintf('/land/%s/combined_selection_tables', 
+#                                          folder)), 
+#                           full.names = TRUE)
+#   files_clean = files |> basename() |> 
+#     str_remove('_predict_output.log.annotation.result.txt')
+#   for(row in which(dat$folder_name == folder)){
+#     species_d = c()
+#     file = files[files_clean == dat$file_name[row]]
+#     if(length(file) == 0){
+#       dat$species[row] = NA
+#       next
+#     }
+#     st = load.selection.table(file)
+#     if(nrow(st) == 0){
+#       dat$species[row] = NA
+#       next
+#     }
+#     st$Annotations = str_to_title(st$Annotations)
+#     st$Annotations[st$Annotations %in% 
+#                        c('Mbramys', 'Mdas', 'Mnat', 'Mdau')] = 'M'
+#     st$Annotations[st$Annotations %in% c('Nnoc', 'Eser', 'Vmur')] = 'NVE'
+#     st$Annotations[st$Annotations %in% c('Noise', 'Bbar', 'B')] = 'noise'
+#     duration = max(st$End.Time..s.)
+#     chunk_starts = seq(0, duration, 5)
+#     for(chunk_start in chunk_starts){
+#       d = st[st$Begin.Time..s. >= chunk_start & 
+#                   st$Begin.Time..s. < (chunk_start+5),]
+#       ### remove species with less than three occurrences
+#       table_species = table(d$Annotations)
+#       table_species = table_species[names(table_species) != 'noise']
+#       table_species = table_species[table_species >= 5]
+#       species_d = c(species_d, names(table_species))
+#     } # end chunk loop
+#     dat$species[row] = ifelse(length(species_d) > 0, 
+#                               paste(unique(species_d), collapse = ', '), 
+#                               NA)
+#   } # end row loop
+# } # end folder loop
+
+# Add if recordings were offshore ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting adding offshore or not.')
+
 dat$offshore = ifelse(dat$type_location == 'land', FALSE, NA)
 summary$offshore = ifelse(summary$type_location == 'land', FALSE, NA)
 ## fugletogter
@@ -622,7 +706,11 @@ for(st in unique(dat$station[dat$type_location == 'HRIII'])){
     (summary$date[which(summary$station == st)] %in% offshore_dates)
 }
 
-# Create data frame with all offshore days
+# Create data frame for model ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting creating dat_model.')
+
 dat_model = data.frame()
 ## boejer
 for(st in unique(meta_boejer$Station.ID)){
@@ -674,11 +762,15 @@ for(st in unique(meta_HRIII$WT.ID)){
 }
 # dat_model = dat_model[dat_model$date < as.Date('2024-04-11'),]
 
-# Add weather
+# Add weather ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting adding weather data.')
+
 ## add weather for each offshore night
 message('Getting weather for offshore nights.')
 for(st in unique(dat_model$station)){
-  print(st)
+  # print(st)
   ws = weather_stations$weather_station[weather_stations$station_id == st]
   if(length(ws) != 1) stop('Did not find ', st)
   weather = read.table(sprintf('%s/%s_era5.pre', path_weather, ws),
@@ -722,10 +814,21 @@ for(st in unique(dat_model$station)){
 #   }
 # }
 
-# Add lunar phase
+# Add lunar phase ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting adding lunar data.')
+
 lunar_data = read.csv(path_lunar_data)
 dat_model = merge(dat_model, lunar_data, by = 'date', 
                   all.x = TRUE, all.y = FALSE)
+
+# Clean up 2 ----
+
+# Fix misnaming of Skjern_0912_2024_A_NS32_A
+summary$station[summary$folder_name == 'Skjern_0912_2024_A_NS32_A'] = 'Skjern'
+summary$type_location[summary$folder_name == 'Skjern_0912_2024_A_NS32_A'] = 
+  'land'
 
 # Remove first deployment A01 og all of B01
 summary = summary[!(summary$station == 'A01' & 
@@ -733,12 +836,167 @@ summary = summary[!(summary$station == 'A01' &
 summary = summary[!summary$station == 'B01',]
 dat = dat[!dat$station == 'B01',]
 
-# Add GPS coordinates stations
+# Remove wake-up on first of month
+dat = dat[!(dat$station == 'HR3-4' & 
+              dat$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                      '2025-01-01', '2025-02-01',
+                                      '2025-04-01'))),]
+summary = summary[!(summary$station == 'HR3-4' & 
+                      summary$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                                  '2025-01-01', '2025-02-01',
+                                                  '2025-04-01'))),]
+dat = dat[!(dat$station == 'NS06' & 
+              dat$date %in% as.Date(c('2025-01-01'))),]
+summary = summary[!(summary$station == 'NS06' & 
+                      summary$date %in% as.Date(c('2025-01-01'))),]
+dat = dat[!(dat$station == 'NS08' & 
+              dat$date %in% as.Date(c('2024-08-01', '2025-01-01'))),]
+summary = summary[!(summary$station == 'NS08' & 
+                      summary$date %in% as.Date(c('2024-08-01', 
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS12' & 
+              dat$date %in% as.Date(c('2024-11-01', '2025-01-01',
+                                      '2025-02-01'))),]
+summary = summary[!(summary$station == 'NS12' & 
+                      summary$date %in% as.Date(c('2024-11-01', '2025-01-01',
+                                                  '2025-02-01'))),]
+dat = dat[!(dat$station == 'NS13' & 
+              dat$date %in% as.Date(c('2025-01-01'))),]
+summary = summary[!(summary$station == 'NS13' & 
+                      summary$date %in% as.Date(c('2025-01-01'))),]
+dat = dat[!(dat$station == 'NS14' & 
+              dat$date %in% as.Date(c('2025-01-01'))),]
+summary = summary[!(summary$station == 'NS14' & 
+                      summary$date %in% as.Date(c('2025-01-01'))),]
+dat = dat[!(dat$station == 'NS16' & 
+              dat$date %in% as.Date(c('2024-08-01'))),]
+summary = summary[!(summary$station == 'NS16' & 
+                      summary$date %in% as.Date(c('2024-08-01'))),]
+dat = dat[!(dat$station == 'NS19' & 
+              dat$date %in% as.Date(c('2024-11-01','2025-01-01'))),]
+summary = summary[!(summary$station == 'NS19' & 
+                      summary$date %in% as.Date(c('2024-11-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS20' & 
+              dat$date %in% as.Date(c('2024-08-01', '2024-11-01'))),]
+summary = summary[!(summary$station == 'NS20' & 
+                      summary$date %in% as.Date(c('2024-08-01',
+                                                  '2024-11-01'))),]
+dat = dat[!(dat$station == 'NS21' & 
+              dat$date %in% as.Date(c('2024-06-01', '2025-01-01'))),]
+summary = summary[!(summary$station == 'NS21' & 
+                      summary$date %in% as.Date(c('2024-06-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS24' & 
+              dat$date %in% as.Date(c('2024-08-01', '2024-11-01'))),]
+summary = summary[!(summary$station == 'NS24' & 
+                      summary$date %in% as.Date(c('2024-08-01',
+                                                  '2024-11-01'))),]
+dat = dat[!(dat$station == 'NS26' & 
+              dat$date %in% as.Date(c('2024-06-01', '2025-01-01'))),]
+summary = summary[!(summary$station == 'NS26' & 
+                      summary$date %in% as.Date(c('2024-06-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS27' & 
+              dat$date %in% as.Date(c('2024-08-01', '2024-11-01',
+                                      '2025-01-01', '2025-02-01'))),]
+summary = summary[!(summary$station == 'NS27' & 
+                      summary$date %in% as.Date(c('2024-08-01', '2024-11-01',
+                                                  '2025-01-01', 
+                                                  '2025-02-01'))),]
+dat = dat[!(dat$station == 'NS28' & 
+              dat$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                      '2025-01-01', '2025-02-01'))),]
+summary = summary[!(summary$station == 'NS28' & 
+                      summary$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                                  '2025-01-01', 
+                                                  '2025-02-01'))),]
+dat = dat[!(dat$station == 'NS29' & 
+              dat$date %in% as.Date(c('2024-08-01', '2024-11-01'))),]
+summary = summary[!(summary$station == 'NS29' & 
+                      summary$date %in% as.Date(c('2024-08-01',
+                                                  '2024-11-01'))),]
+dat = dat[!(dat$station == 'NS30' & 
+              dat$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                      '2025-01-01'))),]
+summary = summary[!(summary$station == 'NS30' & 
+                      summary$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS31' & 
+              dat$date %in% as.Date(c('2025-01-01'))),]
+summary = summary[!(summary$station == 'NS31' & 
+                      summary$date %in% as.Date(c('2025-01-01'))),]
+dat = dat[!(dat$station == 'NS32' & 
+              dat$date %in% as.Date(c('2024-08-01', '2024-11-01'))),]
+summary = summary[!(summary$station == 'NS32' & 
+                      summary$date %in% as.Date(c('2024-08-01',
+                                                  '2024-11-01'))),]
+dat = dat[!(dat$station == 'NS33' & 
+              dat$date %in% as.Date(c('2025-01-01', '2025-02-01'))),]
+summary = summary[!(summary$station == 'NS33' & 
+                      summary$date %in% as.Date(c('2025-01-01', 
+                                                  '2025-02-01'))),]
+dat = dat[!(dat$station == 'NS34' & 
+              dat$date %in% as.Date(c('2024-06-01'))),]
+summary = summary[!(summary$station == 'NS34' & 
+                      summary$date %in% as.Date(c('2024-06-01'))),]
+dat = dat[!(dat$station == 'NS35' & 
+              dat$date %in% as.Date(c('2024-06-01','2025-01-01'))),]
+summary = summary[!(summary$station == 'NS35' & 
+                      summary$date %in% as.Date(c('2024-06-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'E07' & 
+              dat$date %in% as.Date(c('2024-11-01','2025-01-01'))),]
+summary = summary[!(summary$station == 'E07' & 
+                      summary$date %in% as.Date(c('2024-11-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'F01' & 
+              dat$date %in% as.Date(c('2025-04-01'))),]
+summary = summary[!(summary$station == 'F01' & 
+                      summary$date %in% as.Date(c('2025-04-01'))),]
+dat = dat[!(dat$station == 'F04' & 
+              dat$date %in% as.Date(c('2025-04-01'))),]
+summary = summary[!(summary$station == 'F04' & 
+                      summary$date %in% as.Date(c('2025-04-01'))),]
+dat = dat[!(dat$station == 'F07' & 
+              dat$date %in% as.Date(c('2025-04-01'))),]
+summary = summary[!(summary$station == 'F07' & 
+                      summary$date %in% as.Date(c('2025-04-01'))),]
+dat = dat[!(dat$station == 'G05' & 
+              dat$date %in% as.Date(c('2024-11-01','2025-04-01'))),]
+summary = summary[!(summary$station == 'G05' & 
+                      summary$date %in% as.Date(c('2024-11-01',
+                                                  '2025-04-01'))),]
+dat = dat[!(dat$station == 'G06' & 
+              dat$date %in% as.Date(c('2024-08-01'))),]
+summary = summary[!(summary$station == 'G06' & 
+                      summary$date %in% as.Date(c('2024-08-01'))),]
+dat = dat[!(dat$station == 'platform' & 
+              dat$date %in% as.Date(c('2024-11-01', '2025-04-01',
+                                      '2025-04-02'))),]
+summary = summary[!(summary$station == 'platform' & 
+                      summary$date %in% as.Date(c('2024-11-01', '2025-04-01',
+                                                  '2025-04-02'))),]
+
+# Remove dates with overlap between activation and recovery (but before 
+# deployment)
+dat = dat[!(dat$station == 'NS19' & 
+              dat$date %in% as.Date(c('2025-02-20', '2025-02-21',
+                                      '2025-02-22'))),]
+summary = summary[!(summary$station == 'NS19' & 
+                      summary$date %in% as.Date(c('2025-02-20', '2025-02-21',
+                                                  '2025-02-22'))),]
+
+# Add GPS coordinates stations ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting adding coordinates.')
+
 dat_model = merge(dat_model, weather_stations[,c('station_id', 'lat', 'long')],
                   by.x = 'station', by.y = 'station_id', 
                   all.x = TRUE, all.y = FALSE)
 
-# Calculate distance to coast and add to dat_model
+# Calculate distance to coast and add to dat_model ----
 stations = unique(dat_model[c('station', 'lat', 'long')])
 world_coastline = ne_coastline(scale = 'large', returnclass = 'sf')
 stations_sf = st_as_sf(stations, coords = c('long', 'lat'), crs = 4326)
@@ -747,35 +1005,42 @@ stations$distance_to_coast = (nearest_coast_distance |> apply(1, min))/1000
 dat_model = merge(dat_model, stations[c('station', 'distance_to_coast')], 
                   by = 'station', all.x = TRUE, all.y = FALSE)
 
-# Colours species 
+# Colours species ----
 colours = c(
   '#1f77b4', # A soft blue
   '#2ca02c', # A strong green
-  '#FFC107', # A soft yellow
+  '#9467bd', # A moderate purple
+  '#F7DC6F', # A soft yellow
+  '#E67E22', # A pastel orange
   '#B03A2E'  # A dark red
 )
-species = c('M', 'NVE', 'Pnat', 'Ppyg')
+species = c('M', 'NVE', 'Paur', 'Pnat', 'Ppip', 'Ppyg')
 names(colours) = species
 
-# Create summary per station for Signe
-sum_per_station = dat_model |> group_by(station) |> summarise(n = n())
+# # Create summary per station for Signe ----
+# sum_per_station = dat_model |> group_by(station) |> summarise(n = n())
+# 
+# # Create data frame for all bat detections offshore
+# offshore_bats = st_bats[c('file', 'Begin.time..s.', 'End.time..s.')]
+# offshore_bats = merge(offshore_bats, species_offshore[c('Fil', 'sp')],
+#                       by.x = 'file', by.y = 'Fil', all.x = TRUE, all.y = FALSE)
+# offshore_bats = merge(offshore_bats, dat[c('file_name', 'station', 
+#                                            'type_location', 'offshore')],
+#                       by.x = 'file', by.y = 'file_name', 
+#                       all.x = TRUE, all.y = FALSE)
+# if(any(is.na(offshore_bats$offshore))) stop('Offshore column not complete!')
+# offshore_bats = offshore_bats[offshore_bats$offshore,]
 
-# Create data frame for all bat detections offshore
-offshore_bats = st_bats[c('file', 'Begin.time..s.', 'End.time..s.')]
-offshore_bats = merge(offshore_bats, species_offshore[c('Fil', 'sp')],
-                      by.x = 'file', by.y = 'Fil', all.x = TRUE, all.y = FALSE)
-offshore_bats = merge(offshore_bats, dat[c('file_name', 'station', 
-                                           'type_location', 'offshore')],
-                      by.x = 'file', by.y = 'file_name', 
-                      all.x = TRUE, all.y = FALSE)
-if(any(is.na(offshore_bats$offshore))) stop('Offshore column not complete!')
-offshore_bats = offshore_bats[offshore_bats$offshore,]
+# Store output ----
 
-# Store output
-save(dat, dat_model, summary, summary_bats, sun, colours, 
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting storing data.')
+
+save(dat, dat_model, summary, sun, colours, 
      species_offshore, species, locations_all_buoys,
      file = path_combined_data)
-write.csv(sum_per_station, path_summary_per_station, row.names = FALSE)
-write.csv(offshore_bats, path_offshore_bats, row.names = FALSE)
-message('Stored all data.')
+# write.csv(sum_per_station, path_summary_per_station, row.names = FALSE)
+# write.csv(offshore_bats, path_offshore_bats, row.names = FALSE)
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Stored all data. Done.')
 
