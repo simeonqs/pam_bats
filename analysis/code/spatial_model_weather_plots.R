@@ -14,6 +14,8 @@ for(lib in libraries){
 # Clean R
 rm(list=ls()) 
 
+stop('Check wind direction!')
+
 # Paths 
 path_png = 'analysis/results/spatial_model/weather_plots.png'
 path_dat_model = 'analysis/results/spatial_model/dat_model.RData'
