@@ -17,17 +17,17 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Settings
-data_set = 32
+data_set = 33
 samp_rate_lower_limit = 192000
 
 # Paths 
 path_results = sprintf('aspot/data_sets_s/data_%s', data_set)
 path_data = 'analysis/data'
 path_selections = sprintf(
-  '%s/aspot_selections/target/TrainingData_Classification_NOVANAbased_easy',
+  '%s/aspot_selections/target_species/TrainingData_Classification_NOVANAbased_easy',
   path_data)
 path_wavs = sprintf(
-  '%s/audio/TrainingData_Classification_NOVANAbased',
+  '%s/audio',
   path_data)
 
 # Create directories
@@ -61,8 +61,8 @@ export.selection = function(selection, selection_table, wave, file_name){
     type = file_name |> strsplit(' ') |> sapply(`[`, 1)
   }
   type = type |> str_remove('-')
-  if(type == 'MbraMmys') type = 'Mbramys'
-  if(type %in% c('Mdau', 'Mbramys', 'Mnat', 'Mdas')) type = 'M'
+  # if(type == 'MbraMmys') type = 'Mbramys'
+  # if(type %in% c('Mdau', 'Mbramys', 'Mnat', 'Mdas')) type = 'M'
   if(type %in% c('Vmur', 'Eser')) type = 'noise'
   if(type %in% c('Nnoc')) type = 'target'
   
