@@ -27,9 +27,12 @@ wing = 0.01 # how much to add before and after detection
 #   '/media/au472091/T7 Shield/LAND_winter_23/%s_all', folder)
 # path_out = sprintf(
 #   '/home/au472091/Documents/results_aspot/%s/specs_detections', folder)
-path_detections = '/home/au472091/Downloads/noise_tables'
-path_audio = '/media/au472091/cd5d3443-6980-4c41-96c9-fdfa2b7c264e/togter_all'
-path_out = '/home/au472091/Downloads/specs_noise'
+# path_detections = '/home/au472091/Documents/large_data/results_viborgvej_moensted_nnoc?/selection_tables'
+# path_audio = '/media/au472091/WildlifeAco/Data'
+# path_out = '/home/au472091/Documents/large_data/results_viborgvej_moensted_nnoc?/specs_detections'
+path_detections = 'aspot/models/m59/selection_tables'
+path_audio = 'aspot/test_data_sets/test_data'
+path_out = 'aspot/models/m59/specs_detections'
 
 # Load selection tables
 detections = load.selection.tables(path_detections)
