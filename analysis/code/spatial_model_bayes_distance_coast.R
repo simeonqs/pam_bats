@@ -4,6 +4,8 @@
 # Description: Bayesian version of model for distance to coast.
 # This model assumes exponential decline that follows: y(x)=y0*exp(-k*x). Where
 # y0 is the initial value at source, k is rate of decline and x is distance.
+# But because the response is binomial, it ends up being just a 'linear' 
+# predictor. 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Loading libraries
@@ -60,11 +62,20 @@ fit = model$sample(data = clean_dat,
                    seed = 1, 
                    chains = 4, 
                    parallel_chains = 4)
-fit_nice = fit$output_files() %>%
-  rstan::read_stan_csv()
-post = fit_nice %>%
-  rethinking::extract.samples()
-fit_nice |> precis(depth = 2) |> round(2) |> print()
+# fit_nice = fit$output_files() %>%
+#   rstan::read_stan_csv()
+# post = fit_nice %>%
+#   rethinking::extract.samples()
+extract.samples.cmdstanr <- function(fit_obj) {
+  vars <- fit_obj$metadata()$stan_variables
+  draws <- posterior::as_draws_rvars(fit_obj$draws())
+  
+  lapply(vars, \(var_name){  
+    posterior::draws_of(draws[[var_name]], with_chains = FALSE)
+  }) |> setNames(vars)
+}
+post = extract.samples.cmdstanr(fit)
+# fit_nice |> precis(depth = 2) |> round(2) |> print()
 
 # Plot predictions
 pdf(path_pdf, 6, 4)
@@ -84,7 +95,8 @@ dist_coast = seq(min(dat_model$distance_to_coast),
              max(dat_model$distance_to_coast), 
              1)
 pred = vapply(seq_along(post$a), function(i)
-  vapply(seq_along(dist_coast), function(j) post$a[i] * exp(-post$k[i] * j),
+  vapply(seq_along(dist_coast), function(j) 
+    post$a[i] - post$b[i] * dist_coast[j],
          numeric(1)),
   numeric(length(dist_coast)))
 PI_pred = apply(pred, 1, PI) |> inv_logit()
