@@ -2,8 +2,9 @@ import cdsapi
 import os
 
 #variables to download
-era5_variable_array = ['total_precipitation', '2m_temperature', '10m_u_component_of_wind', '10m_v_component_of_wind']
-variable_store_array = ['precip', 'temp', 'windu', 'windv']
+era5_variable_array = ['total_precipitation', '2m_temperature', '10m_u_component_of_wind', 
+'10m_v_component_of_wind', 'total_cloud_cover', 'surface_pressure']
+variable_store_array = ['precip', 'temp', 'windu', 'windv', 'cloud_coverage', 'atm_pressure']
 
 #path to store the data
 store_path = '/home/au472091/OneDrive/au/projects/pam_bats/analysis/data/weather/'
@@ -13,10 +14,10 @@ if not os.path.exists(store_path):
     exit()
 
 c = cdsapi.Client(url="https://cds.climate.copernicus.eu/api", key="fbcf6d2f-6dd5-47b9-9990-b0679803e7b1")
-start_year = 2023
-start_month = 1 # works with the start year
-end_year = 2024 # included
-end_month = 11 # included, works with the end year
+start_year = 2022
+start_month = 8 # works with the start year
+end_year = 2022 # included
+end_month = 10 # included, works with the end year
 
 #calculating the start and end year_month together
 start_year_month = start_year*100 + start_month
