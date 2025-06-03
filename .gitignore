@@ -2,8 +2,11 @@
 .Rhistory
 .RData
 .Ruserdata
+analysis/code/models/m_dist_coast
 analysis/code/models/m_night
 analysis/code/models/m_night_spatial
+analysis/code/models/m_station_type
+analysis/code/models/m_station_type_dist_coast
 analysis/code/Carlén et al. 2018
 analysis/data
 analysis/results
