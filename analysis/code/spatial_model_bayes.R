@@ -15,19 +15,19 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_dat_model = 'analysis/results/spatial_model/dat_model.RData'
+path_combined_data = 'analysis/results/combined_data.RData'
 path_m_night = 'analysis/code/models/m_night.stan'
 path_m_night_spatial = 'analysis/code/models/m_night_spatial.stan'
 
 # Load
-load(path_dat_model)
+load(path_combined_data)
 
 # Make simple model with b-splines
 num_knots = 5
 degree = 3
-knots = as.numeric(quantile(dat_model$night_of_year, 
+knots = as.numeric(quantile(dat_model$date, 
                             probs = seq(0, 1, length.out = num_knots)))
-B = bs(dat_model$night_of_year,
+B = bs(dat_model$date,
        knots = knots[-c(1, num_knots)],
        degree = degree, intercept = TRUE)
 clean_dat = list(N_obs = nrow(dat_model),
@@ -105,8 +105,8 @@ plot(dat_model$windspeed,
      xlab = 'wind speed', ylab = 'probability presence per night')
 
 # Temperature
-plot(dat_model$temp, 
-     dat_model$present,
+plot(dat_model$mean_temp, 
+     dat_model$detection,
      ylim = c(0, 1),
      pch = 16, col = '#AED6F1',
      xlab = 'temperature', ylab = 'probability presence per night')
