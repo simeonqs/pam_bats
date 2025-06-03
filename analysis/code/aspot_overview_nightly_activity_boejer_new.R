@@ -18,10 +18,11 @@ rm(list=ls())
 path_combined_data = 'analysis/results/combined_data.RData'
 path_png = 'analysis/results/nightly_activity/nightly_activity_bøjer_new.png'
 
-# Load data and subset for boejer
+# Load data and subset for boejer Y1
 load(path_combined_data)
 dat = dat[which(dat$type_location == 'boejer'),]
 dat = dat[dat$station != 'NS29',]
+dat = dat[which(dat$date < as.Date('2024-04-10')),]
 
 # Open png
 png(path_png, 12, 8, units = 'in', res = 800)
