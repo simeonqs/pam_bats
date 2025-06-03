@@ -16,17 +16,17 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-model_1 = 59
-model_2 = 45
-path_segmentation = sprintf('aspot/models/m%s/selection_tables', model_1)
-path_classifiction = sprintf('aspot/models_s/m%s/selection_tables', model_2)
-path_logs = sprintf('aspot/models_s/m%s/predict', model_2)
+model_1 = 'm59'
+model_2 = 'batspot_classifier_m06'
+path_segmentation = sprintf('aspot/models/%s/selection_tables', model_1)
+path_classifiction = sprintf('aspot/models_s/%s/selection_tables', model_2)
+path_logs = sprintf('aspot/models_s/%s/predict', model_2)
 path_combined_selection_tables = 
-  sprintf('aspot/models_s/m%s/combined_selection_tables', model_2)
+  sprintf('aspot/models_s/%s/combined_selection_tables', model_2)
 path_grount_truth = 
   'analysis/results/test_data/ground_truth_selection_tables_species'
 path_pdf = sprintf(
-  'analysis/results/confusion_matrices/confusion_matrix_species_model_m%s+m%s_per_chunk.pdf',
+  'analysis/results/confusion_matrices/confusion_matrix_species_model_%s+%s_per_chunk.pdf',
   model_1, model_2)
 path_audio = 'aspot/test_data_sets/test_data'
 
@@ -118,14 +118,20 @@ manual$Annotation[manual$Annotation %in% c('EVN', 'Nnoc', 'Vmur', 'Eser')] =
 manual$Annotation[manual$Annotation %in% c('b', 'a')] = 'B'
 manual$Annotation[manual$Annotation %in% c('s')] = 'S'
 
+aspot$Sound.type = str_to_title(aspot$Sound.type)
+aspot$Sound.type[aspot$Sound.type %in% 
+                   c('Mbramys', 'Mdas', 'Mnat', 'Mdau')] = 'M'
+aspot$Sound.type[aspot$Sound.type %in% c('Nnoc', 'Eser', 'Vmur')] = 'NVE'
+aspot$Sound.type[aspot$Sound.type %in% c('Noise')] = 'S'
+
 # List unique files
 files = list.files(path_grount_truth) |> str_remove('.Table.1.selections.txt')
 
-# Subset for land files
-message('Subsetting for LAND.')
-files = files[!str_detect(files, 'NS')]
-files = files[!str_detect(files, 'HR')]
-files = files[!str_detect(files, 'ONBOARD')]
+# # Subset for land files
+# message('Subsetting for LAND.')
+# files = files[!str_detect(files, 'NS')]
+# files = files[!str_detect(files, 'HR')]
+# files = files[!str_detect(files, 'ONBOARD')]
 
 # Create place holders for output
 class_results = data.frame()
