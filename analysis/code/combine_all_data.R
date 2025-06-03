@@ -715,7 +715,7 @@ dat_model = data.frame()
 ## boejer
 for(st in unique(meta_boejer$Station.ID)){
   sub_meta = meta_boejer[meta_boejer$Station.ID == st,]
-  dates_station = dat$night_date[dat$station == st & dat$n_bats > 0] |> 
+  dates_station = dat$night_date[dat$station == st & !is.na(dat$species)] |> 
     unique() |> sort()
   all_dates = c()
   for(i in seq_len(nrow(sub_meta))){
@@ -739,7 +739,7 @@ for(st in unique(meta_boejer$Station.ID)){
 ## HRIII
 for(st in unique(meta_HRIII$WT.ID)){
   sub_meta = meta_HRIII[meta_HRIII$WT.ID == st,]
-  dates_station = dat$night_date[dat$station == st & dat$n_bats > 0] |> 
+  dates_station = dat$night_date[dat$station == st & !is.na(dat$species)] |> 
     unique() |> sort()
   all_dates = c()
   for(i in seq_len(nrow(sub_meta))){
