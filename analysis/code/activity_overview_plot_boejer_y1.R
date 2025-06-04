@@ -16,7 +16,7 @@ rm(list=ls())
 
 # Paths 
 path_combined_data = 'analysis/results/combined_data.RData'
-path_png = 'analysis/results/activity_overview/activity_overview_bøjer_new.png'
+path_png = 'analysis/results/activity_overview/activity_overview_bøjer_y1.png'
 
 # Plotting function
 points_custom <- function(x, y, shape, col = 'black', cex = 1, ...) {
@@ -103,8 +103,8 @@ summary_detections = sub |> group_by(station, date) |>
 points(summary_detections$date,
        trans_stations[summary_detections$station] + 0.15, pch = 16, 
        cex = log10(summary_detections$n)/4 + 0.1)
-points(sub$date[sub$n_bats > 0],
-       trans_stations[sub$station[sub$n_bats > 0]] - 0.15, pch = 16, 
+points(sub$date[!is.na(sub$species)],
+       trans_stations[sub$station[!is.na(sub$species)]] - 0.15, pch = 16, 
        cex = 1.5, col = '#D68910')
 ## add axes
 unique_months = unique(format(ymd(sub$date), '%Y-%m'))
