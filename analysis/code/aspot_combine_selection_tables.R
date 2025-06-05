@@ -21,7 +21,7 @@ rm(list=ls())
 mc.cores = 20
 
 # Paths 
-deployment = 'Ballum_0710_2024_B'
+deployment = 'Kammerslusen_0903_2024_A'
 path_segmentation = sprintf(
   '/media/au472091/data/rerun_land/results_done/%s/selection_tables', 
   deployment)
