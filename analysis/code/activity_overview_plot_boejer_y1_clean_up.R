@@ -16,7 +16,8 @@ rm(list=ls())
 
 # Paths 
 path_combined_data = 'analysis/results/combined_data.RData'
-path_png = 'analysis/results/activity_overview/activity_overview_bøjer_y1.png'
+path_png = 
+  'analysis/results/activity_overview/activity_overview_bøjer_y1_clean_up.png'
 
 # Plotting function
 points_custom <- function(x, y, shape, col = 'black', cex = 1, ...) {
@@ -44,17 +45,11 @@ load(path_combined_data)
 dat = dat[dat$type_location == 'boejer',]
 summary = summary[summary$type_location == 'boejer',]
 
-# Define removed dates
-removed_dates = data_frame(
-  station = c('HR3-4', 'HR3-4'),
-  date = as.Date(c(''))
-)
-
 # Plot
 unique_stations = dat$station |> unique() |> sort(decreasing = TRUE)
 labels_stations = vapply(unique_stations, function(st) if(str_detect(st, 'NS')) 
-    sprintf('NS%02d', as.numeric(strsplit(st, 'NS')[[1]][2])) else
-      st, character(1))
+  sprintf('NS%02d', as.numeric(strsplit(st, 'NS')[[1]][2])) else
+    st, character(1))
 trans_stations = seq_along(unique_stations)
 names(trans_stations) = 
   unique_stations[order(labels_stations, decreasing = TRUE)]
@@ -112,6 +107,12 @@ points(summary_detections$date,
 points(sub$date[!is.na(sub$species)],
        trans_stations[sub$station[!is.na(sub$species)]] - 0.15, pch = 16, 
        cex = 1.5, col = '#D68910')
+## add crosses for removed dates
+for(i in seq_len(nrow(removed_dates))){
+  points(removed_dates$date[i],
+         trans_stations[removed_dates$station[i]], 
+         pch = 4, col = 'red', cex = 1)
+}
 ## add axes
 unique_months = unique(format(ymd(sub$date), '%Y-%m'))
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
