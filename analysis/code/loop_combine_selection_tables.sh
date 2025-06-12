@@ -4,10 +4,7 @@
 R_SCRIPT_PATH="/home/au472091/OneDrive/au/projects/pam_bats/analysis/code/aspot_combine_selection_tables.R"
 
 # Define the base directory containing deployment folders
-BASE_DIR="/media/au472091/data/rerun_land/results_done"
-
-# Define the directory where the CSVs should exist
-CSV_DIR="/home/au472091/OneDrive/au/projects/pam_bats/analysis/results/species_overview"
+BASE_DIR="/media/au472091/data/new_results_aspot/land"
 
 # Loop through each folder in the base directory
 for deployment in "$BASE_DIR"/*; do
@@ -17,11 +14,11 @@ for deployment in "$BASE_DIR"/*; do
     # Extract just the folder name
     DEPLOYMENT_NAME=$(basename "$deployment")
 
-    # Define the expected CSV path
-    CSV_PATH="$CSV_DIR/$DEPLOYMENT_NAME.csv"
+    # Define the expected directory path
+    COMBINED_DIR="$deployment/combined_selection_tables"
 
-    # Check if the CSV file exists
-    if [ ! -f "$CSV_PATH" ]; then
+    # Check if the combined_selection_tables directory exists
+    if [ ! -d "$COMBINED_DIR" ]; then
         # Create a temporary copy of the R script
         TEMP_R_SCRIPT="/tmp/temp_aspot_combine_selection_tables.R"
         cp "$R_SCRIPT_PATH" "$TEMP_R_SCRIPT"
