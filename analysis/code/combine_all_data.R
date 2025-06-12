@@ -130,6 +130,152 @@ dat = dat |> bind_rows(.id = 'folder_name')
 incomplete = which(dat$log_complete == 'False' & dat$broken == 'False')
 if(length(incomplete) > 0) stop('Some prediction logs were incomplete.')
 
+# Define removed dates
+removed_dates = data.frame(
+  station = 'HR3-4',
+  date = as.Date(c('2023-06-03', '2023-09-17', '2023-09-18', '2023-12-12', 
+                   '2023-12-13', '2023-12-14'))
+)
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'HR3-6',
+  date = as.Date(c('2023-12-22'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS06',
+  date = c(seq(as.Date('2023-09-17'), as.Date('2023-09-30'), by = 'day'),
+           seq(as.Date('2023-12-17'), as.Date('2023-12-20'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS08',
+  date = c(as.Date('2023-05-31'), as.Date('2023-06-01'),
+           seq(as.Date('2023-09-30'), as.Date('2023-11-07'), by = 'day'),
+           as.Date('2023-12-27'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS12',
+  date = c(seq(as.Date('2023-09-21'), as.Date('2023-11-03'), by = 'day'),
+           seq(as.Date('2023-06-04'), as.Date('2023-06-06 '), by = 'day'),
+           as.Date('2023-12-29'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS13',
+  date = c(seq(as.Date('2023-05-26'), as.Date('2023-05-29'), by = 'day'),
+           seq(as.Date('2023-12-26'), as.Date('2024-01-08'), by = 'day'),
+           as.Date('2024-03-27'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS14',
+  date = c(seq(as.Date('2023-06-06'), as.Date('2023-06-08'), by = 'day'),
+           seq(as.Date('2023-09-05'), as.Date('2023-09-06'), by = 'day'),
+           seq(as.Date('2023-12-27'), as.Date('2024-01-07'), by = 'day'),
+           as.Date('2024-04-05'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS16',
+  date = c(seq(as.Date('2023-06-08'), as.Date('2023-06-11'), by = 'day'),
+           seq(as.Date('2023-12-25'), as.Date('2024-01-23'), by = 'day'),
+           as.Date('2024-04-01'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS19',
+  date = c(seq(as.Date('2023-05-25'), as.Date('2023-05-26'), by = 'day'),
+           seq(as.Date('2023-09-23'), as.Date('2023-10-28'), by = 'day'),
+           seq(as.Date('2023-12-23'), as.Date('2023-12-30'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS20',
+  date = c(seq(as.Date('2023-06-06'), as.Date('2023-06-08 '), by = 'day'),
+           seq(as.Date('2023-09-26'), as.Date('2023-10-15'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS21',
+  date = c(seq(as.Date('2023-06-18'), as.Date('2023-06-19'), by = 'day'),
+           seq(as.Date('2023-12-26'), as.Date('2024-01-06'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS24',
+  date = c(seq(as.Date('2023-06-03'), as.Date('2023-06-04'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS25',
+  date = c(seq(as.Date('2023-06-08'), as.Date('2023-06-12'), by = 'day'),
+           seq(as.Date('2023-12-27'), as.Date('2023-12-29'), by = 'day'),
+           as.Date('2024-04-01'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS26',
+  date = c(as.Date('2023-06-05'),
+           seq(as.Date('2023-09-20'), as.Date('2023-09-21'), by = 'day'),
+           as.Date('2023-12-10'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS27',
+  date = c(as.Date('2023-06-03'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS28',
+  date = c(seq(as.Date('2023-05-31'), as.Date('2023-06-01'), by = 'day'),
+           as.Date('2024-04-01'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS29',
+  date = c(seq(as.Date('2023-05-30'), as.Date('2023-06-05'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS30',
+  date = c(seq(as.Date('2023-09-24'), as.Date('2023-10-23'), by = 'day'),
+           seq(as.Date('2023-12-26'), as.Date('2023-12-28'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS31',
+  date = c(seq(as.Date('2023-06-07'), as.Date('2023-06-10'), by = 'day'),
+           seq(as.Date('2023-09-21'), as.Date('2023-11-01'), by = 'day'),
+           seq(as.Date('2023-12-28'), as.Date('2023-12-29'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS32',
+  date = c(as.Date('2023-05-09'),
+           seq(as.Date('2023-11-30'), as.Date('2023-12-04'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS33',
+  date = c(as.Date('2023-05-29'),
+           seq(as.Date('2023-09-21'), as.Date('2023-09-24'), by = 'day'),
+           seq(as.Date('2023-12-22'), as.Date('2023-12-26'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS34',
+  date = c(seq(as.Date('2023-06-08'), as.Date('2023-06-11'), by = 'day'),
+           seq(as.Date('2023-09-25'), as.Date('2023-11-17'), by = 'day'),
+           seq(as.Date('2023-12-23'), as.Date('2023-12-25'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'NS35',
+  date = c(seq(as.Date('2023-06-06'), as.Date('2023-06-09'), by = 'day'),
+           seq(as.Date('2023-09-25'), as.Date('2023-11-05'), by = 'day'),
+           seq(as.Date('2023-12-28'), as.Date('2024-01-04'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'A01',
+  date = c(seq(as.Date('2023-11-06'), as.Date('2023-11-12'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'A05',
+  date = c(seq(as.Date('2023-06-28'), as.Date('2023-06-29'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'A06',
+  date = c(seq(as.Date('2023-06-27'), as.Date('2023-06-29'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'F03',
+  date = c(seq(as.Date('2023-11-15'), as.Date('2023-11-17'), by = 'day'))
+))
+removed_dates = rbind(removed_dates, data.frame(
+  station = 'J01',
+  date = c(seq(as.Date('2023-07-13'), as.Date('2023-07-14'), by = 'day'))
+))
+
 # Clean up ----
 
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
@@ -154,7 +300,14 @@ dat$night_time_m = split |> vapply(function(x)
 rm(split)
 dat$file_name = dat$file_name |> str_remove('.wav')
 
-# List all summary files
+# Fix error Skjern - NS32
+dat$station[dat$folder_name  == 'Skjern_0912_2024_A'] = 'Skjern'
+
+# List all summary files ----
+
+message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+        '] Starting listing summary files.')
+
 files_summary = list.files(path_results, 
                            pattern = 'summary_',
                            recursive = TRUE, full.names = TRUE)
@@ -461,7 +614,7 @@ summary$type_location = ifelse(summary$station %in%
 # Check if all stations are included as weather station
 dat_check = vapply(unique(dat$station), function(x) 
   x %in% weather_stations$station_id, logical(1))
-if(!all(dat_check)){
+if(!all(dat_check[names(dat_check) != 'survey_ship'])){
   warning('Could not find weather station for: ', 
           paste(unique(dat$station)[!dat_check], collapse = ', '))
 }
@@ -474,7 +627,7 @@ if(!all(meta_boejer_check)){
 }
 summary_check = vapply(unique(summary$station), function(x) 
   x %in% weather_stations$station_id, logical(1))
-if(!all(summary_check)){
+if(!all(summary_check[names(summary_check) != 'survey_ship'])){
   warning('Could not find weather station for: ', 
           paste(unique(summary$station)[!summary_check], collapse = ', '))
 }
@@ -638,7 +791,7 @@ for(st in unique(dat$station[dat$type_location == 'boejer'])){
                          as.character())
   } 
   dat$offshore[which(dat$station == st)] = 
-    (dat$date[which(dat$station == st)] %in% offshore_dates)
+    (dat$night_date[which(dat$station == st)] %in% offshore_dates)
   summary$offshore[which(summary$station == st)] = 
     (summary$date[which(summary$station == st)] %in% offshore_dates)
 }
@@ -667,7 +820,7 @@ summary$offshore[summary$station == 'NS13' & summary$date %in%
                    as.Date(c('2024-04-16', '2024-04-17', 
                              '2024-04-18', '2024-04-19'))] = FALSE
 dat$offshore[dat$station == 'NS24' & dat$date %in% 
-               as.Date(c('2023-09-11'))] = FALSE
+               as.Date(c('2023-09-11', '2023-09-12'))] = FALSE
 dat$offshore[dat$station == 'NS20' & dat$date %in% 
                as.Date(c('2024-05-15'))] = FALSE
 summary$offshore[summary$station == 'NS20' & summary$date %in% 
@@ -701,10 +854,202 @@ for(st in unique(dat$station[dat$type_location == 'HRIII'])){
                          as.character())
   } 
   dat$offshore[which(dat$station == st)] = 
-    (dat$date[which(dat$station == st)] %in% offshore_dates)
+    (dat$night_date[which(dat$station == st)] %in% offshore_dates)
   summary$offshore[which(summary$station == st)] = 
     (summary$date[which(summary$station == st)] %in% offshore_dates)
 }
+
+# Clean up 2 ----
+
+# Fix misnaming of Skjern_0912_2024_A_NS32_A
+summary$station[summary$folder_name == 'Skjern_0912_2024_A_NS32_A'] = 'Skjern'
+summary$type_location[summary$folder_name == 'Skjern_0912_2024_A_NS32_A'] = 
+  'land'
+
+# Remove first deployment A01 og all of B01
+summary = summary[!(summary$station == 'A01' & 
+                      summary$date < as.Date('2023-10-01')),]
+dat = dat[!(dat$station == 'A01' & 
+              dat$date < as.Date('2023-10-01')),]
+summary = summary[!summary$station == 'B01',]
+dat = dat[!dat$station == 'B01',]
+
+# Remove wake-up on first of month
+dat = dat[!(dat$station == 'HR3-4' & 
+              dat$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                      '2025-01-01', '2025-02-01',
+                                      '2025-04-01'))),]
+summary = summary[!(summary$station == 'HR3-4' & 
+                      summary$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                                  '2025-01-01', '2025-02-01',
+                                                  '2025-04-01'))),]
+dat = dat[!(dat$station == 'NS06' & 
+              dat$date %in% as.Date(c('2024-04-01', '2025-01-01'))),]
+summary = summary[!(summary$station == 'NS06' & 
+                      summary$date %in% as.Date(c('2024-04-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS08' & 
+              dat$date %in% as.Date(c('2024-08-01', '2025-01-01'))),]
+summary = summary[!(summary$station == 'NS08' & 
+                      summary$date %in% as.Date(c('2024-08-01', 
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS12' & 
+              dat$date %in% as.Date(c('2024-11-01', '2025-01-01',
+                                      '2025-02-01'))),]
+summary = summary[!(summary$station == 'NS12' & 
+                      summary$date %in% as.Date(c('2024-11-01', '2025-01-01',
+                                                  '2025-02-01'))),]
+dat = dat[!(dat$station == 'NS13' & 
+              dat$date %in% as.Date(c('2024-04-01', '2025-01-01'))),]
+summary = summary[!(summary$station == 'NS13' & 
+                      summary$date %in% as.Date(c('2024-04-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS14' & 
+              dat$date %in% as.Date(c('2025-01-01'))),]
+summary = summary[!(summary$station == 'NS14' & 
+                      summary$date %in% as.Date(c('2025-01-01'))),]
+dat = dat[!(dat$station == 'NS16' & 
+              dat$date %in% as.Date(c('2024-08-01'))),]
+summary = summary[!(summary$station == 'NS16' & 
+                      summary$date %in% as.Date(c('2024-08-01'))),]
+dat = dat[!(dat$station == 'NS19' & 
+              dat$date %in% as.Date(c('2024-11-01','2025-01-01'))),]
+summary = summary[!(summary$station == 'NS19' & 
+                      summary$date %in% as.Date(c('2024-11-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS20' & 
+              dat$date %in% as.Date(c('2024-08-01', '2024-11-01',
+                                      '2025-04-01'))),]
+summary = summary[!(summary$station == 'NS20' & 
+                      summary$date %in% as.Date(c('2024-08-01',
+                                                  '2024-11-01',
+                                                  '2025-04-01'))),]
+dat = dat[!(dat$station == 'NS21' & 
+              dat$date %in% as.Date(c('2024-06-01', '2025-01-01'))),]
+summary = summary[!(summary$station == 'NS21' & 
+                      summary$date %in% as.Date(c('2024-06-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS24' & 
+              dat$date %in% as.Date(c('2024-08-01', '2024-11-01'))),]
+summary = summary[!(summary$station == 'NS24' & 
+                      summary$date %in% as.Date(c('2024-08-01',
+                                                  '2024-11-01'))),]
+dat = dat[!(dat$station == 'NS26' & 
+              dat$date %in% as.Date(c('2024-06-01', '2025-01-01'))),]
+summary = summary[!(summary$station == 'NS26' & 
+                      summary$date %in% as.Date(c('2024-06-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS27' & 
+              dat$date %in% as.Date(c('2024-08-01', '2024-11-01',
+                                      '2025-01-01', '2025-02-01'))),]
+summary = summary[!(summary$station == 'NS27' & 
+                      summary$date %in% as.Date(c('2024-08-01', '2024-11-01',
+                                                  '2025-01-01', 
+                                                  '2025-02-01'))),]
+dat = dat[!(dat$station == 'NS28' & 
+              dat$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                      '2025-01-01', '2025-02-01'))),]
+summary = summary[!(summary$station == 'NS28' & 
+                      summary$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                                  '2025-01-01', 
+                                                  '2025-02-01'))),]
+dat = dat[!(dat$station == 'NS29' & 
+              dat$date %in% as.Date(c('2024-08-01', '2024-11-01'))),]
+summary = summary[!(summary$station == 'NS29' & 
+                      summary$date %in% as.Date(c('2024-08-01',
+                                                  '2024-11-01'))),]
+dat = dat[!(dat$station == 'NS30' & 
+              dat$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                      '2025-01-01'))),]
+summary = summary[!(summary$station == 'NS30' & 
+                      summary$date %in% as.Date(c('2024-06-01', '2024-11-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'NS31' & 
+              dat$date %in% as.Date(c('2025-01-01'))),]
+summary = summary[!(summary$station == 'NS31' & 
+                      summary$date %in% as.Date(c('2025-01-01'))),]
+dat = dat[!(dat$station == 'NS32' & 
+              dat$date %in% as.Date(c('2024-08-01', '2024-11-01'))),]
+summary = summary[!(summary$station == 'NS32' & 
+                      summary$date %in% as.Date(c('2024-08-01',
+                                                  '2024-11-01'))),]
+dat = dat[!(dat$station == 'NS33' & 
+              dat$date %in% as.Date(c('2025-01-01', '2025-02-01',
+                                      '2025-04-01'))),]
+summary = summary[!(summary$station == 'NS33' & 
+                      summary$date %in% as.Date(c('2025-01-01', 
+                                                  '2025-02-01',
+                                                  '2025-04-01'))),]
+dat = dat[!(dat$station == 'NS34' & 
+              dat$date %in% as.Date(c('2024-06-01', '2025-04-01'))),]
+summary = summary[!(summary$station == 'NS34' & 
+                      summary$date %in% as.Date(c('2024-06-01',
+                                                  '2025-04-01'))),]
+dat = dat[!(dat$station == 'NS35' & 
+              dat$date %in% as.Date(c('2024-06-01','2025-01-01'))),]
+summary = summary[!(summary$station == 'NS35' & 
+                      summary$date %in% as.Date(c('2024-06-01',
+                                                  '2025-01-01'))),]
+dat = dat[!(dat$station == 'A01' & 
+              dat$date %in% as.Date(c('2024-09-04'))),]
+summary = summary[!(summary$station == 'A01' & 
+                      summary$date %in% as.Date(c('2024-09-04'))),]
+dat = dat[!(dat$station == 'E07' & 
+              dat$date %in% as.Date(c('2024-11-01','2025-01-01',
+                                      '2025-02-01'))),]
+summary = summary[!(summary$station == 'E07' & 
+                      summary$date %in% as.Date(c('2024-11-01',
+                                                  '2025-01-01',
+                                                  '2025-02-01'))),]
+dat = dat[!(dat$station == 'F01' & 
+              dat$date %in% as.Date(c('2025-04-01'))),]
+summary = summary[!(summary$station == 'F01' & 
+                      summary$date %in% as.Date(c('2025-04-01'))),]
+dat = dat[!(dat$station == 'F04' & 
+              dat$date %in% as.Date(c('2025-04-01'))),]
+summary = summary[!(summary$station == 'F04' & 
+                      summary$date %in% as.Date(c('2025-04-01'))),]
+dat = dat[!(dat$station == 'F07' & 
+              dat$date %in% as.Date(c('2024-11-01', '2025-04-01'))),]
+summary = summary[!(summary$station == 'F07' & 
+                      summary$date %in% as.Date(c('2024-11-01',
+                                                  '2025-04-01'))),]
+dat = dat[!(dat$station == 'G05' & 
+              dat$date %in% as.Date(c('2024-11-01', '2025-01-01',
+                                      '2025-04-01'))),]
+summary = summary[!(summary$station == 'G05' & 
+                      summary$date %in% as.Date(c('2024-11-01',
+                                                  '2025-01-01',
+                                                  '2025-04-01'))),]
+dat = dat[!(dat$station == 'G06' & 
+              dat$date %in% as.Date(c('2024-08-01'))),]
+summary = summary[!(summary$station == 'G06' & 
+                      summary$date %in% as.Date(c('2024-08-01'))),]
+dat = dat[!(dat$station == 'platform' & 
+              dat$date %in% as.Date(c('2024-11-01', '2025-01-01',
+                                      '2025-04-01', '2025-04-02'))),]
+summary = summary[!(summary$station == 'platform' & 
+                      summary$date %in% as.Date(c('2024-11-01', '2025-01-01',
+                                                  '2025-04-01',
+                                                  '2025-04-02'))),]
+
+# Remove dates with overlap between activation and recovery (but before 
+# deployment)
+dat = dat[!(dat$station == 'NS08' & 
+              dat$date %in% as.Date(c('2024-05-17'))),]
+summary = summary[!(summary$station == 'NS08' & 
+                      summary$date %in% as.Date(c('2024-05-17'))),]
+dat = dat[!(dat$station == 'NS19' & 
+              dat$date %in% as.Date(c('2025-02-20', '2025-02-21',
+                                      '2025-02-22', '2025-02-23'))),]
+summary = summary[!(summary$station == 'NS19' & 
+                      summary$date %in% as.Date(c('2025-02-20', '2025-02-21',
+                                                  '2025-02-22',
+                                                  '2025-02-23'))),]
+dat = dat[!(dat$station == 'NS29' & 
+              dat$date %in% as.Date(c('2024-05-16'))),]
+summary = summary[!(summary$station == 'NS29' & 
+                      summary$date %in% as.Date(c('2024-05-16'))),]
 
 # Create data frame for model ----
 
@@ -723,7 +1068,7 @@ for(st in unique(meta_boejer$Station.ID)){
     end = sub_meta$Recovery.date[i] - 2
     if(end < start) stop('End smaller than start!')
     all_dates = seq(start, end, by = 'day')
-    triggers_station = dat[dat$station == st,]
+    triggers_station = dat[dat$station == st & dat$offshore,]
     all_dates = all_dates[all_dates %in% triggers_station$date]
     if(length(all_dates) < 1) next
     dat_model = rbind(dat_model, 
@@ -747,7 +1092,7 @@ for(st in unique(meta_HRIII$WT.ID)){
     end = sub_meta$Recovery.date[i]-2 
     if(end < start) stop('End smaller than start!')
     all_dates = seq(start, end, by = 'day')
-    triggers_station = dat[dat$station == st,]
+    triggers_station = dat[dat$station == st & dat$offshore,]
     all_dates = all_dates[all_dates %in% triggers_station$date]
     if(length(all_dates) < 1) next
     dat_model = rbind(dat_model, 
@@ -760,7 +1105,33 @@ for(st in unique(meta_HRIII$WT.ID)){
                       ))
   }
 }
-# dat_model = dat_model[dat_model$date < as.Date('2024-04-11'),]
+## add some days manual
+dat_model = rbind(dat_model, 
+                  data.frame(
+                    station = 'NS35',
+                    date = as.Date(c('2023-09-05', '2023-09-05')),
+                    detection = FALSE,
+                    subset = 'Buoys'
+                  ))
+warning('Check 2023-05-10.')
+dat_model = rbind(dat_model, 
+                  data.frame(
+                    station = 'NS35',
+                    date = as.Date(c('2023-05-10', '2023-09-05', 
+                                     '2023-09-05')),
+                    detection = FALSE,
+                    subset = 'Buoys'
+                  ))
+warning('Add some days manual.')
+
+# Remove last night per deployment
+warning('Remove last night per deployment.')
+
+# Remove nights that are not complete
+for(row in seq_len(nrow(removed_dates))){
+  dat_model = dat_model[!(dat_model$station == removed_dates$station[row] &
+                            dat_model$date == removed_dates$date[row]),]
+}
 
 # Add weather ----
 
@@ -823,170 +1194,6 @@ lunar_data = read.csv(path_lunar_data)
 dat_model = merge(dat_model, lunar_data, by = 'date', 
                   all.x = TRUE, all.y = FALSE)
 
-# Clean up 2 ----
-
-# Fix misnaming of Skjern_0912_2024_A_NS32_A
-summary$station[summary$folder_name == 'Skjern_0912_2024_A_NS32_A'] = 'Skjern'
-summary$type_location[summary$folder_name == 'Skjern_0912_2024_A_NS32_A'] = 
-  'land'
-
-# Remove first deployment A01 og all of B01
-summary = summary[!(summary$station == 'A01' & 
-                      summary$date < as.Date('2023-10-01')),]
-summary = summary[!summary$station == 'B01',]
-dat = dat[!dat$station == 'B01',]
-
-# Remove wake-up on first of month
-dat = dat[!(dat$station == 'HR3-4' & 
-              dat$date %in% as.Date(c('2024-06-01', '2024-11-01',
-                                      '2025-01-01', '2025-02-01',
-                                      '2025-04-01'))),]
-summary = summary[!(summary$station == 'HR3-4' & 
-                      summary$date %in% as.Date(c('2024-06-01', '2024-11-01',
-                                                  '2025-01-01', '2025-02-01',
-                                                  '2025-04-01'))),]
-dat = dat[!(dat$station == 'NS06' & 
-              dat$date %in% as.Date(c('2025-01-01'))),]
-summary = summary[!(summary$station == 'NS06' & 
-                      summary$date %in% as.Date(c('2025-01-01'))),]
-dat = dat[!(dat$station == 'NS08' & 
-              dat$date %in% as.Date(c('2024-08-01', '2025-01-01'))),]
-summary = summary[!(summary$station == 'NS08' & 
-                      summary$date %in% as.Date(c('2024-08-01', 
-                                                  '2025-01-01'))),]
-dat = dat[!(dat$station == 'NS12' & 
-              dat$date %in% as.Date(c('2024-11-01', '2025-01-01',
-                                      '2025-02-01'))),]
-summary = summary[!(summary$station == 'NS12' & 
-                      summary$date %in% as.Date(c('2024-11-01', '2025-01-01',
-                                                  '2025-02-01'))),]
-dat = dat[!(dat$station == 'NS13' & 
-              dat$date %in% as.Date(c('2025-01-01'))),]
-summary = summary[!(summary$station == 'NS13' & 
-                      summary$date %in% as.Date(c('2025-01-01'))),]
-dat = dat[!(dat$station == 'NS14' & 
-              dat$date %in% as.Date(c('2025-01-01'))),]
-summary = summary[!(summary$station == 'NS14' & 
-                      summary$date %in% as.Date(c('2025-01-01'))),]
-dat = dat[!(dat$station == 'NS16' & 
-              dat$date %in% as.Date(c('2024-08-01'))),]
-summary = summary[!(summary$station == 'NS16' & 
-                      summary$date %in% as.Date(c('2024-08-01'))),]
-dat = dat[!(dat$station == 'NS19' & 
-              dat$date %in% as.Date(c('2024-11-01','2025-01-01'))),]
-summary = summary[!(summary$station == 'NS19' & 
-                      summary$date %in% as.Date(c('2024-11-01',
-                                                  '2025-01-01'))),]
-dat = dat[!(dat$station == 'NS20' & 
-              dat$date %in% as.Date(c('2024-08-01', '2024-11-01'))),]
-summary = summary[!(summary$station == 'NS20' & 
-                      summary$date %in% as.Date(c('2024-08-01',
-                                                  '2024-11-01'))),]
-dat = dat[!(dat$station == 'NS21' & 
-              dat$date %in% as.Date(c('2024-06-01', '2025-01-01'))),]
-summary = summary[!(summary$station == 'NS21' & 
-                      summary$date %in% as.Date(c('2024-06-01',
-                                                  '2025-01-01'))),]
-dat = dat[!(dat$station == 'NS24' & 
-              dat$date %in% as.Date(c('2024-08-01', '2024-11-01'))),]
-summary = summary[!(summary$station == 'NS24' & 
-                      summary$date %in% as.Date(c('2024-08-01',
-                                                  '2024-11-01'))),]
-dat = dat[!(dat$station == 'NS26' & 
-              dat$date %in% as.Date(c('2024-06-01', '2025-01-01'))),]
-summary = summary[!(summary$station == 'NS26' & 
-                      summary$date %in% as.Date(c('2024-06-01',
-                                                  '2025-01-01'))),]
-dat = dat[!(dat$station == 'NS27' & 
-              dat$date %in% as.Date(c('2024-08-01', '2024-11-01',
-                                      '2025-01-01', '2025-02-01'))),]
-summary = summary[!(summary$station == 'NS27' & 
-                      summary$date %in% as.Date(c('2024-08-01', '2024-11-01',
-                                                  '2025-01-01', 
-                                                  '2025-02-01'))),]
-dat = dat[!(dat$station == 'NS28' & 
-              dat$date %in% as.Date(c('2024-06-01', '2024-11-01',
-                                      '2025-01-01', '2025-02-01'))),]
-summary = summary[!(summary$station == 'NS28' & 
-                      summary$date %in% as.Date(c('2024-06-01', '2024-11-01',
-                                                  '2025-01-01', 
-                                                  '2025-02-01'))),]
-dat = dat[!(dat$station == 'NS29' & 
-              dat$date %in% as.Date(c('2024-08-01', '2024-11-01'))),]
-summary = summary[!(summary$station == 'NS29' & 
-                      summary$date %in% as.Date(c('2024-08-01',
-                                                  '2024-11-01'))),]
-dat = dat[!(dat$station == 'NS30' & 
-              dat$date %in% as.Date(c('2024-06-01', '2024-11-01',
-                                      '2025-01-01'))),]
-summary = summary[!(summary$station == 'NS30' & 
-                      summary$date %in% as.Date(c('2024-06-01', '2024-11-01',
-                                                  '2025-01-01'))),]
-dat = dat[!(dat$station == 'NS31' & 
-              dat$date %in% as.Date(c('2025-01-01'))),]
-summary = summary[!(summary$station == 'NS31' & 
-                      summary$date %in% as.Date(c('2025-01-01'))),]
-dat = dat[!(dat$station == 'NS32' & 
-              dat$date %in% as.Date(c('2024-08-01', '2024-11-01'))),]
-summary = summary[!(summary$station == 'NS32' & 
-                      summary$date %in% as.Date(c('2024-08-01',
-                                                  '2024-11-01'))),]
-dat = dat[!(dat$station == 'NS33' & 
-              dat$date %in% as.Date(c('2025-01-01', '2025-02-01'))),]
-summary = summary[!(summary$station == 'NS33' & 
-                      summary$date %in% as.Date(c('2025-01-01', 
-                                                  '2025-02-01'))),]
-dat = dat[!(dat$station == 'NS34' & 
-              dat$date %in% as.Date(c('2024-06-01'))),]
-summary = summary[!(summary$station == 'NS34' & 
-                      summary$date %in% as.Date(c('2024-06-01'))),]
-dat = dat[!(dat$station == 'NS35' & 
-              dat$date %in% as.Date(c('2024-06-01','2025-01-01'))),]
-summary = summary[!(summary$station == 'NS35' & 
-                      summary$date %in% as.Date(c('2024-06-01',
-                                                  '2025-01-01'))),]
-dat = dat[!(dat$station == 'E07' & 
-              dat$date %in% as.Date(c('2024-11-01','2025-01-01'))),]
-summary = summary[!(summary$station == 'E07' & 
-                      summary$date %in% as.Date(c('2024-11-01',
-                                                  '2025-01-01'))),]
-dat = dat[!(dat$station == 'F01' & 
-              dat$date %in% as.Date(c('2025-04-01'))),]
-summary = summary[!(summary$station == 'F01' & 
-                      summary$date %in% as.Date(c('2025-04-01'))),]
-dat = dat[!(dat$station == 'F04' & 
-              dat$date %in% as.Date(c('2025-04-01'))),]
-summary = summary[!(summary$station == 'F04' & 
-                      summary$date %in% as.Date(c('2025-04-01'))),]
-dat = dat[!(dat$station == 'F07' & 
-              dat$date %in% as.Date(c('2025-04-01'))),]
-summary = summary[!(summary$station == 'F07' & 
-                      summary$date %in% as.Date(c('2025-04-01'))),]
-dat = dat[!(dat$station == 'G05' & 
-              dat$date %in% as.Date(c('2024-11-01','2025-04-01'))),]
-summary = summary[!(summary$station == 'G05' & 
-                      summary$date %in% as.Date(c('2024-11-01',
-                                                  '2025-04-01'))),]
-dat = dat[!(dat$station == 'G06' & 
-              dat$date %in% as.Date(c('2024-08-01'))),]
-summary = summary[!(summary$station == 'G06' & 
-                      summary$date %in% as.Date(c('2024-08-01'))),]
-dat = dat[!(dat$station == 'platform' & 
-              dat$date %in% as.Date(c('2024-11-01', '2025-04-01',
-                                      '2025-04-02'))),]
-summary = summary[!(summary$station == 'platform' & 
-                      summary$date %in% as.Date(c('2024-11-01', '2025-04-01',
-                                                  '2025-04-02'))),]
-
-# Remove dates with overlap between activation and recovery (but before 
-# deployment)
-dat = dat[!(dat$station == 'NS19' & 
-              dat$date %in% as.Date(c('2025-02-20', '2025-02-21',
-                                      '2025-02-22'))),]
-summary = summary[!(summary$station == 'NS19' & 
-                      summary$date %in% as.Date(c('2025-02-20', '2025-02-21',
-                                                  '2025-02-22'))),]
-
 # Add GPS coordinates stations ----
 
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
@@ -1036,7 +1243,7 @@ names(colours) = species
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
         '] Starting storing data.')
 
-save(dat, dat_model, summary, sun, colours, 
+save(dat, dat_model, summary, sun, colours, removed_dates,
      species_offshore, species, locations_all_buoys,
      file = path_combined_data)
 # write.csv(sum_per_station, path_summary_per_station, row.names = FALSE)
