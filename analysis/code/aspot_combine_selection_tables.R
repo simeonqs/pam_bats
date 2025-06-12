@@ -23,18 +23,18 @@ mc.cores = 20
 # Paths 
 deployment = 'Kammerslusen_0903_2024_A'
 path_segmentation = sprintf(
-  '/media/au472091/data/rerun_land/results_done/%s/selection_tables', 
+  '/media/au472091/data/new_results_aspot/land/%s/selection_tables', 
   deployment)
 path_logs_segmentation = sprintf(
-  '/media/au472091/data/rerun_land/results_done/%s/predict', 
+  '/media/au472091/data/new_results_aspot/land/%s/predict', 
   deployment)
 path_classifiction = sprintf(
-  '/media/au472091/data/rerun_land/results_done/%s/selection_tables_species',
+  '/media/au472091/data/new_results_aspot/land/%s/selection_tables_species',
   deployment)
 path_logs = sprintf(
-  '/media/au472091/data/rerun_land/results_done/%s/predict_species', deployment)
+  '/media/au472091/data/new_results_aspot/land/%s/predict_species', deployment)
 path_combined_selection_tables = sprintf(
-  '/media/au472091/data/rerun_land/results_done/%s/combined_selection_tables',
+  '/media/au472091/data/new_results_aspot/land/%s/combined_selection_tables',
   deployment)
 path_species_overview = sprintf(
   'analysis/results/species_overview/%s.csv', deployment)
