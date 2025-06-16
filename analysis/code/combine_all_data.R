@@ -43,10 +43,13 @@ path_species_offshore = 'analysis/data/species_offshore.csv'
 path_weather = 'analysis/data/weather/generated_data'
 path_stations = 'analysis/data/weather/stations.csv'
 path_all_buoys = 'analysis/data/locations_boejer.csv'
-path_combined_data = 'analysis/results/combined_data.RData'
 path_summary_per_station = 'analysis/results/summary_per_station.csv'
 path_offshore_bats = 'analysis/results/offshore_detections_bats.csv'
 path_lunar_data = 'analysis/data/lunar_data_esbjerg.csv'
+path_combined_data = 'analysis/results/combined_data.RData'
+
+# Should land species be run (very time consuming)
+species_land = FALSE
 
 # Load data ----
 
@@ -130,7 +133,7 @@ dat = dat |> bind_rows(.id = 'folder_name')
 incomplete = which(dat$log_complete == 'False' & dat$broken == 'False')
 if(length(incomplete) > 0) stop('Some prediction logs were incomplete.')
 
-# Define removed dates
+# Define removed dates ----
 removed_dates = data.frame(
   station = 'HR3-4',
   date = as.Date(c('2023-06-03', '2023-09-17', '2023-09-18', '2023-12-12', 
@@ -149,19 +152,23 @@ removed_dates = rbind(removed_dates, data.frame(
   station = 'NS08',
   date = c(as.Date('2023-05-31'), as.Date('2023-06-01'),
            seq(as.Date('2023-09-30'), as.Date('2023-11-07'), by = 'day'),
-           as.Date('2023-12-27'))
+           as.Date('2023-12-27'),
+           seq(as.Date('2024-08-22'), as.Date('2024-10-12'), by = 'day'))
 ))
 removed_dates = rbind(removed_dates, data.frame(
   station = 'NS12',
   date = c(seq(as.Date('2023-09-21'), as.Date('2023-11-03'), by = 'day'),
            seq(as.Date('2023-06-04'), as.Date('2023-06-06 '), by = 'day'),
-           as.Date('2023-12-29'))
+           as.Date('2023-12-29'),
+           seq(as.Date('2024-04-17'), as.Date('2024-05-16'), by = 'day'))
 ))
 removed_dates = rbind(removed_dates, data.frame(
   station = 'NS13',
   date = c(seq(as.Date('2023-05-26'), as.Date('2023-05-29'), by = 'day'),
+           seq(as.Date('2023-08-04'), as.Date('2023-08-30'), by = 'day'),
            seq(as.Date('2023-12-26'), as.Date('2024-01-08'), by = 'day'),
-           as.Date('2024-03-27'))
+           as.Date('2024-03-27'),
+           seq(as.Date('2024-08-14'), as.Date('2024-10-16'), by = 'day'))
 ))
 removed_dates = rbind(removed_dates, data.frame(
   station = 'NS14',
@@ -190,7 +197,8 @@ removed_dates = rbind(removed_dates, data.frame(
 removed_dates = rbind(removed_dates, data.frame(
   station = 'NS21',
   date = c(seq(as.Date('2023-06-18'), as.Date('2023-06-19'), by = 'day'),
-           seq(as.Date('2023-12-26'), as.Date('2024-01-06'), by = 'day'))
+           seq(as.Date('2023-12-26'), as.Date('2024-01-06'), by = 'day'),
+           seq(as.Date('2024-08-15'), as.Date('2024-10-16'), by = 'day'))
 ))
 removed_dates = rbind(removed_dates, data.frame(
   station = 'NS24',
@@ -206,16 +214,19 @@ removed_dates = rbind(removed_dates, data.frame(
   station = 'NS26',
   date = c(as.Date('2023-06-05'),
            seq(as.Date('2023-09-20'), as.Date('2023-09-21'), by = 'day'),
-           as.Date('2023-12-10'))
+           as.Date('2023-12-10'),
+           seq(as.Date('2024-08-14'), as.Date('2024-10-16'), by = 'day'))
 ))
 removed_dates = rbind(removed_dates, data.frame(
   station = 'NS27',
-  date = c(as.Date('2023-06-03'))
+  date = c(as.Date('2023-06-03'),
+           seq(as.Date('2024-04-11'), as.Date('2024-05-16'), by = 'day'))
 ))
 removed_dates = rbind(removed_dates, data.frame(
   station = 'NS28',
   date = c(seq(as.Date('2023-05-31'), as.Date('2023-06-01'), by = 'day'),
-           as.Date('2024-04-01'))
+           as.Date('2024-04-01'),
+           seq(as.Date('2025-03-11'), as.Date('2025-04-02'), by = 'day'))
 ))
 removed_dates = rbind(removed_dates, data.frame(
   station = 'NS29',
@@ -223,7 +234,7 @@ removed_dates = rbind(removed_dates, data.frame(
 ))
 removed_dates = rbind(removed_dates, data.frame(
   station = 'NS30',
-  date = c(seq(as.Date('2023-09-24'), as.Date('2023-10-23'), by = 'day'),
+  date = c(seq(as.Date('2023-09-14'), as.Date('2023-10-23'), by = 'day'),
            seq(as.Date('2023-12-26'), as.Date('2023-12-28'), by = 'day'))
 ))
 removed_dates = rbind(removed_dates, data.frame(
@@ -241,7 +252,8 @@ removed_dates = rbind(removed_dates, data.frame(
   station = 'NS33',
   date = c(as.Date('2023-05-29'),
            seq(as.Date('2023-09-21'), as.Date('2023-09-24'), by = 'day'),
-           seq(as.Date('2023-12-22'), as.Date('2023-12-26'), by = 'day'))
+           seq(as.Date('2023-12-22'), as.Date('2023-12-26'), by = 'day'),
+           seq(as.Date('2024-06-20'), as.Date('2024-08-11'), by = 'day'))
 ))
 removed_dates = rbind(removed_dates, data.frame(
   station = 'NS34',
@@ -252,6 +264,7 @@ removed_dates = rbind(removed_dates, data.frame(
 removed_dates = rbind(removed_dates, data.frame(
   station = 'NS35',
   date = c(seq(as.Date('2023-06-06'), as.Date('2023-06-09'), by = 'day'),
+           seq(as.Date('2023-09-02'), as.Date('2023-09-05'), by = 'day'),
            seq(as.Date('2023-09-25'), as.Date('2023-11-05'), by = 'day'),
            seq(as.Date('2023-12-28'), as.Date('2024-01-04'), by = 'day'))
 ))
@@ -712,50 +725,53 @@ for(row in which(dat$type_location %in% c('boejer', 'HRIII') &
   dat$species[row] = ifelse(nrow(sub) == 1, sub$sp, NA)
 }
 
-# message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
-#         '] Starting adding onshore bat species.')
-# 
-# for(folder in unique(dat$folder_name[which(dat$type_location == 'land')])){
-#   ## list files from land stations
-#   files = list.files(paste0(path_results, 
-#                                  sprintf('/land/%s/combined_selection_tables', 
-#                                          folder)), 
-#                           full.names = TRUE)
-#   files_clean = files |> basename() |> 
-#     str_remove('_predict_output.log.annotation.result.txt')
-#   for(row in which(dat$folder_name == folder)){
-#     species_d = c()
-#     file = files[files_clean == dat$file_name[row]]
-#     if(length(file) == 0){
-#       dat$species[row] = NA
-#       next
-#     }
-#     st = load.selection.table(file)
-#     if(nrow(st) == 0){
-#       dat$species[row] = NA
-#       next
-#     }
-#     st$Annotations = str_to_title(st$Annotations)
-#     st$Annotations[st$Annotations %in% 
-#                        c('Mbramys', 'Mdas', 'Mnat', 'Mdau')] = 'M'
-#     st$Annotations[st$Annotations %in% c('Nnoc', 'Eser', 'Vmur')] = 'NVE'
-#     st$Annotations[st$Annotations %in% c('Noise', 'Bbar', 'B')] = 'noise'
-#     duration = max(st$End.Time..s.)
-#     chunk_starts = seq(0, duration, 5)
-#     for(chunk_start in chunk_starts){
-#       d = st[st$Begin.Time..s. >= chunk_start & 
-#                   st$Begin.Time..s. < (chunk_start+5),]
-#       ### remove species with less than three occurrences
-#       table_species = table(d$Annotations)
-#       table_species = table_species[names(table_species) != 'noise']
-#       table_species = table_species[table_species >= 5]
-#       species_d = c(species_d, names(table_species))
-#     } # end chunk loop
-#     dat$species[row] = ifelse(length(species_d) > 0, 
-#                               paste(unique(species_d), collapse = ', '), 
-#                               NA)
-#   } # end row loop
-# } # end folder loop
+if(species_land){
+  message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'),
+          '] Starting adding onshore bat species.')
+  
+  for(folder in unique(dat$folder_name[which(dat$type_location == 'land')])){
+    print(folder)
+    ## list files from land stations
+    files = list.files(paste0(path_results,
+                              sprintf('/land/%s/combined_selection_tables',
+                                      folder)),
+                       full.names = TRUE)
+    files_clean = files |> basename() |>
+      str_remove('_predict_output.log.annotation.result.txt')
+    for(row in which(dat$folder_name == folder)){
+      species_d = c()
+      file = files[files_clean == dat$file_name[row]]
+      if(length(file) == 0){
+        dat$species[row] = NA
+        next
+      }
+      st = load.selection.table(file)
+      if(nrow(st) == 0){
+        dat$species[row] = NA
+        next
+      }
+      st$Annotations = str_to_title(st$Annotations)
+      st$Annotations[st$Annotations %in%
+                       c('Mbramys', 'Mdas', 'Mnat', 'Mdau')] = 'M'
+      st$Annotations[st$Annotations %in% c('Nnoc', 'Eser', 'Vmur')] = 'NVE'
+      st$Annotations[st$Annotations %in% c('Noise', 'Bbar', 'B')] = 'noise'
+      duration = max(st$End.Time..s.)
+      chunk_starts = seq(0, duration, 5)
+      for(chunk_start in chunk_starts){
+        d = st[st$Begin.Time..s. >= chunk_start &
+                 st$Begin.Time..s. < (chunk_start+5),]
+        ### remove species with less than three occurrences
+        table_species = table(d$Annotations)
+        table_species = table_species[names(table_species) != 'noise']
+        table_species = table_species[table_species >= 5]
+        species_d = c(species_d, names(table_species))
+      } # end chunk loop
+      dat$species[row] = ifelse(length(species_d) > 0,
+                                paste(unique(species_d), collapse = ', '),
+                                NA)
+    } # end row loop
+  } # end folder loop
+} # end if species_land loop
 
 # Add if recordings were offshore ----
 
@@ -1069,7 +1085,7 @@ for(st in unique(meta_boejer$Station.ID)){
     if(end < start) stop('End smaller than start!')
     all_dates = seq(start, end, by = 'day')
     triggers_station = dat[dat$station == st & dat$offshore,]
-    all_dates = all_dates[all_dates %in% triggers_station$date]
+    all_dates = all_dates[all_dates %in% triggers_station$night_date]
     if(length(all_dates) < 1) next
     dat_model = rbind(dat_model, 
                       data.frame(
@@ -1093,7 +1109,7 @@ for(st in unique(meta_HRIII$WT.ID)){
     if(end < start) stop('End smaller than start!')
     all_dates = seq(start, end, by = 'day')
     triggers_station = dat[dat$station == st & dat$offshore,]
-    all_dates = all_dates[all_dates %in% triggers_station$date]
+    all_dates = all_dates[all_dates %in% triggers_station$night_date]
     if(length(all_dates) < 1) next
     dat_model = rbind(dat_model, 
                       data.frame(
@@ -1105,33 +1121,36 @@ for(st in unique(meta_HRIII$WT.ID)){
                       ))
   }
 }
-## add some days manual
-dat_model = rbind(dat_model, 
-                  data.frame(
-                    station = 'NS35',
-                    date = as.Date(c('2023-09-05', '2023-09-05')),
-                    detection = FALSE,
-                    subset = 'Buoys'
-                  ))
-warning('Check 2023-05-10.')
-dat_model = rbind(dat_model, 
-                  data.frame(
-                    station = 'NS35',
-                    date = as.Date(c('2023-05-10', '2023-09-05', 
-                                     '2023-09-05')),
-                    detection = FALSE,
-                    subset = 'Buoys'
-                  ))
-warning('Add some days manual.')
 
-# Remove last night per deployment
-warning('Remove last night per deployment.')
+# Remove first deployment for buoys (wrong settings)
+to_remove = unique(dat[which(str_detect(dat$folder_name, 'Spring23') |
+                               str_detect(dat$folder_name, 'NS20_B_Summer23') |
+                               str_detect(dat$folder_name, 'NS13_B_Summer23')), 
+                       c('station', 'night_date')])
+for(row in seq_len(nrow(to_remove))){
+  dat_model = dat_model[!(dat_model$station == to_remove$station[row] &
+                            dat_model$date == to_remove$night_date[row]),]
+}
 
-# Remove nights that are not complete
+# Remove nights that are not complete (mainly battery failure)
 for(row in seq_len(nrow(removed_dates))){
   dat_model = dat_model[!(dat_model$station == removed_dates$station[row] &
                             dat_model$date == removed_dates$date[row]),]
 }
+
+# Remove last night per deployment
+dat_model = dat_model %>%
+  arrange(station, date) %>%
+  group_by(station) %>%
+  mutate(
+    next_date = lead(date),
+    gap = as.numeric(next_date - date),
+    to_remove = ifelse(is.na(next_date) | gap > 2, TRUE, FALSE)
+  ) %>%
+  ungroup() %>%
+  select(-next_date, -gap)
+dat_model = dat_model[!dat_model$to_remove,]
+dat_model$to_remove = NULL
 
 # Add weather ----
 
