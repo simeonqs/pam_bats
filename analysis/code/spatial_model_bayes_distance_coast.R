@@ -48,7 +48,7 @@ dat_model$year = ifelse(str_detect(dat_model$date, '2023'), 1,
                         ifelse(str_detect(dat_model$date, '2024'), 2, 3))
 
 # Subset of fall migration
-dat_model = dat_model[dat_model$julian_date >= 228 & # '08-15'
+dat_model = dat_model[dat_model$julian_date >= 214 & # '08-01'
                         dat_model$julian_date <= 289,] # '10-15'
 
 # Clean data
@@ -78,16 +78,22 @@ post = extract.samples.cmdstanr(fit)
 # fit_nice |> precis(depth = 2) |> round(2) |> print()
 
 # Plot predictions
-pdf(path_pdf, 6, 4)
+trans_subset = c(Buoys = 19,        # circle
+                 Windturbines = 17, # triangle
+                 SSO = 15)          # square
+dat_model = dat_model[sample(nrow(dat_model)),] # randomise order
+pdf(path_pdf, 6, 3.5)
+par(mar = c(4, 4, 0.5, 1))
 plot(dat_model$distance_to_coast, 
      dat_model$detection - rnorm(nrow(dat_model), 0.2, 0.05),
-     pch = 15 + as.integer(as.factor(dat_model$subset)), 
      xaxt = 'n', yaxt = 'n', xlim = c(0, 90),
-     # grey = 2023, purple = 2024, orange = 2025
-     col = c('#b3b6b7', '#bb8fce', '#f0b27a')[dat_model$year],
+     pch = trans_subset[dat_model$subset], 
+     col = c('#c39bd3', # 2023 = purple
+             '#f8c471', # 2024 = yellow
+             '#d5dbdb'  # 2025 = grey (not included)
+     )[dat_model$year],
+     cex = 0.8,
      xlab = 'Distance to coast', ylab = 'Probability presence per night')
-axis_dates = as.POSIXlt(c('2024-08-15', '2024-09-01', '2024-09-15',
-               '2024-10-01', '2024-10-15'))$yday + 1
 axis(1, c(0, 20, 40, 60, 80))
 axis(2, c(0, 0.2, 0.4, 0.6, 0.8))
 abline(h = 0, lty = 2, lwd = 2)
