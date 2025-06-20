@@ -16,7 +16,8 @@ rm(list=ls())
 
 # Paths 
 path_combined_data = 'analysis/results/combined_data.RData'
-path_m_night = 'analysis/code/models/m_night.stan'
+path_m_date = 'analysis/code/models/m_date.stan'
+path_m_date_temp = 'analysis/code/models/m_date_temp.stan'
 path_pdf = 'analysis/results/spatial_model/model_date.pdf'
 
 # Load
@@ -28,10 +29,10 @@ dat_model$year = ifelse(str_detect(dat_model$date, '2023'), 1,
                         ifelse(str_detect(dat_model$date, '2024'), 2, 3))
 
 # Subset of fall migration
-dat_model = dat_model[dat_model$julian_date >= 228 & # '08-15'
+dat_model = dat_model[dat_model$julian_date >= 214 & # '08-01'
                         dat_model$julian_date <= 289,] # '10-15'
 
-# Make simple model with b-splines for night of year
+# Make simple model with b-splines for night of year ----
 num_knots = 10
 degree = 3
 knots = as.numeric(quantile(dat_model$julian_date, 
@@ -45,7 +46,7 @@ clean_dat = list(N_obs = nrow(dat_model),
                  present = dat_model$detection |> as.integer(), 
                  B = B,
                  station = dat_model$station |> as.factor() |> as.integer())
-model = cmdstan_model(path_m_night)
+model = cmdstan_model(path_m_date)
 fit = model$sample(data = clean_dat,
                    seed = 1, 
                    chains = 4, 
@@ -57,26 +58,31 @@ post = fit_nice %>%
 fit_nice |> precis(depth = 2) |> round(2) |> print()
 
 # Plot predictions
-pdf(path_pdf, 6, 4)
-plot(dat_model$julian_date, 
-     dat_model$detection - rnorm(nrow(dat_model), 0.2, 0.05),
-     pch = 15 + as.integer(as.factor(dat_model$subset)), 
+trans_subset = c(Buoys = 19,        # circle
+                 Windturbines = 17, # triangle
+                 SSO = 15)          # square
+pdf(path_pdf, 6, 3.5)
+par(mar = c(4, 4, 0.5, 1))
+plot(dat_model[sample(nrow(dat_model)),]$julian_date, 
+     dat_model[sample(nrow(dat_model)),]$detection - 
+       rnorm(nrow(dat_model), 0.2, 0.05),
      xaxt = 'n', yaxt = 'n',
-     # grey = 2023, purple = 2024, orange = 2025
-     col = c('#b3b6b7', '#bb8fce', '#f0b27a')[dat_model$year],
+     pch = trans_subset[dat_model$subset], 
+     col = c('#c39bd3', # 2023 = purple
+             '#f8c471', # 2024 = yellow
+             '#d5dbdb'  # 2025 = grey (not included)
+     )[dat_model$year],
+     cex = 0.8,
      xlab = 'Night of year', ylab = 'Probability presence per night')
-axis_dates = as.POSIXlt(c('2024-08-15', '2024-09-01', '2024-09-15',
-               '2024-10-01', '2024-10-15'))$yday + 1
-axis(1, axis_dates, c('Aug 15th', 'Sep 1st', 'Sep 15th', 
+axis_dates = as.POSIXlt(c('2024-08-01', '2024-08-15', '2024-09-01', 
+                          '2024-09-15', '2024-10-01', '2024-10-15'))$yday + 1
+axis(1, axis_dates, c('Aug 1st', 'Aug 15th', 'Sep 1st', 'Sep 15th', 
                       'Oct 1st', 'Oct 15th'))
 axis(2, c(0, 0.2, 0.4, 0.6, 0.8))
 abline(h = 0, lty = 2, lwd = 2)
-nights = seq(min(dat_model$julian_date),
-             max(dat_model$julian_date), 
-             1)
-B_plot = bs(nights,
-            knots = knots[-c(1, num_knots)],
-            degree = degree, intercept = TRUE)
+sorter = order(dat_model$julian_date)
+nights = dat_model$julian_date[sorter]
+B_plot = B[sorter,]
 pred = vapply(seq_along(post$a), function(i)
   vapply(seq_along(nights), function(j) post$a[i] + B_plot[j,] %*% post$w[i,],
          numeric(1)),
@@ -86,7 +92,4 @@ mean_pred = apply(pred, 1, mean) |> inv_logit()
 shade(PI_pred, nights , col = '#AED6F1')
 lines(nights, mean_pred, lwd = 3, col = '#1B4F72')
 dev.off()
-
-
-
 
