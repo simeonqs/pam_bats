@@ -10,7 +10,7 @@ parameters{
   real a;
   vector[N_stations] z_station;
   real<lower=0> sigma_station;
-  vector[2] z_type;
+  vector[3] z_type;
   real<lower=0> sigma_type;
   real<lower=0> b;
 }
@@ -32,6 +32,6 @@ model{
   present ~ binomial(1 , p);
 }
 generated quantities {
-  vector[2] a_type;
+  vector[3] a_type;
   a_type = a + z_type * sigma_type;
 }
