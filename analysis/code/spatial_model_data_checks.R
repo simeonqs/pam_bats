@@ -5,7 +5,7 @@
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Loading libraries
-libraries = c('stringr', 'lubridate')
+libraries = c('stringr', 'lubridate', 'dplyr')
 for(lib in libraries){
   if(! lib %in% installed.packages()) lapply(lib, install.packages)
   lapply(libraries, require, character.only = TRUE)
@@ -69,4 +69,4 @@ mtext('Station', 2, 5, cex = 1.5)
 dev.off()
 
 # First deployment should be removed, second has the -30, +30 setting.
-warnings('Remember the +30, -30 as variable in the model!')
+warning('Remember the +30, -30 as variable in the model!')
