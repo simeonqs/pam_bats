@@ -9,7 +9,7 @@ library(dplyr)
 library(stringr)
 
 paths_results = 
-  list.files('/media/au472091/T7_black/new_results_aspot/land')
+  list.files('/media/au472091/data/new_results_aspot/land')
 paths_dirs = read.table('analysis/data/all_paths_ERDA.txt', sep = ',')$V1
 
 paths_dirs = paths_dirs[str_detect(paths_dirs, 'LOT1_LAND_DATA')]
