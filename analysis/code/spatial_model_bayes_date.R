@@ -17,7 +17,6 @@ rm(list=ls())
 # Paths 
 path_combined_data = 'analysis/results/combined_data.RData'
 path_m_date = 'analysis/code/models/m_date.stan'
-path_m_date_temp = 'analysis/code/models/m_date_temp.stan'
 path_pdf = 'analysis/results/spatial_model/model_date.pdf'
 
 # Load
@@ -63,15 +62,16 @@ trans_subset = c(Buoys = 19,        # circle
                  SSO = 15)          # square
 pdf(path_pdf, 6, 3.5)
 par(mar = c(4, 4, 0.5, 1))
-plot(dat_model[sample(nrow(dat_model)),]$julian_date, 
-     dat_model[sample(nrow(dat_model)),]$detection - 
+reorder = order(dat_model$julian_date)
+plot(dat_model[reorder,]$julian_date, 
+     dat_model[reorder,]$detection - 
        rnorm(nrow(dat_model), 0.2, 0.05),
      xaxt = 'n', yaxt = 'n',
-     pch = trans_subset[dat_model$subset], 
+     pch = trans_subset[dat_model$subset[reorder]], 
      col = c('#c39bd3', # 2023 = purple
              '#f8c471', # 2024 = yellow
              '#d5dbdb'  # 2025 = grey (not included)
-     )[dat_model$year],
+     )[dat_model$year[reorder]],
      cex = 0.8,
      xlab = 'Night of year', ylab = 'Probability presence per night')
 axis_dates = as.POSIXlt(c('2024-08-01', '2024-08-15', '2024-09-01', 
