@@ -313,9 +313,6 @@ dat$night_time_m = split |> vapply(function(x)
 rm(split)
 dat$file_name = dat$file_name |> str_remove('.wav')
 
-# Fix error Skjern - NS32
-dat$station[dat$folder_name  == 'Skjern_0912_2024_A'] = 'Skjern'
-
 # List all summary files ----
 
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
@@ -878,6 +875,7 @@ for(st in unique(dat$station[dat$type_location == 'HRIII'])){
 # Clean up 2 ----
 
 # Fix misnaming of Skjern_0912_2024_A_NS32_A
+dat$station[dat$folder_name  == 'Skjern_0912_2024_A'] = 'Skjern'
 summary$station[summary$folder_name == 'Skjern_0912_2024_A_NS32_A'] = 'Skjern'
 summary$type_location[summary$folder_name == 'Skjern_0912_2024_A_NS32_A'] = 
   'land'
@@ -889,6 +887,11 @@ dat = dat[!(dat$station == 'A01' &
               dat$date < as.Date('2023-10-01')),]
 summary = summary[!summary$station == 'B01',]
 dat = dat[!dat$station == 'B01',]
+
+# Remove faulty first days Mandoe
+dat = dat[!(dat$station == 'Mandoe' & 
+              dat$date %in% seq(as.Date('2023-04-15'), 
+                                as.Date('2023-04-20'), by = 'day')),]
 
 # Remove wake-up on first of month
 dat = dat[!(dat$station == 'HR3-4' & 
@@ -1121,6 +1124,7 @@ for(st in unique(meta_HRIII$WT.ID)){
                       ))
   }
 }
+dat_model$subset[dat_model$station == 'platform'] = 'SSO'
 
 # Remove first deployment for buoys (wrong settings)
 to_remove = unique(dat[which(str_detect(dat$folder_name, 'Spring23') |
