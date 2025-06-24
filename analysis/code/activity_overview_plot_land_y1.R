@@ -15,8 +15,8 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_combined_data = 'analysis/results/combined_data.RData'
-path_png = 'analysis/results/activity_overview/activity_overview'
+path_combined_data = 'analysis/results/combined_data_land.RData'
+path_png = 'analysis/results/activity_overview/activity_overview_land_y1.png'
 
 # Plotting function
 points_custom <- function(x, y, shape, col = 'black', cex = 1, ...) {
@@ -41,8 +41,9 @@ my_shape1 = list(x = c(-0.1, 0.1, 0.1, -0.1)/ dev,
 
 # Load data
 load(path_combined_data)
-dat = dat[dat$type_location == 'land',]
-summary = summary[summary$type_location == 'land',]
+dat = dat[dat$type_location == 'land' & dat$station != 'Skagen',]
+summary = summary[summary$type_location == 'land' & 
+                    summary$station != 'Skagen',]
 
 # Plot
 unique_stations = dat$station |> unique() |> sort(decreasing = TRUE)
@@ -54,9 +55,9 @@ labels_stations = sort(labels_stations, decreasing = TRUE)
 ## create colour gradient
 colfunc = colorRampPalette(c('#EAEDED', '#5F6A6A'))
 cols = colfunc(max(summary$n))
-png(sprintf('%s_bøjer_new.png', path_png),
-    width = 40, height = 18, units = 'in', res = 800)
-par(mar = c(5, 10, 1, 1), xaxs = 'i', yaxs = 'i')
+png(path_png,
+    width = 40, height = 11, units = 'in', res = 800)
+par(mar = c(5, 18, 1, 1), xaxs = 'i', yaxs = 'i')
 ## subset per season and adjust xlims
 if(TRUE){
   sub = dat[which(dat$date < as.Date('2024-04-10')),]
@@ -66,9 +67,6 @@ if(TRUE){
 } else {
   xlim = as.Date(c('2023-07-30', '2023-11-15'))
 }
-## remove before and after deployment
-sub = sub[sub$offshore,]
-sub_summary = sub_summary[sub_summary$offshore,]
 ## create empty plot
 ymin = min(trans_stations) - 0.45
 ymax = max(trans_stations) + 0.45
@@ -79,7 +77,7 @@ plot(sub$date,
      xaxt = 'n', yaxt = 'n', type = 'n',
      xlab = '', ylab = '')
 mtext('Date', 1, 3.5, cex = 2.5)
-mtext('Station', 2, 7.8, cex = 2.5)
+mtext('Station', 2, 16, cex = 2.5)
 ## add shaded area for migration
 polygon(as.Date(c('2023-04-10', '2023-04-10', '2023-05-15','2023-05-15')),
         c(ymin, ymax, ymax, ymin),
@@ -102,14 +100,13 @@ summary_detections = sub |> group_by(station, date) |>
 points(summary_detections$date,
        trans_stations[summary_detections$station] + 0.15, pch = 16, 
        cex = log10(summary_detections$n)/4 + 0.1)
-points(sub$date[sub$n_bats > 0],
-       trans_stations[sub$station[sub$n_bats > 0]] - 0.15, pch = 16, 
+points(sub$date[!is.na(sub$species)],
+       trans_stations[sub$station[!is.na(sub$species)]] - 0.15, pch = 16, 
        cex = 1.5, col = '#D68910')
 ## add axes
 unique_months = unique(format(ymd(sub$date), '%Y-%m'))
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
      labels = paste0(unique_months, '-01'),
      cex.axis = 2)
-labels_stations[labels_stations == 'NS26'] = 'T3-NS26'
 axis(2, trans_stations, labels_stations, las = 1, cex.axis = 2)
 dev.off() # close png
