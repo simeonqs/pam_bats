@@ -71,7 +71,6 @@ fit_nice |> precis(depth = 3) |> round(2) |> print()
 trans_subset = c(Buoys = 19,        # circle
                  Windturbines = 17, # triangle
                  SSO = 15)          # square
-dat_model = dat_model[sample(nrow(dat_model)),] # randomise order
 pdf(path_pdf, 16, 7)
 par(mar = c(4, 4, 0.5, 1),
     mfrow = c(2, 3))
@@ -98,25 +97,19 @@ axis(1, unique(round(dat_model$mean_temp), 0.5))
 axis(2, c(0, 0.2, 0.4, 0.6, 0.8))
 abline(h = 0, lty = 2, lwd = 2)
 
-temps = seq(min(dat_model$mean_temp[subber]),
-            max(dat_model$mean_temp[subber]), 
-            0.1)
-B_date_plot = bs(220, # Aug 7th
-                 knots = knots_date[-c(1, num_knots_date)],
-                 degree = degree, intercept = TRUE)
-B_temps_plot = bs(temps,
-                  knots = knots_temp[-c(1, num_knots_temp)],
-                  degree = degree, intercept = TRUE)
+temps = dat_model$mean_temp[subber][sorter]
+B_date_plot = B_date[dat_model$julian_date == 220,][1,]
+B_temp_plot = B_temp[subber,][sorter,]
 pred = vapply(seq_along(post$a), function(i)
-  vapply(seq_len(nrow(B_temps_plot)), function(j) {
-    smooth_date = sum(B_date_plot[1, ] * post$w_date[i, ])
-    smooth_temp = sum(B_temps_plot[j, ] * post$w_temp[i, ])
+  vapply(seq_len(nrow(B_temp_plot)), function(j) {
+    smooth_date = sum(B_date_plot * post$w_date[i, ])
+    smooth_temp = sum(B_temp_plot[j, ] * post$w_temp[i, ])
     smooth_date_temp = sum(
-      B_date_plot[1, ] %*% post$w_date_temp[i,,] %*% B_temps_plot[j, ]
+      B_date_plot %*% post$w_date_temp[i,,] %*% B_temp_plot[j, ]
     )
     post$a[i] + smooth_date + smooth_temp + smooth_date_temp
   }, numeric(1)),
-  numeric(nrow(B_temps_plot))
+  numeric(nrow(B_temp_plot))
 )
 PI_pred = apply(pred, 1, PI) |> inv_logit()
 mean_pred = apply(pred, 1, mean) |> inv_logit()
@@ -125,8 +118,9 @@ lines(temps, mean_pred, lwd = 3, col = '#1B4F72')
 
 ## plot temp mid season (Sep 1st-15th) ----
 subber = dat_model$julian_date %in% seq(244, 258)
-plot(dat_model$mean_temp[subber], 
-     dat_model$detection[subber] - 
+sorter = order(dat_model$mean_temp[subber])
+plot(dat_model$mean_temp[subber][sorter], 
+     dat_model$detection[subber][sorter] - 
        rnorm(nrow(dat_model[subber,]), 0.2, 0.05),
      xaxt = 'n', yaxt = 'n',
      pch = trans_subset[dat_model$subset[subber]], 
@@ -141,25 +135,19 @@ axis(1, unique(round(dat_model$mean_temp), 0.5))
 axis(2, c(0, 0.2, 0.4, 0.6, 0.8))
 abline(h = 0, lty = 2, lwd = 2)
 
-temps = seq(min(dat_model$mean_temp[subber]),
-            max(dat_model$mean_temp[subber]), 
-            0.1)
-B_date_plot = bs(250, # Sep 7th
-                 knots = knots_date[-c(1, num_knots_date)],
-                 degree = degree, intercept = TRUE)
-B_temps_plot = bs(temps,
-                  knots = knots_temp[-c(1, num_knots_temp)],
-                  degree = degree, intercept = TRUE)
+temps = dat_model$mean_temp[subber][sorter]
+B_date_plot = B_date[dat_model$julian_date == 250,][1,]
+B_temp_plot = B_temp[subber,][sorter,]
 pred = vapply(seq_along(post$a), function(i)
-  vapply(seq_len(nrow(B_temps_plot)), function(j) {
-    smooth_date = sum(B_date_plot[1, ] * post$w_date[i, ])
-    smooth_temp = sum(B_temps_plot[j, ] * post$w_temp[i, ])
+  vapply(seq_len(nrow(B_temp_plot)), function(j) {
+    smooth_date = sum(B_date_plot * post$w_date[i, ])
+    smooth_temp = sum(B_temp_plot[j, ] * post$w_temp[i, ])
     smooth_date_temp = sum(
-      B_date_plot[1, ] %*% post$w_date_temp[i,,] %*% B_temps_plot[j, ]
+      B_date_plot %*% post$w_date_temp[i,,] %*% B_temp_plot[j, ]
     )
     post$a[i] + smooth_date + smooth_temp + smooth_date_temp
   }, numeric(1)),
-  numeric(nrow(B_temps_plot))
+  numeric(nrow(B_temp_plot))
 )
 PI_pred = apply(pred, 1, PI) |> inv_logit()
 mean_pred = apply(pred, 1, mean) |> inv_logit()
@@ -168,8 +156,9 @@ lines(temps, mean_pred, lwd = 3, col = '#1B4F72')
 
 ## plot temp end season (Oct 1st-15th) ----
 subber = dat_model$julian_date %in% seq(274, 288)
-plot(dat_model$mean_temp[subber], 
-     dat_model$detection[subber] - 
+sorter = order(dat_model$mean_temp[subber])
+plot(dat_model$mean_temp[subber][sorter], 
+     dat_model$detection[subber][sorter] - 
        rnorm(nrow(dat_model[subber,]), 0.2, 0.05),
      xaxt = 'n', yaxt = 'n',
      pch = trans_subset[dat_model$subset[subber]], 
@@ -184,25 +173,19 @@ axis(1, unique(round(dat_model$mean_temp), 0.5))
 axis(2, c(0, 0.2, 0.4, 0.6, 0.8))
 abline(h = 0, lty = 2, lwd = 2)
 
-temps = seq(min(dat_model$mean_temp[subber]),
-            max(dat_model$mean_temp[subber]), 
-            0.1)
-B_date_plot = bs(280, # Oct 7th
-                 knots = knots_date[-c(1, num_knots_date)],
-                 degree = degree, intercept = TRUE)
-B_temps_plot = bs(temps,
-                  knots = knots_temp[-c(1, num_knots_temp)],
-                  degree = degree, intercept = TRUE)
+temps = dat_model$mean_temp[subber][sorter]
+B_date_plot = B_date[dat_model$julian_date == 280,][1,]
+B_temp_plot = B_temp[subber,][sorter,]
 pred = vapply(seq_along(post$a), function(i)
-  vapply(seq_len(nrow(B_temps_plot)), function(j) {
-    smooth_date = sum(B_date_plot[1, ] * post$w_date[i, ])
-    smooth_temp = sum(B_temps_plot[j, ] * post$w_temp[i, ])
+  vapply(seq_len(nrow(B_temp_plot)), function(j) {
+    smooth_date = sum(B_date_plot * post$w_date[i, ])
+    smooth_temp = sum(B_temp_plot[j, ] * post$w_temp[i, ])
     smooth_date_temp = sum(
-      B_date_plot[1, ] %*% post$w_date_temp[i,,] %*% B_temps_plot[j, ]
+      B_date_plot %*% post$w_date_temp[i,,] %*% B_temp_plot[j, ]
     )
     post$a[i] + smooth_date + smooth_temp + smooth_date_temp
   }, numeric(1)),
-  numeric(nrow(B_temps_plot))
+  numeric(nrow(B_temp_plot))
 )
 PI_pred = apply(pred, 1, PI) |> inv_logit()
 mean_pred = apply(pred, 1, mean) |> inv_logit()
