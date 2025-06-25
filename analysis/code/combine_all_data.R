@@ -1171,12 +1171,17 @@ for(st in unique(dat_model$station)){
                        skip = 2, header = TRUE)
   weather$wind_direction = (270 - weather$wind_direction * 180 / pi) %% 360
   for(row in which(dat_model$station == st)){
+    time_sunset = sun$Sunset[sun$Date == dat_model$date[row]] |>
+      as.POSIXct(format = '%H:%M:%S') |>
+      round_date(unit = 'hour') |>
+      format('%H') |>
+      as.numeric()
     sub = weather[weather$year == dat_model$date[row] |> str_sub(1, 4) &
                     weather$month == dat_model$date[row] |> str_sub(6, 7) |> 
                     as.numeric() &
                     weather$day == dat_model$date[row] |> str_sub(9, 10) |> 
                     as.numeric() &
-                    weather$hour == 23,]
+                    weather$hour == time_sunset,]
     if(nrow(sub) != 1) stop('Weather not found for row ', row)
     dat_model[row, c('mean_temp', 'wind_speed', 'wind_direction', 'precip',
                      'cloud_coverage', 'atm_pressure')] = 
