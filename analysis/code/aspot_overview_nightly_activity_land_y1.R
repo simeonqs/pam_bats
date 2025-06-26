@@ -16,12 +16,13 @@ rm(list=ls())
 
 # Paths
 path_species_overview = 'analysis/results/species_overview'
-path_png = 'analysis/results/nightly_activity/nightly_activity_land_new.png'
-path_combined_data = 'analysis/results/combined_data.RData'
+path_png = 'analysis/results/nightly_activity/nightly_activity_land_y1.png'
+path_combined_data = 'analysis/results/combined_data_land.RData'
 
 # Load data
 load(path_combined_data)
 dat = dat[dat$type_location == 'land' & dat$station != 'Skagen',]
+dat = dat[which(dat$date < as.Date('2024-04-10')),]
 
 # Open png
 png(path_png, 12, 8, units = 'in', res = 800)
@@ -47,7 +48,7 @@ for(station in unique(dat$station)){
       species_found = str_split(sub_with_detections$species[row], ', ')[[1]]
       rows_to_delete = c(rows_to_delete, row)
       for(sp in species_found){
-        extra_entry = dat[row,]
+        extra_entry = sub_with_detections[row,]
         extra_entry$species = sp
         new_dat = rbind(new_dat, extra_entry)
       } 
@@ -71,6 +72,13 @@ for(station in unique(dat$station)){
                                by = 'month'), 
             labels = '')
   
+  # Make shadow for night
+  sun_sub = sun[sun$Date > as.Date('2023-04-09') &
+                  sun$Date < as.Date('2024-04-10'),]
+  polygon(x = c(as.Date(sun_sub$Date)+1, rev(as.Date(sun_sub$Date))),
+          y = c(sun_sub$rise_min, rev(sun_sub$set_min)),
+          col = '#212F3D', border = '#212F3D')
+  
   # Mark missing dates
   all_dates = seq(from = as.Date('2023-04-10'),
                   to = as.Date('2024-04-10'),
@@ -79,14 +87,7 @@ for(station in unique(dat$station)){
   for(d in missing_dates) 
     polygon(x = c(d-0.5, d+0.5),
             y = c(0, 1440),
-            col = '#BDC3C7', border = '#BDC3C7')
-  
-  # Make shadow for night
-  sun_sub = sun[sun$Date > as.Date('2023-04-09') &
-                  sun$Date < as.Date('2024-04-10'),]
-  polygon(x = c(as.Date(sun_sub$Date)+1, rev(as.Date(sun_sub$Date))),
-          y = c(sun_sub$rise_min, rev(sun_sub$set_min)),
-          col = '#212F3D', border = '#212F3D')
+            col = 'white', border = 'white')
   
   # Shuffle order
   sub_with_detections = sub_with_detections[sample(nrow(sub_with_detections)),]
@@ -117,8 +118,8 @@ for(station in unique(dat$station)){
 
 # Print legend
 plot.new()
-legend('bottomright', legend = species |> str_replace('NVE', 'ENV'), 
-       col = colours, pch = 16,
+legend('bottomright', legend = species[species %in% dat$species], 
+       col = colours[names(colours) %in% dat$species], pch = 16,
        cex = 1.5)
 
 # Close png
