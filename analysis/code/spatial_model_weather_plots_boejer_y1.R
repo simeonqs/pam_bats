@@ -17,50 +17,70 @@ rm(list=ls())
 # Paths
 path_combined_data = 'analysis/results/combined_data.RData'
 path_png_temp = 'analysis/results/spatial_model/figure_temp_boejer.png'
-path_png_vind_ret = 'analysis/results/spatial_model/figure_vind_ret_boejer.png'
+path_png_vind_ret = 
+  'analysis/results/spatial_model/figure_vind_ret_boejer.png'
 path_png_vind_hast = 
   'analysis/results/spatial_model/figure_vind_hast_boejer.png'
+path_weather = 'analysis/data/weather/generated_data'
 
 # Load data
 load(path_combined_data)
 
-# Summarise data per night
-dat_model = dat_model[str_detect(dat_model$station, 'NS') |
-                        dat_model$station %in% c('HR3-4', 'HR3-6'),]
-sum_dat = data.frame(date = unique(dat_model$date))
-sum_dat$mean_temp = vapply(sum_dat$date, function(date) 
-  mean(dat_model$mean_temp[dat_model$date == date]), numeric(1))
-sum_dat$wind_direction = vapply(sum_dat$date, function(date) 
-  mean(dat_model$wind_direction[dat_model$date == date]), numeric(1))
-sum_dat$wind_speed = vapply(sum_dat$date, function(date) 
-  mean(dat_model$wind_speed[dat_model$date == date]), numeric(1))
-sum_dat$n_stations_with_bats = vapply(sum_dat$date, function(date) 
-  sum(dat_model$detection[dat_model$date == date]), numeric(1))
+# Summarise data per night and station
+sum_dat = dat[dat$type_location == 'boejer' & dat$offshore, ] |>
+  group_by(station, night_date) |>
+  summarise(bats_present = any(!is.na(species))) |>
+  group_by(night_date) |>
+  summarise(n_stations_with_bats = length(which(bats_present)))
+
+# Add weather data
+ws = 'Loc_17' # NS20, ca. i midten
+weather = read.table(sprintf('%s/%s_era5.pre', path_weather, ws),
+                     skip = 2, header = TRUE)
+weather$wind_direction = (270 - weather$wind_direction * 180 / pi) %% 360
+for(row in seq_len(nrow(sum_dat))){
+  time_sunset = sun$Sunset[sun$Date == sum_dat$night_date[row]] |>
+    as.POSIXct(format = '%H:%M:%S') |>
+    round_date(unit = 'hour') |>
+    format('%H') |>
+    as.numeric()
+  sub = weather[weather$year == sum_dat$night_date[row] |> str_sub(1, 4) &
+                  weather$month == sum_dat$night_date[row] |> str_sub(6, 7) |> 
+                  as.numeric() &
+                  weather$day == sum_dat$night_date[row] |> str_sub(9, 10) |> 
+                  as.numeric() &
+                  weather$hour == time_sunset,]
+  if(nrow(sub) != 1) stop('Weather not found for row ', row)
+  sum_dat[row, c('mean_temp', 'wind_speed', 'wind_direction', 'precip',
+                   'cloud_coverage', 'atm_pressure')] = 
+    sub[c('mean_temp', 'wind_speed', 'wind_direction', 'precip',
+          'cloud_coverage', 'atm_pressure')]
+}
 
 # Plot
-png(path_png_temp, width = 7, height = 5, units = 'in', res = 800)
+png(path_png_temp, width = 10, height = 4, units = 'in', res = 800)
 par(mar = c(4, 4, 1, 4))
-plot(sum_dat$date, sum_dat$mean_temp,
+plot(sum_dat$night_date, sum_dat$mean_temp,
      col = '#D4E6F1', ylim = c(-5, 22),
      xlab = 'Date', ylab = 'Temperature (°C)', xaxt = 'n')
-points(sum_dat$date, sum_dat$n_stations_with_bats * 2, 
+points(sum_dat$night_date, sum_dat$n_stations_with_bats * 2, 
        type = 'h', col = '#1F618D')
 axis(4, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9) * 2, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
-unique_months = unique(format(ymd(sum_dat$date), '%Y-%m'))
+unique_months = unique(format(ymd(sum_dat$night_date), '%Y-%m'))
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
      labels = paste0(unique_months, '-01'),
      cex.axis = 1)
 mtext('Number of stations with bats that night', 4, 3)
 dev.off()
 
-png(path_png_vind_ret, width = 7, height = 5, units = 'in', res = 800)
+png(path_png_vind_ret, width = 10, height = 4, units = 'in', res = 800)
 par(mar = c(4, 4, 1, 4))
-plot(sum_dat$date, sum_dat$wind_direction,
+plot(sum_dat$night_date, sum_dat$wind_direction,
      col = '#D4E6F1', ylim = c(0, 360),
      xlab = 'Date', ylab = 'Wind direction', xaxt = 'n', yaxt = 'n')
-points(sum_dat$date, sum_dat$n_stations_with_bats * 40, 
+points(sum_dat$night_date, sum_dat$n_stations_with_bats * 40, 
        type = 'h', col = '#1F618D')
-unique_months = unique(format(ymd(sum_dat$date), '%Y-%m'))
+unique_months = unique(format(ymd(sum_dat$night_date), '%Y-%m'))
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
      labels = paste0(unique_months, '-01'),
      cex.axis = 1)
@@ -70,14 +90,14 @@ axis(4, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9) * 40, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
 mtext('Number of stations with bats that night', 4, 3)
 dev.off()
 
-png(path_png_vind_hast, width = 7, height = 5, units = 'in', res = 800)
+png(path_png_vind_hast, width = 10, height = 4, units = 'in', res = 800)
 par(mar = c(4, 4, 1, 4))
-plot(sum_dat$date, sum_dat$wind_speed,
+plot(sum_dat$night_date, sum_dat$wind_speed,
      col = '#D4E6F1', ylim = c(0, 22),
      xlab = 'Date', ylab = 'Wind speed (m/s)', xaxt = 'n')
-points(sum_dat$date, sum_dat$n_stations_with_bats * 2, 
+points(sum_dat$night_date, sum_dat$n_stations_with_bats * 2, 
        type = 'h', col = '#1F618D')
-unique_months = unique(format(ymd(sum_dat$date), '%Y-%m'))
+unique_months = unique(format(ymd(sum_dat$night_date), '%Y-%m'))
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
      labels = paste0(unique_months, '-01'),
      cex.axis = 1)
