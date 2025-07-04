@@ -47,10 +47,10 @@ path_all_buoys = 'analysis/data/locations_boejer.csv'
 path_summary_per_station_y1 = 'analysis/results/summary_per_station_y1.csv'
 path_summary_per_station_y2 = 'analysis/results/summary_per_station_y2.csv'
 path_lunar_data = 'analysis/data/lunar_data_esbjerg.csv'
-path_combined_data = 'analysis/results/combined_data.RData'
+path_combined_data = 'analysis/results/combined_data_land.RData'
 
 # Should land species be run (very time consuming)
-species_land = FALSE
+species_land = TRUE
 
 # Load data ----
 
@@ -764,7 +764,7 @@ if(species_land){
       st$Annotations = str_to_title(st$Annotations)
       st$Annotations[st$Annotations %in%
                        c('Mbramys', 'Mdas', 'Mnat', 'Mdau')] = 'M'
-      st$Annotations[st$Annotations %in% c('Nnoc', 'Eser', 'Vmur')] = 'NVE'
+      st$Annotations[st$Annotations %in% c('Nnoc', 'Eser', 'Vmur')] = 'ENV'
       st$Annotations[st$Annotations %in% c('Noise', 'Bbar', 'B')] = 'noise'
       duration = max(st$End.Time..s.)
       chunk_starts = seq(0, duration, 5)
@@ -1065,6 +1065,14 @@ summary = summary[!(summary$station == 'OSS' &
                       summary$date %in% as.Date(c('2024-11-01', '2025-01-01',
                                                   '2025-04-01',
                                                   '2025-04-02'))),]
+dat = dat[!(dat$station == 'Skjern' & 
+              dat$date %in% as.Date(c('2024-09-01'))),]
+summary = summary[!(summary$station == 'Skjern' & 
+                      summary$date %in% as.Date(c('2024-09-01'))),]
+dat = dat[!(dat$station == 'Stadiloe' & 
+              dat$date %in% as.Date(c('2024-09-01'))),]
+summary = summary[!(summary$station == 'Stadiloe' & 
+                      summary$date %in% as.Date(c('2024-09-01'))),]
 
 # Remove dates with overlap between activation and recovery (but before 
 # deployment)
@@ -1170,6 +1178,54 @@ dat_model = dat_model %>%
 dat_model = dat_model[!dat_model$to_remove,]
 dat_model$to_remove = NULL
 
+# Create data frame for land model ----
+
+if(species_land){
+  
+  message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+          '] Starting creating dat_model_land.')
+  
+  dat_model_land = data.frame()
+  for(st in unique(dat$station[dat$type_location == 'land' &
+                               dat$station != 'Skagen'])){
+    sub_station = dat[dat$station == st &
+                        dat$date >= as.Date('2023-04-10'),]
+    for(sp in c('M', 'ENV', 'Paur', 'Ppnat', 'Ppip', 'Ppyg')){
+      sub_species = sub_station[which(str_detect(sub_station$species, sp)),]
+      for(night in as.character(unique(sub_species$night_date))){
+        night = as.Date(night)
+        sub_night = sub_species[sub_species$night_date == night,]
+        time_sunset = sun$Sunset[sun$Date == night] |>
+          as.POSIXct(format = '%H:%M:%S') |>
+          round_date(unit = 'hour') 
+        time_sunrise = sun$Sunrise[sun$Date == (night+1)] |>
+          as.POSIXct(format = '%H:%M:%S') |>
+          round_date(unit = 'hour') 
+        if(length(time_sunset) != 1 | length(time_sunrise) != 1) 
+          stop('Sunset or -rise not found for land model data.')
+        hours = seq(time_sunset, time_sunrise + 24*60*60, by = 'hour') |>
+          format('%H') |>
+          as.numeric()
+        for(hour in hours){
+          sub_hour = sub_night[(sub_night$time |>
+                                  str_sub(1, 2) |>
+                                  as.numeric()) == hour,]
+          sub_non_dup = sub_hour[!duplicated(sub_hour$time |>
+                                               str_sub(4, 5)),]
+          dat_model_land = rbind(dat_model_land,
+                                 data.frame(station = st,
+                                            species = sp,
+                                            date = night,
+                                            hour = hour,
+                                            n_act_mins = nrow(sub_non_dup)))
+          if(nrow(sub_non_dup) > 60) stop('Too many minutes.')
+        } # end hour loop
+      } # end night loop
+    } # end sp loop
+  } # end st loop
+  
+} # end if species_land
+
 # Add weather ----
 
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
@@ -1203,6 +1259,33 @@ for(st in unique(dat_model$station)){
             'cloud_coverage', 'atm_pressure')]
   }
 }
+
+if(species_land){
+  
+  message('Getting weather for onshore nights.')
+  for(st in unique(dat_model_land$station)){
+    print(st)
+    ws = weather_stations$weather_station[weather_stations$station_id == st]
+    if(length(ws) != 1) stop('Did not find ', st)
+    weather = read.table(sprintf('%s/%s_era5.pre', path_weather, ws),
+                         skip = 2, header = TRUE)
+    weather$wind_direction = (270 - weather$wind_direction * 180 / pi) %% 360
+    for(row in which(dat_model_land$station == st)){
+      sub = weather[weather$year == dat_model_land$date[row] |> str_sub(1, 4) &
+                      weather$month == dat_model_land$date[row] |> str_sub(6, 7) |> 
+                      as.numeric() &
+                      weather$day == dat_model_land$date[row] |> str_sub(9, 10) |> 
+                      as.numeric() &
+                      weather$hour == dat_model_land$hour[row],]
+      if(nrow(sub) != 1) stop('Weather not found for row ', row)
+      dat_model_land[row, c('mean_temp', 'wind_speed', 'wind_direction', 
+                            'precip', 'cloud_coverage', 'atm_pressure')] = 
+        sub[c('mean_temp', 'wind_speed', 'wind_direction', 'precip',
+              'cloud_coverage', 'atm_pressure')]
+    }
+  }
+  
+} # end if species_land
 
 # # add weather for each detection (needed to compare weather with Vestas)
 # message('Getting weather for Vestas stations.')
@@ -1297,7 +1380,7 @@ sum_per_station_y2$dist_coast_km =
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
         '] Starting storing data.')
 
-save(dat, dat_model, summary, sun, colours, removed_dates,
+save(dat, dat_model, dat_model_land, summary, sun, colours, removed_dates,
      species_offshore, species, locations_all_buoys,
      file = path_combined_data)
 write.csv(sum_per_station_y1, path_summary_per_station_y1, row.names = FALSE)
