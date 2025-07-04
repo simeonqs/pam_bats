@@ -41,8 +41,10 @@ my_shape1 = list(x = c(-0.1, 0.1, 0.1, -0.1)/ dev,
 
 # Load data
 load(path_combined_data)
-dat = dat[dat$type_location == 'HRIII',]
-summary = summary[summary$type_location == 'HRIII',]
+dat = dat[dat$type_location %in% c('HRIII', 'OSS') & dat$offshore,]
+dat = dat[which(dat$date >= as.Date('2024-04-10') & 
+                  dat$date < as.Date('2025-04-10')),]
+summary = summary[summary$type_location %in% c('HRIII', 'OSS'),]
 
 # Plot
 ## create colour gradient
