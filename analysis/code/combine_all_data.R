@@ -40,16 +40,17 @@ path_meta_boejer = 'analysis/data/meta_data_boejer.csv'
 path_meta_HRIII = 'analysis/data/meta_data_HRIII.csv'
 path_sun = 'analysis/data/sunrise_sunset_west_coast_DK.csv'
 path_species_offshore = 'analysis/data/species_offshore.csv'
+path_species_offshore_env = 'analysis/data/species_offshore_env.csv'
 path_weather = 'analysis/data/weather/generated_data'
 path_stations = 'analysis/data/weather/stations.csv'
 path_all_buoys = 'analysis/data/locations_boejer.csv'
-path_summary_per_station = 'analysis/results/summary_per_station.csv'
-path_offshore_bats = 'analysis/results/offshore_detections_bats.csv'
+path_summary_per_station_y1 = 'analysis/results/summary_per_station_y1.csv'
+path_summary_per_station_y2 = 'analysis/results/summary_per_station_y2.csv'
 path_lunar_data = 'analysis/data/lunar_data_esbjerg.csv'
-path_combined_data = 'analysis/results/combined_data.RData'
+path_combined_data = 'analysis/results/combined_data_land.RData'
 
 # Should land species be run (very time consuming)
-species_land = FALSE
+species_land = TRUE
 
 # Load data ----
 
@@ -313,9 +314,6 @@ dat$night_time_m = split |> vapply(function(x)
 rm(split)
 dat$file_name = dat$file_name |> str_remove('.wav')
 
-# Fix error Skjern - NS32
-dat$station[dat$folder_name  == 'Skjern_0912_2024_A'] = 'Skjern'
-
 # List all summary files ----
 
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
@@ -368,17 +366,30 @@ message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'),
         '] Starting loading species offshore.')
 
 species_offshore = read.csv(path_species_offshore)
+species_offshore_env = read.csv(path_species_offshore_env)
 
 # Fix Signes species names
 species_offshore$sp = species_offshore$art
 species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'rold'),
                              'Pnat', species_offshore$sp)
 species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'ENV'),
-                             'NVE', species_offshore$sp)
+                             'ENV', species_offshore$sp)
 species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'dværgflagermus'),
                              'Ppyg', species_offshore$sp)
 species_offshore$sp = ifelse(str_detect(species_offshore$sp, 'Myo'),
                              'M', species_offshore$sp)
+## remove corrupted recordings (had land files after recovery)
+species_offshore = species_offshore[!str_detect(species_offshore$Fil, 
+                                                'HR3-Y'),]
+## fill out ENV species
+for(i in which(species_offshore$sp == 'ENV' & 
+               species_offshore$Station != 'fugletogt' &
+               !str_detect(species_offshore$Fil, 'ONBOARD'))){
+  new_species = species_offshore_env$species[species_offshore_env$file ==
+                                               species_offshore$Fil[i]]
+  if(length(new_species) != 1) stop('Problem with ENV species.')
+  species_offshore$sp[i] = new_species
+}
 
 # Load location all buoys
 locations_all_buoys = read.csv(path_all_buoys)
@@ -450,7 +461,7 @@ dat$station = ifelse(dat$station == 'HUSBY', 'Husby', dat$station)
 dat$station = ifelse(dat$station == 'LAND5', 'Husby', dat$station)
 dat$station = ifelse(dat$station == 'NS6', 'NS06', dat$station)
 dat$station = ifelse(dat$station == 'NS8', 'NS08', dat$station)
-dat$station = ifelse(dat$station == 'VAT2', 'platform', dat$station)
+dat$station = ifelse(dat$station == 'VAT2', 'OSS', dat$station)
 dat$station = ifelse(dat$station == 'KAMMER', 'Kammerslusen', dat$station)
 dat$station = ifelse(dat$station == 'LAND1', 'Kammerslusen', dat$station)
 dat$station = ifelse(dat$station == 'TWJ-08', 'Mandoe', dat$station)
@@ -523,7 +534,7 @@ summary$station = ifelse(summary$station == 'HUSBY', 'Husby', summary$station)
 summary$station = ifelse(summary$station == 'LAND5', 'Husby', summary$station)
 summary$station = ifelse(summary$station == 'NS6', 'NS06', summary$station)
 summary$station = ifelse(summary$station == 'NS8', 'NS08', summary$station)
-summary$station = ifelse(summary$station == 'VAT2', 'platform', 
+summary$station = ifelse(summary$station == 'VAT2', 'OSS', 
                          summary$station)
 summary$station = ifelse(summary$station == 'ONBOARD', 'survey_ship', 
                          summary$station)
@@ -753,7 +764,7 @@ if(species_land){
       st$Annotations = str_to_title(st$Annotations)
       st$Annotations[st$Annotations %in%
                        c('Mbramys', 'Mdas', 'Mnat', 'Mdau')] = 'M'
-      st$Annotations[st$Annotations %in% c('Nnoc', 'Eser', 'Vmur')] = 'NVE'
+      st$Annotations[st$Annotations %in% c('Nnoc', 'Eser', 'Vmur')] = 'ENV'
       st$Annotations[st$Annotations %in% c('Noise', 'Bbar', 'B')] = 'noise'
       duration = max(st$End.Time..s.)
       chunk_starts = seq(0, duration, 5)
@@ -878,6 +889,7 @@ for(st in unique(dat$station[dat$type_location == 'HRIII'])){
 # Clean up 2 ----
 
 # Fix misnaming of Skjern_0912_2024_A_NS32_A
+dat$station[dat$folder_name  == 'Skjern_0912_2024_A'] = 'Skjern'
 summary$station[summary$folder_name == 'Skjern_0912_2024_A_NS32_A'] = 'Skjern'
 summary$type_location[summary$folder_name == 'Skjern_0912_2024_A_NS32_A'] = 
   'land'
@@ -889,6 +901,11 @@ dat = dat[!(dat$station == 'A01' &
               dat$date < as.Date('2023-10-01')),]
 summary = summary[!summary$station == 'B01',]
 dat = dat[!dat$station == 'B01',]
+
+# Remove faulty first days Mandoe
+dat = dat[!(dat$station == 'Mandoe' & 
+              dat$date %in% seq(as.Date('2023-04-15'), 
+                                as.Date('2023-04-20'), by = 'day')),]
 
 # Remove wake-up on first of month
 dat = dat[!(dat$station == 'HR3-4' & 
@@ -1041,13 +1058,21 @@ dat = dat[!(dat$station == 'G06' &
               dat$date %in% as.Date(c('2024-08-01'))),]
 summary = summary[!(summary$station == 'G06' & 
                       summary$date %in% as.Date(c('2024-08-01'))),]
-dat = dat[!(dat$station == 'platform' & 
+dat = dat[!(dat$station == 'OSS' & 
               dat$date %in% as.Date(c('2024-11-01', '2025-01-01',
                                       '2025-04-01', '2025-04-02'))),]
-summary = summary[!(summary$station == 'platform' & 
+summary = summary[!(summary$station == 'OSS' & 
                       summary$date %in% as.Date(c('2024-11-01', '2025-01-01',
                                                   '2025-04-01',
                                                   '2025-04-02'))),]
+dat = dat[!(dat$station == 'Skjern' & 
+              dat$date %in% as.Date(c('2024-09-01'))),]
+summary = summary[!(summary$station == 'Skjern' & 
+                      summary$date %in% as.Date(c('2024-09-01'))),]
+dat = dat[!(dat$station == 'Stadiloe' & 
+              dat$date %in% as.Date(c('2024-09-01'))),]
+summary = summary[!(summary$station == 'Stadiloe' & 
+                      summary$date %in% as.Date(c('2024-09-01'))),]
 
 # Remove dates with overlap between activation and recovery (but before 
 # deployment)
@@ -1121,6 +1146,7 @@ for(st in unique(meta_HRIII$WT.ID)){
                       ))
   }
 }
+dat_model$subset[dat_model$station == 'OSS'] = 'OSS'
 
 # Remove first deployment for buoys (wrong settings)
 to_remove = unique(dat[which(str_detect(dat$folder_name, 'Spring23') |
@@ -1152,6 +1178,54 @@ dat_model = dat_model %>%
 dat_model = dat_model[!dat_model$to_remove,]
 dat_model$to_remove = NULL
 
+# Create data frame for land model ----
+
+if(species_land){
+  
+  message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
+          '] Starting creating dat_model_land.')
+  
+  dat_model_land = data.frame()
+  for(st in unique(dat$station[dat$type_location == 'land' &
+                               dat$station != 'Skagen'])){
+    sub_station = dat[dat$station == st &
+                        dat$date >= as.Date('2023-04-10'),]
+    for(sp in c('M', 'ENV', 'Paur', 'Ppnat', 'Ppip', 'Ppyg')){
+      sub_species = sub_station[which(str_detect(sub_station$species, sp)),]
+      for(night in as.character(unique(sub_species$night_date))){
+        night = as.Date(night)
+        sub_night = sub_species[sub_species$night_date == night,]
+        time_sunset = sun$Sunset[sun$Date == night] |>
+          as.POSIXct(format = '%H:%M:%S') |>
+          round_date(unit = 'hour') 
+        time_sunrise = sun$Sunrise[sun$Date == (night+1)] |>
+          as.POSIXct(format = '%H:%M:%S') |>
+          round_date(unit = 'hour') 
+        if(length(time_sunset) != 1 | length(time_sunrise) != 1) 
+          stop('Sunset or -rise not found for land model data.')
+        hours = seq(time_sunset, time_sunrise + 24*60*60, by = 'hour') |>
+          format('%H') |>
+          as.numeric()
+        for(hour in hours){
+          sub_hour = sub_night[(sub_night$time |>
+                                  str_sub(1, 2) |>
+                                  as.numeric()) == hour,]
+          sub_non_dup = sub_hour[!duplicated(sub_hour$time |>
+                                               str_sub(4, 5)),]
+          dat_model_land = rbind(dat_model_land,
+                                 data.frame(station = st,
+                                            species = sp,
+                                            date = night,
+                                            hour = hour,
+                                            n_act_mins = nrow(sub_non_dup)))
+          if(nrow(sub_non_dup) > 60) stop('Too many minutes.')
+        } # end hour loop
+      } # end night loop
+    } # end sp loop
+  } # end st loop
+  
+} # end if species_land
+
 # Add weather ----
 
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
@@ -1167,12 +1241,17 @@ for(st in unique(dat_model$station)){
                        skip = 2, header = TRUE)
   weather$wind_direction = (270 - weather$wind_direction * 180 / pi) %% 360
   for(row in which(dat_model$station == st)){
+    time_sunset = sun$Sunset[sun$Date == dat_model$date[row]] |>
+      as.POSIXct(format = '%H:%M:%S') |>
+      round_date(unit = 'hour') |>
+      format('%H') |>
+      as.numeric()
     sub = weather[weather$year == dat_model$date[row] |> str_sub(1, 4) &
                     weather$month == dat_model$date[row] |> str_sub(6, 7) |> 
                     as.numeric() &
                     weather$day == dat_model$date[row] |> str_sub(9, 10) |> 
                     as.numeric() &
-                    weather$hour == 23,]
+                    weather$hour == time_sunset,]
     if(nrow(sub) != 1) stop('Weather not found for row ', row)
     dat_model[row, c('mean_temp', 'wind_speed', 'wind_direction', 'precip',
                      'cloud_coverage', 'atm_pressure')] = 
@@ -1180,6 +1259,33 @@ for(st in unique(dat_model$station)){
             'cloud_coverage', 'atm_pressure')]
   }
 }
+
+if(species_land){
+  
+  message('Getting weather for onshore nights.')
+  for(st in unique(dat_model_land$station)){
+    print(st)
+    ws = weather_stations$weather_station[weather_stations$station_id == st]
+    if(length(ws) != 1) stop('Did not find ', st)
+    weather = read.table(sprintf('%s/%s_era5.pre', path_weather, ws),
+                         skip = 2, header = TRUE)
+    weather$wind_direction = (270 - weather$wind_direction * 180 / pi) %% 360
+    for(row in which(dat_model_land$station == st)){
+      sub = weather[weather$year == dat_model_land$date[row] |> str_sub(1, 4) &
+                      weather$month == dat_model_land$date[row] |> str_sub(6, 7) |> 
+                      as.numeric() &
+                      weather$day == dat_model_land$date[row] |> str_sub(9, 10) |> 
+                      as.numeric() &
+                      weather$hour == dat_model_land$hour[row],]
+      if(nrow(sub) != 1) stop('Weather not found for row ', row)
+      dat_model_land[row, c('mean_temp', 'wind_speed', 'wind_direction', 
+                            'precip', 'cloud_coverage', 'atm_pressure')] = 
+        sub[c('mean_temp', 'wind_speed', 'wind_direction', 'precip',
+              'cloud_coverage', 'atm_pressure')]
+    }
+  }
+  
+} # end if species_land
 
 # # add weather for each detection (needed to compare weather with Vestas)
 # message('Getting weather for Vestas stations.')
@@ -1234,39 +1340,51 @@ dat_model = merge(dat_model, stations[c('station', 'distance_to_coast')],
 # Colours species ----
 colours = c(
   '#1f77b4', # A soft blue
+  '#f8bbd0', # A pastel pink
+  '#8d6e63', # A pastel brown
   '#2ca02c', # A strong green
   '#9467bd', # A moderate purple
   '#F7DC6F', # A soft yellow
   '#E67E22', # A pastel orange
-  '#B03A2E'  # A dark red
+  '#B03A2E', # A dark red
+  '#cfd8dc'  # A pastel grey
 )
-species = c('M', 'NVE', 'Paur', 'Pnat', 'Ppip', 'Ppyg')
+species = c('Eser', 'M', 'Nnoc', 'ENV', 'Paur', 'Pnat', 'Ppip', 'Ppyg', 'Vmur')
 names(colours) = species
 
-# # Create summary per station for Signe ----
-# sum_per_station = dat_model |> group_by(station) |> summarise(n = n())
-# 
-# # Create data frame for all bat detections offshore
-# offshore_bats = st_bats[c('file', 'Begin.time..s.', 'End.time..s.')]
-# offshore_bats = merge(offshore_bats, species_offshore[c('Fil', 'sp')],
-#                       by.x = 'file', by.y = 'Fil', all.x = TRUE, all.y = FALSE)
-# offshore_bats = merge(offshore_bats, dat[c('file_name', 'station', 
-#                                            'type_location', 'offshore')],
-#                       by.x = 'file', by.y = 'file_name', 
-#                       all.x = TRUE, all.y = FALSE)
-# if(any(is.na(offshore_bats$offshore))) stop('Offshore column not complete!')
-# offshore_bats = offshore_bats[offshore_bats$offshore,]
+# Create summary per station for Signe ----
+sum_per_station_y1 = dat[dat$night_date < as.Date('2024-04-10') & 
+                           dat$offshore,] |> 
+  group_by(station) |> 
+  summarise(n = n_distinct(night_date))
+sum_per_station_y2 = dat[dat$night_date >= as.Date('2024-04-10') & 
+                           dat$night_date < as.Date('2025-04-10') &
+                           dat$offshore,] |> 
+  group_by(station) |> 
+  summarise(n = n_distinct(night_date))
+
+## add distance to coast
+sum_per_station_y1$dist_coast_km = 
+  vapply(sum_per_station_y1$station, 
+         function(st){
+           return(dat_model$distance_to_coast[dat_model$station == st][1])
+         }, numeric(1))
+sum_per_station_y2$dist_coast_km = 
+  vapply(sum_per_station_y2$station, 
+         function(st){
+           return(dat_model$distance_to_coast[dat_model$station == st][1])
+         }, numeric(1))
 
 # Store output ----
 
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
         '] Starting storing data.')
 
-save(dat, dat_model, summary, sun, colours, removed_dates,
+save(dat, dat_model, dat_model_land, summary, sun, colours, removed_dates,
      species_offshore, species, locations_all_buoys,
      file = path_combined_data)
-# write.csv(sum_per_station, path_summary_per_station, row.names = FALSE)
-# write.csv(offshore_bats, path_offshore_bats, row.names = FALSE)
+write.csv(sum_per_station_y1, path_summary_per_station_y1, row.names = FALSE)
+write.csv(sum_per_station_y2, path_summary_per_station_y2, row.names = FALSE)
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
         '] Stored all data. Done.')
 
