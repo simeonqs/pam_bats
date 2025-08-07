@@ -16,7 +16,7 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_motus = 'analysis/data/motus/motus_data.csv'
+path_motus = 'analysis/data/motus/motus_data_1_2_3.csv'
 path_motus_locations = 'analysis/data/motus/receiver-deployments.csv'
 path_gis_out = 'analysis/results/motus/motus_data.shp'
 path_gis_out_locations = 'analysis/results/motus/motus_locations.shp'
@@ -42,7 +42,7 @@ stations$dtEnd = as.POSIXct(stations$dtEnd,
                               format = '%Y-%m-%d %H:%M:%S', tz = 'UTC')
 stations$dtEnd[is.na(stations$dtEnd)] = as.POSIXct('2024-12-01', tz = 'UTC')
 stations = stations[stations$isMobile == 'false' & 
-                     stations$dtStart < as.POSIXct('2023-11-01', tz = 'UTC') &
+                     stations$dtStart < as.POSIXct('2024-11-01', tz = 'UTC') &
                       stations$dtEnd > as.POSIXct('2023-09-01', tz = 'UTC'),]
 stations = stations[c('latitude', 'longitude')]
 stations_sf = st_as_sf(stations, 
