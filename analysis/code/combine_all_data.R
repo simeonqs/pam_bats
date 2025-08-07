@@ -1103,6 +1103,13 @@ for(st in unique(meta_boejer$Station.ID)){
   sub_meta = meta_boejer[meta_boejer$Station.ID == st,]
   dates_station = dat$night_date[dat$station == st & !is.na(dat$species)] |> 
     unique() |> sort()
+  dates_station_pnat = dat$night_date[dat$station == st & 
+                                        dat$species == 'Pnat'] |> 
+    unique() |> sort()
+  dates_station_env = dat$night_date[dat$station == st & 
+                                       dat$species %in% c('ENV', 'Eser',
+                                                          'Nnoc', 'Vmur')] |> 
+    unique() |> sort()
   all_dates = c()
   for(i in seq_len(nrow(sub_meta))){
     start = sub_meta$Deployment.date[i] + 1
@@ -1118,6 +1125,10 @@ for(st in unique(meta_boejer$Station.ID)){
                         date = all_dates,
                         detection = vapply(all_dates, function(date) 
                           date %in% dates_station, logical(1)),
+                        detection_pnat = vapply(all_dates, function(date) 
+                          date %in% dates_station_pnat, logical(1)),
+                        detection_env = vapply(all_dates, function(date) 
+                          date %in% dates_station_env, logical(1)),
                         subset = 'Buoys'
                       ))
   }
@@ -1126,6 +1137,13 @@ for(st in unique(meta_boejer$Station.ID)){
 for(st in unique(meta_HRIII$WT.ID)){
   sub_meta = meta_HRIII[meta_HRIII$WT.ID == st,]
   dates_station = dat$night_date[dat$station == st & !is.na(dat$species)] |> 
+    unique() |> sort()
+  dates_station_pnat = dat$night_date[dat$station == st & 
+                                        dat$species == 'Pnat'] |> 
+    unique() |> sort()
+  dates_station_env = dat$night_date[dat$station == st & 
+                                       dat$species %in% c('ENV', 'Eser',
+                                                          'Nnoc', 'Vmur')] |> 
     unique() |> sort()
   all_dates = c()
   for(i in seq_len(nrow(sub_meta))){
@@ -1142,6 +1160,10 @@ for(st in unique(meta_HRIII$WT.ID)){
                         date = all_dates,
                         detection = vapply(all_dates, function(date) 
                           date %in% dates_station, logical(1)),
+                        detection_pnat = vapply(all_dates, function(date) 
+                          date %in% dates_station_pnat, logical(1)),
+                        detection_env = vapply(all_dates, function(date) 
+                          date %in% dates_station_env, logical(1)),
                         subset = 'Windturbines'
                       ))
   }
@@ -1186,13 +1208,16 @@ if(species_land){
           '] Starting creating dat_model_land.')
   
   dat_model_land = data.frame()
+  # run for each station
   for(st in unique(dat$station[dat$type_location == 'land' &
                                dat$station != 'Skagen'])){
     sub_station = dat[dat$station == st &
                         dat$date >= as.Date('2023-04-10'),]
-    for(sp in c('M', 'ENV', 'Paur', 'Ppnat', 'Ppip', 'Ppyg')){
+    # run for each species that is recorded at least once at the station
+    for(sp in c('M', 'ENV', 'Paur', 'Pnat', 'Ppip', 'Ppyg')){
       sub_species = sub_station[which(str_detect(sub_station$species, sp)),]
-      for(night in as.character(unique(sub_species$night_date))){
+      # run for each night with at least one recording (also includes noise)
+      for(night in as.character(unique(sub_station$night_date))){
         night = as.Date(night)
         sub_night = sub_species[sub_species$night_date == night,]
         time_sunset = sun$Sunset[sun$Date == night] |>
@@ -1380,6 +1405,7 @@ sum_per_station_y2$dist_coast_km =
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
         '] Starting storing data.')
 
+if(!species_land) dat_model_land = data.frame(v1 = 'land_not_run')
 save(dat, dat_model, dat_model_land, summary, sun, colours, removed_dates,
      species_offshore, species, locations_all_buoys,
      file = path_combined_data)
