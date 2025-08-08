@@ -47,6 +47,7 @@ path_all_buoys = 'analysis/data/locations_boejer.csv'
 path_summary_per_station_y1 = 'analysis/results/summary_per_station_y1.csv'
 path_summary_per_station_y2 = 'analysis/results/summary_per_station_y2.csv'
 path_lunar_data = 'analysis/data/lunar_data_esbjerg.csv'
+path_biosonic = 'analysis/results/biosonic/50k/id.csv'
 path_combined_data = 'analysis/results/combined_data_land.RData'
 
 # Should land species be run (very time consuming)
@@ -784,6 +785,31 @@ if(species_land){
   } # end folder loop
 } # end if species_land loop
 
+# Add results Biosonic ----
+
+biosonic = read.csv(path_biosonic)
+biosonic$species_biosonic = biosonic$AUTO.ID |>
+  str_replace_all(',', ', ') |>
+  str_replace('eptser', 'Eser') |>
+  str_replace('vesmur', 'Vmur') |>
+  str_replace('nycnoc', 'Nnoc') |>
+  str_replace('pippyg', 'Ppyg') |>
+  str_replace('pippip', 'Ppip') |>
+  str_replace('pipnat', 'Pnat') |>
+  str_replace('myodau', 'M') |>
+  str_replace('myonat', 'M') |>
+  str_replace('myodas', 'M') |>
+  str_replace('pleaur', 'Paur') 
+biosonic = biosonic[biosonic$species_biosonic != '',]
+biosonic$file_name = str_remove(biosonic$IN.FILE, '.wav')
+
+dat = merge(dat, biosonic[c('file_name', 'species_biosonic')], 
+            by = 'file_name', all.x = TRUE, all.y = FALSE)
+
+dat$species_combined = ifelse(is.na(dat$species_biosonic), 
+                              dat$species,
+                              dat$species_biosonic)
+
 # Add if recordings were offshore ----
 
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
@@ -1364,17 +1390,17 @@ dat_model = merge(dat_model, stations[c('station', 'distance_to_coast')],
 
 # Colours species ----
 colours = c(
+  '#2ca02c', # A strong green
   '#1f77b4', # A soft blue
   '#f8bbd0', # A pastel pink
   '#8d6e63', # A pastel brown
-  '#2ca02c', # A strong green
   '#9467bd', # A moderate purple
   '#F7DC6F', # A soft yellow
   '#E67E22', # A pastel orange
   '#B03A2E', # A dark red
   '#cfd8dc'  # A pastel grey
 )
-species = c('Eser', 'M', 'Nnoc', 'ENV', 'Paur', 'Pnat', 'Ppip', 'Ppyg', 'Vmur')
+species = c('ENV', 'Eser', 'M', 'Nnoc', 'Paur', 'Pnat', 'Ppip', 'Ppyg', 'Vmur')
 names(colours) = species
 
 # Create summary per station for Signe ----
