@@ -48,6 +48,7 @@ path_summary_per_station_y1 = 'analysis/results/summary_per_station_y1.csv'
 path_summary_per_station_y2 = 'analysis/results/summary_per_station_y2.csv'
 path_lunar_data = 'analysis/data/lunar_data_esbjerg.csv'
 path_biosonic = 'analysis/results/biosonic/50k/id.csv'
+path_winter_filter = 'analysis/results/winter_dates_bats'
 path_combined_data = 'analysis/results/combined_data_land.RData'
 
 # Should land species be run (very time consuming)
@@ -809,6 +810,27 @@ dat = merge(dat, biosonic[c('file_name', 'species_biosonic')],
 dat$species_combined = ifelse(is.na(dat$species_biosonic), 
                               dat$species,
                               dat$species_biosonic)
+
+# Remove false positives land for the winter months ----
+
+winter_files = list.files(path_winter_filter)
+winter_stations = vapply(winter_files, function(x)
+  dat$station[dat$file_name == str_remove(x, '.wav')],
+  character(1))
+winter_dates = vapply(winter_files, function(x)
+  return(dat$date[dat$file_name == str_remove(x, '.wav')] |> as.character()),
+  character(1))
+winter_station_dates = paste(winter_stations, winter_dates)
+months = dat$date |> as.character() |> strsplit('-') |> sapply(`[`, 2) |> 
+  as.numeric()
+to_keep = vapply(seq_len(nrow(dat)), function(i){
+  if(months[i] %in% c(11, 12, 1, 2)){
+    return(paste(dat$station[i], dat$date[i]) %in% winter_station_dates)
+  } else {return(TRUE)}
+}, logical(1))
+
+dat$species[!to_keep] = NA
+dat$species_combined[!to_keep] = NA
 
 # Add if recordings were offshore ----
 
