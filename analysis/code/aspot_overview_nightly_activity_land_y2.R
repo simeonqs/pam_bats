@@ -35,7 +35,7 @@ layout(matrix(c(1, 1, 1, 2, 2, 2, 3, 3, 3,
 par(mar = rep(0.5, 4), oma = c(3.5, 3.5, 0.5, 0.5))
 
 # Run through stations
-for(station in unique(dat$station)){
+for(station in sort(unique(dat$station))){
   
   # Subset data
   sub = dat[dat$station == station,]
@@ -46,7 +46,8 @@ for(station in unique(dat$station)){
   new_dat = data.frame()
   for(row in seq_len(nrow(sub_with_detections))){
     if(str_detect(sub_with_detections$species[row], ',')){
-      species_found = str_split(sub_with_detections$species[row], ', ')[[1]]
+      species_found = str_split(sub_with_detections$species[row], 
+                                ', ')[[1]]
       rows_to_delete = c(rows_to_delete, row)
       for(sp in species_found){
         extra_entry = sub_with_detections[row,]
@@ -96,7 +97,8 @@ for(station in unique(dat$station)){
   # Plot points
   points(sub_with_detections$night_date, 
          sub_with_detections$night_time, 
-         pch = 20, col = colours[sub_with_detections$species], cex = 0.1)
+         pch = 20, col = colours[sub_with_detections$species], 
+         cex = 0.1)
   
   # Add info plot
   text(as.Date('2024-04-15'), 0.93*1440, station, font = 2, adj = 0, cex = 1.5)
@@ -119,9 +121,13 @@ for(station in unique(dat$station)){
 
 # Print legend
 plot.new()
-legend('bottomright', legend = species[species %in% dat$species], 
-       col = colours[names(colours) %in% dat$species], pch = 16,
-       cex = 1.5)
+legend('bottom',
+       legend = species[species %in% dat$species], 
+       col = colours[names(colours) %in% dat$species], 
+       pch = 16,
+       cex = 1.5,
+       ncol = 3,
+       bty = 'n')
 
 # Close png
 dev.off()
