@@ -62,10 +62,7 @@ fit = model$sample(data = clean_dat,
                    seed = 1, 
                    chains = 4, 
                    parallel_chains = 4)
-# fit_nice = fit$output_files() %>%
-#   rstan::read_stan_csv()
-# post = fit_nice %>%
-#   rethinking::extract.samples()
+print(fit$summary(), n = 100)
 extract.samples.cmdstanr <- function(fit_obj) {
   vars <- fit_obj$metadata()$stan_variables
   draws <- posterior::as_draws_rvars(fit_obj$draws())
@@ -75,23 +72,22 @@ extract.samples.cmdstanr <- function(fit_obj) {
   }) |> setNames(vars)
 }
 post = extract.samples.cmdstanr(fit)
-# fit_nice |> precis(depth = 2) |> round(2) |> print()
 
 # Plot predictions
 trans_subset = c(Buoys = 19,        # circle
                  Windturbines = 17, # triangle
-                 SSO = 15)          # square
-dat_model = dat_model[sample(nrow(dat_model)),] # randomise order
+                 OSS = 15)          # square
 pdf(path_pdf, 6, 3.5)
 par(mar = c(4, 4, 0.5, 1))
-plot(dat_model$distance_to_coast, 
-     dat_model$detection - rnorm(nrow(dat_model), 0.2, 0.05),
+reorder = order(dat_model$distance_to_coast)
+plot(dat_model[reorder,]$distance_to_coast, 
+     dat_model[reorder,]$detection - rnorm(nrow(dat_model), 0.2, 0.05),
      xaxt = 'n', yaxt = 'n', xlim = c(0, 90),
-     pch = trans_subset[dat_model$subset], 
+     pch = trans_subset[dat_model[reorder,]$subset], 
      col = c('#c39bd3', # 2023 = purple
              '#f8c471', # 2024 = yellow
              '#d5dbdb'  # 2025 = grey (not included)
-     )[dat_model$year],
+     )[dat_model[reorder,]$year],
      cex = 0.8,
      xlab = 'Distance to coast', ylab = 'Probability presence per night')
 axis(1, c(0, 20, 40, 60, 80))
