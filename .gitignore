@@ -2,9 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
+analysis/data
+analysis/code/download_weather/.*
 analysis/code/models/[!.]*
 analysis/code/Carlén et al. 2018
-analysis/data
 analysis/results
 aspot
 documents
