@@ -16,9 +16,9 @@ for(lib in libraries){
 rm(list=ls()) 
 
 # Paths 
-path_motus = 'analysis/data/motus/motus_data_1_2_3.csv'
+path_motus = 'analysis/data/motus/motus_data_1_2.csv'
 path_motus_locations = 'analysis/data/motus/receiver-deployments.csv'
-path_gis_out = 'analysis/results/motus/motus_data.shp'
+path_gis_out = 'analysis/results/motus/motus_data_1_2.shp'
 path_gis_out_locations = 'analysis/results/motus/motus_locations.shp'
 path_fino = 'analysis/results/motus/fino3.shp'
 
