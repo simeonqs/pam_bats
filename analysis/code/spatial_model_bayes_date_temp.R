@@ -63,14 +63,21 @@ fit = model$sample(data = clean_dat,
                    parallel_chains = 4)
 fit_nice = fit$output_files() %>%
   rstan::read_stan_csv()
-post = fit_nice %>%
-  rethinking::extract.samples()
-fit_nice |> precis(depth = 3) |> round(2) |> print()
+print(fit$summary(), n = 100)
+extract.samples.cmdstanr <- function(fit_obj) {
+  vars <- fit_obj$metadata()$stan_variables
+  draws <- posterior::as_draws_rvars(fit_obj$draws())
+  
+  lapply(vars, \(var_name){  
+    posterior::draws_of(draws[[var_name]], with_chains = FALSE)
+  }) |> setNames(vars)
+}
+post = extract.samples.cmdstanr(fit)
 
 # Plot predictions ----
 trans_subset = c(Buoys = 19,        # circle
                  Windturbines = 17, # triangle
-                 SSO = 15)          # square
+                 OSS = 15)          # square
 pdf(path_pdf, 16, 7)
 par(mar = c(4, 4, 0.5, 1),
     mfrow = c(2, 3))
@@ -222,6 +229,7 @@ axis(1, axis_dates, c('Aug 1st', 'Aug 15th', 'Sep 1st', 'Sep 15th',
                       'Oct 1st', 'Oct 15th'))
 axis(2, c(0, 0.2, 0.4, 0.6, 0.8))
 abline(h = 0, lty = 2, lwd = 2)
+
 dev.off()
 
 

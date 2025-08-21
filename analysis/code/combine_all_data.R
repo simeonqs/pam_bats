@@ -47,6 +47,8 @@ path_all_buoys = 'analysis/data/locations_boejer.csv'
 path_summary_per_station_y1 = 'analysis/results/summary_per_station_y1.csv'
 path_summary_per_station_y2 = 'analysis/results/summary_per_station_y2.csv'
 path_lunar_data = 'analysis/data/lunar_data_esbjerg.csv'
+path_biosonic = 'analysis/results/biosonic/50k/id.csv'
+path_winter_filter = 'analysis/results/winter_dates_bats'
 path_combined_data = 'analysis/results/combined_data_land.RData'
 
 # Should land species be run (very time consuming)
@@ -784,6 +786,52 @@ if(species_land){
   } # end folder loop
 } # end if species_land loop
 
+# Add results Biosonic ----
+
+biosonic = read.csv(path_biosonic)
+biosonic$species_biosonic = biosonic$AUTO.ID |>
+  str_replace_all(',', ', ') |>
+  str_replace('eptser', 'Eser') |>
+  str_replace('vesmur', 'Vmur') |>
+  str_replace('nycnoc', 'Nnoc') |>
+  str_replace('pippyg', 'Ppyg') |>
+  str_replace('pippip', 'Ppip') |>
+  str_replace('pipnat', 'Pnat') |>
+  str_replace('myodau', 'M') |>
+  str_replace('myonat', 'M') |>
+  str_replace('myodas', 'M') |>
+  str_replace('pleaur', 'Paur') 
+biosonic = biosonic[biosonic$species_biosonic != '',]
+biosonic$file_name = str_remove(biosonic$IN.FILE, '.wav')
+
+dat = merge(dat, biosonic[c('file_name', 'species_biosonic')], 
+            by = 'file_name', all.x = TRUE, all.y = FALSE)
+
+dat$species_combined = ifelse(is.na(dat$species_biosonic), 
+                              dat$species,
+                              dat$species_biosonic)
+
+# Remove false positives land for the winter months ----
+
+winter_files = list.files(path_winter_filter)
+winter_stations = vapply(winter_files, function(x)
+  dat$station[dat$file_name == str_remove(x, '.wav')],
+  character(1))
+winter_dates = vapply(winter_files, function(x)
+  return(dat$date[dat$file_name == str_remove(x, '.wav')] |> as.character()),
+  character(1))
+winter_station_dates = paste(winter_stations, winter_dates)
+months = dat$date |> as.character() |> strsplit('-') |> sapply(`[`, 2) |> 
+  as.numeric()
+to_keep = vapply(seq_len(nrow(dat)), function(i){
+  if(months[i] %in% c(11, 12, 1, 2)){
+    return(paste(dat$station[i], dat$date[i]) %in% winter_station_dates)
+  } else {return(TRUE)}
+}, logical(1))
+
+dat$species[!to_keep] = NA
+dat$species_combined[!to_keep] = NA
+
 # Add if recordings were offshore ----
 
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
@@ -1103,6 +1151,13 @@ for(st in unique(meta_boejer$Station.ID)){
   sub_meta = meta_boejer[meta_boejer$Station.ID == st,]
   dates_station = dat$night_date[dat$station == st & !is.na(dat$species)] |> 
     unique() |> sort()
+  dates_station_pnat = dat$night_date[dat$station == st & 
+                                        dat$species == 'Pnat'] |> 
+    unique() |> sort()
+  dates_station_env = dat$night_date[dat$station == st & 
+                                       dat$species %in% c('ENV', 'Eser',
+                                                          'Nnoc', 'Vmur')] |> 
+    unique() |> sort()
   all_dates = c()
   for(i in seq_len(nrow(sub_meta))){
     start = sub_meta$Deployment.date[i] + 1
@@ -1118,6 +1173,10 @@ for(st in unique(meta_boejer$Station.ID)){
                         date = all_dates,
                         detection = vapply(all_dates, function(date) 
                           date %in% dates_station, logical(1)),
+                        detection_pnat = vapply(all_dates, function(date) 
+                          date %in% dates_station_pnat, logical(1)),
+                        detection_env = vapply(all_dates, function(date) 
+                          date %in% dates_station_env, logical(1)),
                         subset = 'Buoys'
                       ))
   }
@@ -1126,6 +1185,13 @@ for(st in unique(meta_boejer$Station.ID)){
 for(st in unique(meta_HRIII$WT.ID)){
   sub_meta = meta_HRIII[meta_HRIII$WT.ID == st,]
   dates_station = dat$night_date[dat$station == st & !is.na(dat$species)] |> 
+    unique() |> sort()
+  dates_station_pnat = dat$night_date[dat$station == st & 
+                                        dat$species == 'Pnat'] |> 
+    unique() |> sort()
+  dates_station_env = dat$night_date[dat$station == st & 
+                                       dat$species %in% c('ENV', 'Eser',
+                                                          'Nnoc', 'Vmur')] |> 
     unique() |> sort()
   all_dates = c()
   for(i in seq_len(nrow(sub_meta))){
@@ -1142,6 +1208,10 @@ for(st in unique(meta_HRIII$WT.ID)){
                         date = all_dates,
                         detection = vapply(all_dates, function(date) 
                           date %in% dates_station, logical(1)),
+                        detection_pnat = vapply(all_dates, function(date) 
+                          date %in% dates_station_pnat, logical(1)),
+                        detection_env = vapply(all_dates, function(date) 
+                          date %in% dates_station_env, logical(1)),
                         subset = 'Windturbines'
                       ))
   }
@@ -1186,13 +1256,16 @@ if(species_land){
           '] Starting creating dat_model_land.')
   
   dat_model_land = data.frame()
+  # run for each station
   for(st in unique(dat$station[dat$type_location == 'land' &
                                dat$station != 'Skagen'])){
     sub_station = dat[dat$station == st &
                         dat$date >= as.Date('2023-04-10'),]
-    for(sp in c('M', 'ENV', 'Paur', 'Ppnat', 'Ppip', 'Ppyg')){
+    # run for each species that is recorded at least once at the station
+    for(sp in c('M', 'ENV', 'Paur', 'Pnat', 'Ppip', 'Ppyg')){
       sub_species = sub_station[which(str_detect(sub_station$species, sp)),]
-      for(night in as.character(unique(sub_species$night_date))){
+      # run for each night with at least one recording (also includes noise)
+      for(night in as.character(unique(sub_station$night_date))){
         night = as.Date(night)
         sub_night = sub_species[sub_species$night_date == night,]
         time_sunset = sun$Sunset[sun$Date == night] |>
@@ -1339,17 +1412,17 @@ dat_model = merge(dat_model, stations[c('station', 'distance_to_coast')],
 
 # Colours species ----
 colours = c(
+  '#2ca02c', # A strong green
   '#1f77b4', # A soft blue
   '#f8bbd0', # A pastel pink
   '#8d6e63', # A pastel brown
-  '#2ca02c', # A strong green
   '#9467bd', # A moderate purple
   '#F7DC6F', # A soft yellow
   '#E67E22', # A pastel orange
   '#B03A2E', # A dark red
   '#cfd8dc'  # A pastel grey
 )
-species = c('Eser', 'M', 'Nnoc', 'ENV', 'Paur', 'Pnat', 'Ppip', 'Ppyg', 'Vmur')
+species = c('ENV', 'Eser', 'M', 'Nnoc', 'Paur', 'Pnat', 'Ppip', 'Ppyg', 'Vmur')
 names(colours) = species
 
 # Create summary per station for Signe ----
@@ -1380,6 +1453,7 @@ sum_per_station_y2$dist_coast_km =
 message('[UPDATE] [', format(Sys.time(), '%Y-%m-%d %H:%M:%S'), 
         '] Starting storing data.')
 
+if(!species_land) dat_model_land = data.frame(v1 = 'land_not_run')
 save(dat, dat_model, dat_model_land, summary, sun, colours, removed_dates,
      species_offshore, species, locations_all_buoys,
      file = path_combined_data)

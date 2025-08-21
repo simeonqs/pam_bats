@@ -81,7 +81,7 @@ plot(sub$date,
 mtext('Date', 1, 3.5, cex = 2.5)
 mtext('Station', 2, 7.8, cex = 2.5)
 ## add shaded area for migration
-polygon(as.Date(c('2024-04-10', '2024-04-10', '2024-05-15','2024-05-15')),
+polygon(as.Date(c('2024-04-09', '2024-04-09', '2024-05-15','2024-05-15')),
         c(ymin, ymax, ymax, ymin),
         col = '#E8DAEF', border = NA)
 polygon(as.Date(c('2024-08-15', '2024-08-15', '2024-10-15','2024-10-15')),
@@ -106,7 +106,9 @@ points(sub$date[!is.na(sub$species)],
        trans_stations[sub$station[!is.na(sub$species)]] - 0.15, pch = 16, 
        cex = 1.5, col = '#D68910')
 ## add axes
-unique_months = unique(format(ymd(sub$date), '%Y-%m'))
+unique_months = format(seq(ymd('2023-01-01'), 
+                           ymd('2025-12-01'), 
+                           by = '1 month'), '%Y-%m')
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
      labels = paste0(unique_months, '-01'),
      cex.axis = 2)

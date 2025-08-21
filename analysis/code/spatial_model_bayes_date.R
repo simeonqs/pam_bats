@@ -59,7 +59,7 @@ fit_nice |> precis(depth = 2) |> round(2) |> print()
 # Plot predictions
 trans_subset = c(Buoys = 19,        # circle
                  Windturbines = 17, # triangle
-                 SSO = 15)          # square
+                 OSS = 15)          # square
 pdf(path_pdf, 6, 3.5)
 par(mar = c(4, 4, 0.5, 1))
 reorder = order(dat_model$julian_date)

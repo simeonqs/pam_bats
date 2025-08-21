@@ -34,7 +34,7 @@ layout(matrix(c(1, 1, 1, 2, 2, 2, 3, 3, 3,
 par(mar = rep(0.5, 4), oma = c(3.5, 3.5, 0.5, 0.5))
 
 # Run through stations
-for(station in unique(dat$station)){
+for(station in sort(unique(dat$station))){
   
   # Subset data
   sub = dat[dat$station == station,]
@@ -118,9 +118,13 @@ for(station in unique(dat$station)){
 
 # Print legend
 plot.new()
-legend('bottomright', legend = species[species %in% dat$species], 
-       col = colours[names(colours) %in% dat$species], pch = 16,
-       cex = 1.5)
+legend('bottom',
+       legend = species[species %in% dat$species], 
+       col = colours[names(colours) %in% dat$species], 
+       pch = 16,
+       cex = 1.5,
+       ncol = 3,
+       bty = 'n')
 
 # Close png
 dev.off()

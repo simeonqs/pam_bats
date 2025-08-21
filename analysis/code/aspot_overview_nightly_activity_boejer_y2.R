@@ -112,9 +112,13 @@ for(i in order(stations_with_leading_0, decreasing = FALSE)){
 
 # Print legend
 plot.new()
-legend('bottomright', legend = species[species %in% dat$species], 
-       col = colours[names(colours) %in% dat$species], pch = 16,
-       cex = 1.5)
+legend('bottom',
+       legend = species[species %in% dat$species], 
+       col = colours[names(colours) %in% dat$species], 
+       pch = 16,
+       cex = 1.5,
+       ncol = 3,
+       bty = 'n')
 
 # Close png
 dev.off()

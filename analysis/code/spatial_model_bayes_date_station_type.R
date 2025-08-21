@@ -40,7 +40,7 @@ knots = as.numeric(quantile(dat_model$julian_date,
 B = bs(dat_model$julian_date,
        knots = knots[-c(1, num_knots)],
        degree = degree, intercept = TRUE)
-trans_type = c(Buoys = 1L, Windturbines = 2L, SSO = 3L)
+trans_type = c(Buoys = 1L, Windturbines = 2L, OSS = 3L)
 clean_dat = list(N_obs = nrow(dat_model),
                  N_knots = num_knots,
                  N_stations = dat_model$station |> unique() |> length(),
@@ -62,7 +62,7 @@ fit_nice |> precis(depth = 3) |> round(2) |> print()
 # Plot predictions ----
 trans_subset = c(Buoys = 19,        # circle
                  Windturbines = 17, # triangle
-                 SSO = 15)          # square
+                 OSS = 15)          # square
 pdf(path_pdf, 6, 9)
 par(mar = c(4, 4, 0.5, 1),
     mfrow = c(3, 1))
@@ -136,7 +136,7 @@ shade(PI_pred, nights , col = '#AED6F1')
 lines(nights, mean_pred, lwd = 3, col = '#1B4F72')
 
 ## buoys
-subber = dat_model$subset == 'SSO'
+subber = dat_model$subset == 'OSS'
 sorter = order(dat_model$julian_date[subber])
 plot(dat_model$julian_date[subber][sorter], 
      dat_model$detection[subber][sorter] - 

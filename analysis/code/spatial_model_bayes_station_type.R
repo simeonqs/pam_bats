@@ -37,7 +37,7 @@ dat_model = dat_model[dat_model$julian_date >= 214 & # '08-01'
                         dat_model$julian_date <= 289,] # '10-15'
 
 # Run model ----
-trans_type = c(Buoys = 1L, Windturbines = 2L, SSO = 3L)
+trans_type = c(Buoys = 1L, Windturbines = 2L, OSS = 3L)
 clean_dat = list(N_obs = nrow(dat_model),
                  N_stations = dat_model$station |> unique() |> length(),
                  present = dat_model$detection |> as.integer(), 
@@ -68,7 +68,7 @@ post = extract.samples.cmdstanr(fit)
 # Plot predictions
 trans_subset = c(Buoys = 19,        # circle
                  Windturbines = 17, # triangle
-                 SSO = 15)          # square
+                 OSS = 15)          # square
 dat_model = dat_model[sample(nrow(dat_model)),] # randomise order
 pdf(path_pdf, 6, 3.5)
 par(mar = c(4, 4, 0.5, 1))

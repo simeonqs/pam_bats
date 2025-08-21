@@ -86,7 +86,7 @@ plot(sub$date,
 mtext('Date', 1, 3.5, cex = 2.5)
 mtext('Station', 2, 7.8, cex = 2.5)
 ## add shaded area for migration
-polygon(as.Date(c('2024-04-10', '2024-04-10', '2024-05-15','2024-05-15')),
+polygon(as.Date(c('2024-04-09', '2024-04-09', '2024-05-15','2024-05-15')),
         c(ymin, ymax, ymax, ymin),
         col = '#E8DAEF', border = NA)
 polygon(as.Date(c('2024-08-15', '2024-08-15', '2024-10-15','2024-10-15')),

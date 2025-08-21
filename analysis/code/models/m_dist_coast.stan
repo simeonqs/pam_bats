@@ -7,16 +7,16 @@ data{
 }
 parameters{
   real a;
+  real<lower=0> b;
   vector[N_stations] z_station;
   real<lower=0> sigma_station;
-  real<lower=0> b;
 }
 model{
   vector[N_obs] p;
   a ~ normal(-2, 2);
+  b ~ exponential(10);
   z_station ~ normal(0, 1);
   sigma_station ~ exponential(2);
-  b ~ exponential(10);
   for(i in 1:N_obs){
     p[i] = a - b * dist_coast[i] + z_station[station[i]] * sigma_station;
     p[i] = inv_logit(p[i]);

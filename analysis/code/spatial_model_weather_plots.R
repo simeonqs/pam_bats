@@ -5,7 +5,7 @@
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 # Loading libraries
-libraries = c('stringr', 'dplyr')
+libraries = c('stringr', 'dplyr', 'lubridate')
 for(lib in libraries){
   if(! lib %in% installed.packages()) lapply(lib, install.packages)
   lapply(libraries, require, character.only = TRUE)
@@ -17,10 +17,9 @@ rm(list=ls())
 # Paths
 path_combined_data = 'analysis/results/combined_data.RData'
 path_png_temp = 'analysis/results/spatial_model/figure_temp.png'
-path_png_vind_ret = 
-  'analysis/results/spatial_model/figure_vind_ret.png'
-path_png_vind_hast = 
-  'analysis/results/spatial_model/figure_vind_hast.png'
+path_png_vind_ret = 'analysis/results/spatial_model/figure_vind_ret.png'
+path_png_vind_hast = 'analysis/results/spatial_model/figure_vind_hast.png'
+path_png_nedboer = 'analysis/results/spatial_model/figure_nedboer.png'
 path_weather = 'analysis/data/weather/generated_data'
 
 # Load data
@@ -58,53 +57,81 @@ for(row in seq_len(nrow(sum_dat))){
 }
 
 # Plot
-png(path_png_temp, width = 10, height = 4, units = 'in', res = 800)
+png(path_png_temp, width = 10, height = 4.2, units = 'in', res = 800)
 par(mar = c(4, 4, 1, 4))
 plot(sum_dat$night_date, sum_dat$mean_temp,
-     col = '#D4E6F1', ylim = c(-5, 22),
+     col = '#D4E6F1', ylim = c(-3, 22),
      xlab = 'Date', ylab = 'Temperature (°C)', xaxt = 'n')
+points(sum_dat$night_date[sum_dat$n_stations_with_bats > 0], 
+       sum_dat$mean_temp[sum_dat$n_stations_with_bats > 0],
+       col = '#1F618D', pch = 16)
 points(sum_dat$night_date, sum_dat$n_stations_with_bats * 2, 
        type = 'h', col = '#1F618D')
 axis(4, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9) * 2, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
 unique_months = unique(format(ymd(sum_dat$night_date), '%Y-%m'))
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
-     labels = paste0(unique_months, '-01'),
+     labels = unique_months,
      cex.axis = 1)
 mtext('Number of stations with bats that night', 4, 3)
 dev.off()
 
-png(path_png_vind_ret, width = 10, height = 4, units = 'in', res = 800)
+png(path_png_vind_ret, width = 10, height = 4.2, units = 'in', res = 800)
 par(mar = c(4, 4, 1, 4))
 plot(sum_dat$night_date, sum_dat$wind_direction,
      col = '#D4E6F1', ylim = c(0, 360),
      xlab = 'Date', ylab = 'Wind direction', xaxt = 'n', yaxt = 'n')
-points(sum_dat$night_date, sum_dat$n_stations_with_bats * 40, 
+points(sum_dat$night_date[sum_dat$n_stations_with_bats > 0], 
+       sum_dat$wind_direction[sum_dat$n_stations_with_bats > 0],
+       col = '#1F618D', pch = 16)
+points(sum_dat$night_date, sum_dat$n_stations_with_bats * 360/11, 
        type = 'h', col = '#1F618D')
 unique_months = unique(format(ymd(sum_dat$night_date), '%Y-%m'))
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
-     labels = paste0(unique_months, '-01'),
+     labels = unique_months,
      cex.axis = 1)
 axis(2, at = seq(0, 315, 45), 
      labels = c('N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'))
-axis(4, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9) * 40, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
+axis(4, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9) * 360/11, 
+     c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
 mtext('Number of stations with bats that night', 4, 3)
 dev.off()
 
-png(path_png_vind_hast, width = 10, height = 4, units = 'in', res = 800)
+png(path_png_vind_hast, width = 10, height = 4.2, units = 'in', res = 800)
 par(mar = c(4, 4, 1, 4))
 plot(sum_dat$night_date, sum_dat$wind_speed,
      col = '#D4E6F1', ylim = c(0, 22),
      xlab = 'Date', ylab = 'Wind speed (m/s)', xaxt = 'n')
+points(sum_dat$night_date[sum_dat$n_stations_with_bats > 0], 
+       sum_dat$wind_speed[sum_dat$n_stations_with_bats > 0],
+       col = '#1F618D', pch = 16)
 points(sum_dat$night_date, sum_dat$n_stations_with_bats * 2, 
        type = 'h', col = '#1F618D')
 unique_months = unique(format(ymd(sum_dat$night_date), '%Y-%m'))
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
-     labels = paste0(unique_months, '-01'),
+     labels = unique_months,
      cex.axis = 1)
 axis(4, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9) * 2, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
 mtext('Number of stations with bats that night', 4, 3)
 dev.off()
 
+png(path_png_nedboer, width = 10, height = 4.2, units = 'in', res = 800)
+par(mar = c(4, 4, 1, 4))
+plot(sum_dat$night_date, sum_dat$precip,
+     col = '#D4E6F1', ylim = c(0, 4),
+     xlab = 'Date', ylab = 'Precipitation (mm)', xaxt = 'n')
+points(sum_dat$night_date[sum_dat$n_stations_with_bats > 0], 
+       sum_dat$precip[sum_dat$n_stations_with_bats > 0],
+       col = '#1F618D', pch = 16)
+points(sum_dat$night_date, sum_dat$n_stations_with_bats * 4/11, 
+       type = 'h', col = '#1F618D')
+unique_months = unique(format(ymd(sum_dat$night_date), '%Y-%m'))
+axis(1, at = as.Date(paste0(unique_months, '-01')), 
+     labels = unique_months,
+     cex.axis = 1)
+axis(4, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9) * 4/11, 
+     c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
+mtext('Number of stations with bats that night', 4, 3)
+dev.off()
 
 
 
