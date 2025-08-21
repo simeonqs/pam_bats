@@ -24,7 +24,6 @@ path_pdf =
 
 # Load
 load(path_combined_data)
-warning('Remember to include station type.')
 
 # Add Julian date as continuous
 dat_model$julian_date = as.POSIXlt(dat_model$date)$yday + 1
@@ -36,7 +35,7 @@ dat_model = dat_model[dat_model$julian_date >= 214 & # '08-01'
                         dat_model$julian_date <= 289,] # '10-15'
 
 # Run model 
-trans_type = c(Buoys = 1L, Windturbines = 2L, SSO = 3L)
+trans_type = c(Buoys = 1L, Windturbines = 2L, OSS = 3L)
 num_knots = 10
 degree = 3
 knots = as.numeric(quantile(dat_model$julian_date, 
@@ -48,8 +47,7 @@ clean_dat = list(N_obs = nrow(dat_model),
                  N_knots = num_knots,
                  N_stations = dat_model$station |> unique() |> length(),
                  present = dat_model$detection |> as.integer(), 
-                 dist_coast = dat_model$distance_to_coast/
-                   max(clean_dat$dist_coast),
+                 dist_coast = dat_model$distance_to_coast,
                  B = B,
                  station_type = trans_type[dat_model$subset],
                  station = dat_model$station |> as.factor() |> as.integer())
@@ -68,12 +66,11 @@ extract.samples.cmdstanr <- function(fit_obj) {
   }) |> setNames(vars)
 }
 post = extract.samples.cmdstanr(fit)
-# fit_nice |> precis(depth = 2) |> round(2) |> print()
 
 # Plot predictions ----
 trans_subset = c(Buoys = 19,        # circle
                  Windturbines = 17, # triangle
-                 SSO = 15)          # square
+                 OSS = 15)          # square
 pdf(path_pdf, 16, 7)
 par(mar = c(4, 4, 0.5, 1),
     mfrow = c(2, 3))
@@ -102,24 +99,20 @@ axis(1, seq(round(min(dat_model$distance_to_coast)),
 axis(2, c(0, 0.2, 0.4, 0.6, 0.8))
 abline(h = 0, lty = 2, lwd = 2)
 
-# temps = dat_model$distance_to_coast[subber][sorter]
-# B_date_plot = B_date[dat_model$julian_date == 220,][1,]
-# B_temp_plot = B_temp[subber,][sorter,]
-# pred = vapply(seq_along(post$a), function(i)
-#   vapply(seq_len(nrow(B_temp_plot)), function(j) {
-#     smooth_date = sum(B_date_plot * post$w_date[i, ])
-#     smooth_temp = sum(B_temp_plot[j, ] * post$w_temp[i, ])
-#     smooth_date_temp = sum(
-#       B_date_plot %*% post$w_date_temp[i,,] %*% B_temp_plot[j, ]
-#     )
-#     post$a[i] + smooth_date + smooth_temp + smooth_date_temp
-#   }, numeric(1)),
-#   numeric(nrow(B_temp_plot))
-# )
-# PI_pred = apply(pred, 1, PI) |> inv_logit()
-# mean_pred = apply(pred, 1, mean) |> inv_logit()
-# shade(PI_pred, temps , col = '#AED6F1')
-# lines(temps, mean_pred, lwd = 3, col = '#1B4F72')
+dists = seq(min(dat_model$distance_to_coast[subber]),
+            max(dat_model$distance_to_coast[subber]),
+            1)
+B_plot = B[dat_model$julian_date == 220,][1,] # Aug 7th
+pred = vapply(seq_along(post$a), function(i) {
+  vapply(seq_along(dists), function(j) {
+    post$a[i] + B_plot %*% post$w[i,] - 
+      (B_plot * dists[j]) %*% post$w_interact[i,]
+  }, numeric(1))
+}, numeric(length(dists)))
+PI_pred = apply(pred, 1, PI) |> inv_logit()
+mean_pred = apply(pred, 1, mean) |> inv_logit()
+shade(PI_pred, dists, col = '#AED6F1')
+lines(dists, mean_pred, lwd = 3, col = '#1B4F72')
 
 ## plot temp mid season (Sep 1st-15th) ----
 subber = dat_model$julian_date %in% seq(244, 258)
@@ -142,24 +135,20 @@ axis(1, seq(round(min(dat_model$distance_to_coast)),
 axis(2, c(0, 0.2, 0.4, 0.6, 0.8))
 abline(h = 0, lty = 2, lwd = 2)
 
-# temps = dat_model$distance_to_coast[subber][sorter]
-# B_date_plot = B_date[dat_model$julian_date == 250,][1,]
-# B_temp_plot = B_temp[subber,][sorter,]
-# pred = vapply(seq_along(post$a), function(i)
-#   vapply(seq_len(nrow(B_temp_plot)), function(j) {
-#     smooth_date = sum(B_date_plot * post$w_date[i, ])
-#     smooth_temp = sum(B_temp_plot[j, ] * post$w_temp[i, ])
-#     smooth_date_temp = sum(
-#       B_date_plot %*% post$w_date_temp[i,,] %*% B_temp_plot[j, ]
-#     )
-#     post$a[i] + smooth_date + smooth_temp + smooth_date_temp
-#   }, numeric(1)),
-#   numeric(nrow(B_temp_plot))
-# )
-# PI_pred = apply(pred, 1, PI) |> inv_logit()
-# mean_pred = apply(pred, 1, mean) |> inv_logit()
-# shade(PI_pred, temps , col = '#AED6F1')
-# lines(temps, mean_pred, lwd = 3, col = '#1B4F72')
+dists = seq(min(dat_model$distance_to_coast[subber]),
+            max(dat_model$distance_to_coast[subber]),
+            1)
+B_plot = B[dat_model$julian_date == 250,][1,] # Sep 7th
+pred = vapply(seq_along(post$a), function(i) {
+  vapply(seq_along(dists), function(j) {
+    post$a[i] + B_plot %*% post$w[i,] -
+      (B_plot * dists[j]) %*% post$w_interact[i,]
+  }, numeric(1))
+}, numeric(length(dists)))
+PI_pred = apply(pred, 1, PI) |> inv_logit()
+mean_pred = apply(pred, 1, mean) |> inv_logit()
+shade(PI_pred, dists, col = '#AED6F1')
+lines(dists, mean_pred, lwd = 3, col = '#1B4F72')
 
 ## plot temp end season (Oct 1st-15th) ----
 subber = dat_model$julian_date %in% seq(274, 288)
@@ -182,24 +171,20 @@ axis(1, seq(round(min(dat_model$distance_to_coast)),
 axis(2, c(0, 0.2, 0.4, 0.6, 0.8))
 abline(h = 0, lty = 2, lwd = 2)
 
-# temps = dat_model$distance_to_coast[subber][sorter]
-# B_date_plot = B_date[dat_model$julian_date == 280,][1,]
-# B_temp_plot = B_temp[subber,][sorter,]
-# pred = vapply(seq_along(post$a), function(i)
-#   vapply(seq_len(nrow(B_temp_plot)), function(j) {
-#     smooth_date = sum(B_date_plot * post$w_date[i, ])
-#     smooth_temp = sum(B_temp_plot[j, ] * post$w_temp[i, ])
-#     smooth_date_temp = sum(
-#       B_date_plot %*% post$w_date_temp[i,,] %*% B_temp_plot[j, ]
-#     )
-#     post$a[i] + smooth_date + smooth_temp + smooth_date_temp
-#   }, numeric(1)),
-#   numeric(nrow(B_temp_plot))
-# )
-# PI_pred = apply(pred, 1, PI) |> inv_logit()
-# mean_pred = apply(pred, 1, mean) |> inv_logit()
-# shade(PI_pred, temps , col = '#AED6F1')
-# lines(temps, mean_pred, lwd = 3, col = '#1B4F72')
+dists = seq(min(dat_model$distance_to_coast[subber]),
+            max(dat_model$distance_to_coast[subber]),
+            1)
+B_plot = B[dat_model$julian_date == 280,][1,] # Oct 7th
+pred = vapply(seq_along(post$a), function(i) {
+  vapply(seq_along(dists), function(j) {
+    post$a[i] + B_plot %*% post$w[i,] -
+      (B_plot * dists[j]) %*% post$w_interact[i,]
+  }, numeric(1))
+}, numeric(length(dists)))
+PI_pred = apply(pred, 1, PI) |> inv_logit()
+mean_pred = apply(pred, 1, mean) |> inv_logit()
+shade(PI_pred, dists, col = '#AED6F1')
+lines(dists, mean_pred, lwd = 3, col = '#1B4F72')
 
 ## plot date ----
 plot(dat_model$julian_date, 
