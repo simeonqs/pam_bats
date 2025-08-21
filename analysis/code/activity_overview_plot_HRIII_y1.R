@@ -106,7 +106,9 @@ points(sub$date[!is.na(dat$species)],
        trans_stations[sub$station[!is.na(dat$species)]] - 0.15, pch = 16, 
        cex = 1.5, col = '#D68910')
 ## add axes
-unique_months = unique(format(ymd(sub$date), '%Y-%m'))
+unique_months = format(seq(ymd('2023-01-01'), 
+                           ymd('2025-12-01'), 
+                           by = '1 month'), '%Y-%m')
 axis(1, at = as.Date(paste0(unique_months, '-01')), 
      labels = paste0(unique_months, '-01'),
      cex.axis = 2)
