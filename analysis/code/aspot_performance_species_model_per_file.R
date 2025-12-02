@@ -25,8 +25,8 @@ path_combined_selection_tables =
   sprintf('aspot/models_s/%s/combined_selection_tables', model_2)
 path_grount_truth = 
   'analysis/results/test_data/ground_truth_selection_tables_species'
-path_pdf = sprintf(
-  'analysis/results/confusion_matrices/confusion_matrix_species_model_%s+%s_per_chunk.pdf',
+path_png = sprintf(
+  'analysis/results/confusion_matrices/confusion_matrix_species_model_%s+%s_per_chunk.png',
   model_1, model_2)
 path_audio = 'aspot/test_data_sets/test_data'
 
@@ -117,12 +117,14 @@ manual$Annotation[manual$Annotation %in% c('EVN', 'Nnoc', 'Vmur', 'Eser')] =
   'NVE'
 manual$Annotation[manual$Annotation %in% c('b', 'a')] = 'B'
 manual$Annotation[manual$Annotation %in% c('s')] = 'S'
+manual$Annotation[manual$Annotation %in% c('B', 'S')] = '-noise-'
 
 aspot$Sound.type = str_to_title(aspot$Sound.type)
 aspot$Sound.type[aspot$Sound.type %in% 
                    c('Mbramys', 'Mdas', 'Mnat', 'Mdau')] = 'M'
 aspot$Sound.type[aspot$Sound.type %in% c('Nnoc', 'Eser', 'Vmur')] = 'NVE'
 aspot$Sound.type[aspot$Sound.type %in% c('Noise')] = 'S'
+aspot$Sound.type[aspot$Sound.type %in% c('S', 'B', 'Bbar')] = '-noise-'
 
 # List unique files
 files = list.files(path_grount_truth) |> str_remove('.Table.1.selections.txt')
@@ -133,6 +135,9 @@ files = list.files(path_grount_truth) |> str_remove('.Table.1.selections.txt')
 # files = files[!str_detect(files, 'HR')]
 # files = files[!str_detect(files, 'ONBOARD')]
 
+# Remove noise from manual
+manual = manual[!manual$Annotation == '-noise-',]
+
 # Create place holders for output
 class_results = data.frame()
 
@@ -142,6 +147,9 @@ for(file in files){
   ## subset
   d_sub = aspot[aspot$file == file,]
   g_sub = manual[manual$file == file,]
+  
+  ## skip if manual has uncertain species
+  if('Ppippyg' %in% g_sub$Annotation) next
   
   ## get duration and run per chunk
   wave = readWave(audio_files[str_detect(audio_files, file)])
@@ -185,18 +193,18 @@ for(file in files){
           }
         } else {
           class_results = rbind(class_results, data.frame(file = file,
-                                                          d = '-error-',
+                                                          d = '-noise-',
                                                           g = sp))
         } # end else loop
       } # end else
     } # end sp loop (species_g)
     
     ### run through false species
-    for(sp in species_d[!species_d %in% species_g]){
+    for(sp in species_d[!species_d %in% c(species_g, '-noise-')]){
       if(!(sp %in% c('Ppip', 'Ppyg') & any(species_g == 'Ppippyg')))
         class_results = rbind(class_results, data.frame(file = file,
                                                         d = sp,
-                                                        g = '-error-'))
+                                                        g = '-noise-'))
     } # end sp loop (species_d)
     
   } # end chunk_start
@@ -204,7 +212,8 @@ for(file in files){
 } # end file loop
 
 # Plot confusion matrix
-pdf(path_pdf)
+png(path_png, 5, 5, units = 'in', res = 800)
+par(mar = c(5, 5, 0.5, 0.5))
 levels = sort(unique(c(class_results$d, class_results$g)))
 conf_matrix = table(factor(class_results$d, levels = levels), 
                     factor(class_results$g, levels = levels))
@@ -215,8 +224,8 @@ color_gradient = colorRampPalette(c('lightblue', 'darkblue'))
 plot(seq_along(levels), type = 'n', xlab = '', ylab = '',
      xlim = c(0.5, length(levels)+0.5), ylim = c(0.5, length(levels)+0.5),
      xaxt = 'n', yaxt = 'n')
-mtext('aspot', 1, 2.5)
-mtext('ground truth', 2, 3)
+mtext('Animal Spot', 1, 2.5)
+mtext('Ground truth', 2, 4)
 for(i in seq_along(levels)){
   for(j in seq_along(levels)){
     rect(i - 0.5, j - 0.5, i + 0.5, j + 0.5, 
