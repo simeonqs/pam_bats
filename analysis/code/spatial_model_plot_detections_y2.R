@@ -18,7 +18,9 @@ rm(list=ls())
 # Paths 
 path_combined_data = 'analysis/results/combined_data.RData'
 path_png = 'analysis/results/spatial_model/map_detections_Y2.png'
+path_png = 'analysis/results/spatial_model/map_detections_Y1+Y2.png'
 path_gis_out = 'analysis/results/spatial_model/bat_pam_results_Y2.shp'
+path_gis_out = 'analysis/results/spatial_model/bat_pam_results_Y1+Y2.shp'
 
 # Load data
 load(path_combined_data)
@@ -28,7 +30,7 @@ missing = which(is.na(dat_model$lat) | is.na(dat_model$long))
 if(length(missing) > 0) stop('Missing lat/long.')
 
 # Subset dat
-dat = dat[dat$date >= as.Date('2024-04-10'),]
+# dat = dat[dat$date >= as.Date('2024-04-10'),]
 
 # Summarise data
 summary = dat[which(!is.na(dat$species) & 
@@ -60,8 +62,7 @@ plot_dat$cat = paste(plot_dat$col, trans_loc[plot_dat$type_location]) |>
   factor(levels = c('Present Buoys', 'Present Windturbines',
                     'Missing Buoys', 'Missing Windturbines',
                     'Present OSS'))
-plot_dat$cat[plot_dat$station == 'platform'] = 'Present OSS'
-plot_dat$station[plot_dat$station == 'platform'] = 'OSS'
+plot_dat$cat[plot_dat$station == 'OSS'] = 'Present OSS'
 # theme_set(theme_bw())
 # world = ne_countries(scale = 'large', returnclass = 'sf')
 # plot = ggplot(data = world) +
@@ -120,6 +121,7 @@ non_bat$cat = ifelse(str_detect(non_bat$station, 'HR'),
                      'Non-bat buoys')
 non_bat$n = 0
 non_bat = non_bat[!non_bat$station == 'NS6',]
+non_bat = non_bat[!non_bat$station == 'NS8',]
 gis_dat = rbind(gis_dat, non_bat)
 gis_dat$n = gis_dat$n/2 + 3
 
