@@ -49,7 +49,7 @@ path_summary_per_station_y2 = 'analysis/results/summary_per_station_y2.csv'
 path_lunar_data = 'analysis/data/lunar_data_esbjerg.csv'
 path_biosonic = 'analysis/results/biosonic/50k/id.csv'
 path_winter_filter = 'analysis/results/winter_dates_bats'
-path_combined_data = 'analysis/results/combined_data_land.RData'
+path_combined_data = 'analysis/results/combined_data.RData'
 
 # Should land species be run (very time consuming)
 species_land = TRUE
@@ -1154,6 +1154,12 @@ for(st in unique(meta_boejer$Station.ID)){
   dates_station_pnat = dat$night_date[dat$station == st & 
                                         dat$species == 'Pnat'] |> 
     unique() |> sort()
+  dates_station_ppip = dat$night_date[dat$station == st & 
+                                        dat$species == 'Ppip'] |> 
+    unique() |> sort()
+  dates_station_ppyg = dat$night_date[dat$station == st & 
+                                        dat$species == 'Ppyg'] |> 
+    unique() |> sort()
   dates_station_env = dat$night_date[dat$station == st & 
                                        dat$species %in% c('ENV', 'Eser',
                                                           'Nnoc', 'Vmur')] |> 
@@ -1169,12 +1175,17 @@ for(st in unique(meta_boejer$Station.ID)){
     if(length(all_dates) < 1) next
     dat_model = rbind(dat_model, 
                       data.frame(
+                        deployment = paste(st, sub_meta$Deployment.date[i]),
                         station = st,
                         date = all_dates,
                         detection = vapply(all_dates, function(date) 
                           date %in% dates_station, logical(1)),
                         detection_pnat = vapply(all_dates, function(date) 
                           date %in% dates_station_pnat, logical(1)),
+                        detection_ppip = vapply(all_dates, function(date) 
+                          date %in% dates_station_ppip, logical(1)),
+                        detection_ppyg = vapply(all_dates, function(date) 
+                          date %in% dates_station_ppyg, logical(1)),
                         detection_env = vapply(all_dates, function(date) 
                           date %in% dates_station_env, logical(1)),
                         subset = 'Buoys'
@@ -1188,6 +1199,12 @@ for(st in unique(meta_HRIII$WT.ID)){
     unique() |> sort()
   dates_station_pnat = dat$night_date[dat$station == st & 
                                         dat$species == 'Pnat'] |> 
+    unique() |> sort()
+  dates_station_ppip = dat$night_date[dat$station == st & 
+                                        dat$species == 'Ppip'] |> 
+    unique() |> sort()
+  dates_station_ppyg = dat$night_date[dat$station == st & 
+                                        dat$species == 'Ppyg'] |> 
     unique() |> sort()
   dates_station_env = dat$night_date[dat$station == st & 
                                        dat$species %in% c('ENV', 'Eser',
@@ -1204,12 +1221,18 @@ for(st in unique(meta_HRIII$WT.ID)){
     if(length(all_dates) < 1) next
     dat_model = rbind(dat_model, 
                       data.frame(
+                        deployment = 
+                          paste(st, sub_meta$Deployment.service.date[i]),
                         station = st,
                         date = all_dates,
                         detection = vapply(all_dates, function(date) 
                           date %in% dates_station, logical(1)),
                         detection_pnat = vapply(all_dates, function(date) 
                           date %in% dates_station_pnat, logical(1)),
+                        detection_ppip = vapply(all_dates, function(date) 
+                          date %in% dates_station_ppip, logical(1)),
+                        detection_ppyg = vapply(all_dates, function(date) 
+                          date %in% dates_station_ppyg, logical(1)),
                         detection_env = vapply(all_dates, function(date) 
                           date %in% dates_station_env, logical(1)),
                         subset = 'Windturbines'
