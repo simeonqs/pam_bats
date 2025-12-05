@@ -27,8 +27,8 @@ model{
   a ~ normal(-2, 2);
   z_type ~ normal(0, 1);
   sigma_type ~ exponential(1);
-  w_date ~ normal(0, 1);
-  w_temp ~ normal(0, 1);
+  w_date ~ normal(0, 3);
+  w_temp ~ normal(0, 3);
   b_wind_speed ~ exponential(10);
   b_dist_coast ~ exponential(10);
   z_station ~ normal(0, 1);

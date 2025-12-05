@@ -33,8 +33,8 @@ parameters{
 model{
   vector[N_obs] p;
   a ~ normal(-2, 2);
-  w_date ~ normal(0, 1);
-  w_temp ~ normal(0, 1);
+  w_date ~ normal(0, 3);
+  w_temp ~ normal(0, 3);
   b_wind_speed ~ exponential(10);
   b_sin ~ normal(0, 2);
   b_cos ~ normal(0, 2);

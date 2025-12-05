@@ -37,8 +37,8 @@ model{
   a ~ normal(-2, 2);
   b_sin ~ normal(0, 2);
   b_cos ~ normal(0, 2);
-  w_date ~ normal(0, 1);
-  w_temp ~ normal(0, 1);
+  w_date ~ normal(0, 3);
+  w_temp ~ normal(0, 3);
   b_precip ~ exponential(2);
   b_dist_coast ~ exponential(10);
   b_wind_speed ~ exponential(10);

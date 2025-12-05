@@ -36,8 +36,8 @@ model{
   vector[N_obs] p;
   a ~ normal(-2, 2);
   b_precip ~ exponential(2);
-  w_date ~ normal(0, 1);
-  w_temp ~ normal(0, 1);
+  w_date ~ normal(0, 3);
+  w_temp ~ normal(0, 3);
   b_wind_speed ~ exponential(10);
   b_dist_coast ~ exponential(10);
   z_station ~ normal(0, 1);
