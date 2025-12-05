@@ -15,9 +15,9 @@ if not os.path.exists(store_path):
 
 c = cdsapi.Client(url="https://cds.climate.copernicus.eu/api", key="fbcf6d2f-6dd5-47b9-9990-b0679803e7b1")
 start_year = 2022
-start_month = 8 # works with the start year
+start_month = 11 # works with the start year
 end_year = 2022 # included
-end_month = 10 # included, works with the end year
+end_month = 12 # included, works with the end year
 
 #calculating the start and end year_month together
 start_year_month = start_year*100 + start_month
