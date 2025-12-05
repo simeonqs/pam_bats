@@ -13,7 +13,7 @@ path_out = 'analysis/results/dat_model_NSI_y1.RData'
 
 # Load data
 load(path_combined_data)
-dat_model_NSI_y1 = dat_model[dat_model$subset %in% c('Windturbines', 'HRIII') &
+dat_model_NSI_y1 = dat_model[dat_model$subset %in% c('Windturbines', 'Buoys') &
                                dat_model$date <= as.Date('2024-04-10'),]
 
 # Save
