@@ -17,11 +17,14 @@ rm(list=ls())
 
 # Paths 
 path_combined_data = 'analysis/results/combined_data.RData'
-path_png = 'analysis/results/spatial_model/map_detections_Y1+Y2.png'
-path_gis_out = 'analysis/results/spatial_model/bat_pam_results_Y1+Y2.shp'
+path_png = 'analysis/results/spatial_model/map_detections_Y1.png'
+path_gis_out = 'analysis/results/spatial_model/bat_pam_results_Y1.shp'
 
 # Load data
 load(path_combined_data)
+
+# Subset dat
+dat = dat[dat$date < as.Date('2024-04-10'),]
 
 # Check if all observations have lat/long
 missing = which(is.na(dat_model$lat) | is.na(dat_model$long))
@@ -117,6 +120,7 @@ non_bat$cat = ifelse(str_detect(non_bat$station, 'HR'),
                      'Non-bat buoys')
 non_bat$n = 0
 non_bat = non_bat[!non_bat$station == 'NS6',]
+non_bat = non_bat[!non_bat$station == 'NS8',]
 gis_dat = rbind(gis_dat, non_bat)
 gis_dat$n = gis_dat$n/2 + 3
 
